@@ -10,42 +10,70 @@
     <link rel="stylesheet" href="~/RestaurantReservationAndOrderManagementSystem.styles.css" asp-append-version="true" />
 </head>
 <body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container">
-                <a class="navbar-brand" asp-area="" asp-page="/Index">RestaurantReservationAndOrderManagementSystem</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/Privacy">Privacy</a>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </nav>
-    </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - RestaurantReservationAndOrderManagementSystem - <a asp-area="" asp-page="/Privacy">Privacy</a>
+    <div class="app-wrapper">
+        <!-- LEFT SIDEBAR NAVIGATION -->
+        <aside class="sidebar" role="navigation" aria-label="Main Navigation">
+            <div class="brand">
+                <div class="brand-logo" aria-hidden>Logo</div>
+                <div class="brand-name">Between Bites</div>
+            </div>
+
+            <nav class="nav-menu" aria-label="Sidebar Menu">
+                <a class="nav-item" href="#">
+                    <i class="fa-solid fa-house"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a class="nav-item active" href="/Orders">
+                    <i class="fa-solid fa-utensils"></i>
+                    <span>Orders</span>
+                </a>
+                <a class="nav-item" href="#">
+                    <i class='fas fa-calendar-check'></i>
+                    <span>Reservation</span>
+                </a>
+                <a class="nav-item" href="#">
+                    <i class='fas fa-chair'></i>
+                    <span>Tables</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <a class="nav-item logout-btn" href="/Account/Logout">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span>Logout</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- MAIN AREA (Top header + Content) -->
+        <div class="main-area">
+            <header class="top-header">
+                <div class="page-title">@ViewData["Title"]</div>
+                <div class="header-right">
+                    <button class="notification-btn" aria-label="Notifications">
+                        <i class="fa-solid fa-bell"></i>
+                    </button>
+                    <div class="user-profile" aria-label="User Profile">
+                        <div class="avatar" aria-hidden>JL</div>
+                        <div class="user-meta">
+                            <div class="user-name">Joshua Lee</div>
+                            <div class="user-role">Staff</div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <main role="main" class="content-body">
+                @RenderBody()
+            </main>
         </div>
-    </footer>
+    </div>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="https://kit.fontawesome.com/f3ce044c74.js" crossorigin="anonymous"></script>
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>

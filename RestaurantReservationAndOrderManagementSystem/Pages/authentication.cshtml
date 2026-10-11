@@ -1,0 +1,30 @@
+﻿@page "/Authenticate"
+@model RestaurantReservationAndOrderManagementSystem.Pages.authenticationModel
+@{
+}
+
+<link rel="stylesheet" href="~/css/authentication_page.css" />
+
+<div class="authentication-container">
+	<form method="post">
+		<div class="inner-container">
+			<div class="form-header">
+				<h2>Sign in to continue</h2>
+
+				<p>Please sign in to your account to continue.</p>
+			</div>
+
+			<div class="form-input">
+				<i class="fa-solid fa-envelope"></i>
+				<input type="email" id="email" name="email" placeholder="Email Address" required />
+			</div>
+			<div class="form-input">
+				<i class="fa-solid fa-key"></i>
+				<input type="password" id="password" name="password" placeholder="Password" required />
+			</div>
+			<button type="submit">Sign in</button>
+		</div>
+
+		<span class="footer-text">Don't have an account? <a href="#">Sign up</a></span>
+	</form>
+</div>

@@ -1,0 +1,115 @@
+﻿@page "/Orders"
+@model RestaurantReservationAndOrderManagementSystem.Pages.ordersModel
+@{
+}
+
+<link rel="stylesheet" href="~/css/orders_page.css" />
+
+<div class="order-dashboard">
+  <!-- Top Navigation / Status Filter Bar -->
+  <nav class="filter-nav" role="navigation" aria-label="Order Status Filters">
+	<button type="button" aria-pressed="true">All</button>
+	<button type="button">Pending</button>
+	<button type="button">Preparing</button>
+	<button type="button">Ready to Serve</button>
+	<button type="button">Served</button>
+	<button type="button">Payment</button>
+	<button type="button">Completed</button>
+	<button type="button">Cancel</button>
+  </nav>
+
+  <!-- Main Two-Column Container -->
+  <div class="order-main">
+	<!-- LEFT PANEL: Order Cards List -->
+	<aside class="order-list" aria-label="Orders List">
+	  <!-- Example order card (repeatable) -->
+	  <article class="order-card" tabindex="0">
+		<div class="order-card-header">
+		  <div class="order-id">Orders : #907653</div>
+		  <time class="order-time">20:30pm</time>
+		</div>
+		<div class="order-card-body">
+		  <div>Table : T1</div>
+		  <div>Qta : 7</div>
+		</div>
+		<div class="order-card-footer">
+		  <div class="order-total">$40.49</div>
+		  <div class="badge">Dine-in</div>
+		</div>
+	  </article>
+
+	  <article class="order-card">
+		<div class="order-card-header">
+		  <div class="order-id">Orders : #907654</div>
+		  <time class="order-time">20:35pm</time>
+		</div>
+		<div class="order-card-body">
+		  <div>Table : T2</div>
+		  <div>Qta : 4</div>
+		</div>
+		<div class="order-card-footer">
+		  <div class="order-total">$45.08</div>
+		  <div class="badge">Takeaway</div>
+		</div>
+	  </article>
+
+	  <!-- more order cards... -->
+	</aside>
+
+	<!-- RIGHT PANEL: Selected Order Detail View -->
+	<section class="order-detail-panel" aria-label="Selected Order Details">
+	  <header class="detail-header">
+		<div class="detail-order-id">#907653</div>
+		<div class="detail-table">T1</div>
+	  </header>
+
+	  <!-- Itemized Order List -->
+	  <div class="order-items" role="list">
+		<div class="order-item" role="listitem">
+		  <div class="thumb" aria-hidden>IMG</div>
+		  <div class="item-meta">
+			<div class="item-name">Orange Juice</div>
+			<div class="item-custom">Note: Less Ice</div>
+		  </div>
+		  <div class="item-pricing">
+			<div>$2.87</div>
+			<div>x4</div>
+			<div>$11.48</div>
+		  </div>
+		</div>
+
+		<div class="order-item">
+		  <div class="thumb" aria-hidden>IMG</div>
+		  <div class="item-meta">
+			<div class="item-name">American Favorite</div>
+			<div class="item-custom">Crust: Stuffed | Extras: Mozzarella</div>
+		  </div>
+		  <div class="item-pricing">
+			<div>$4.87</div>
+			<div>x1</div>
+			<div>$4.87</div>
+		  </div>
+		</div>
+
+		<!-- more items... -->
+	  </div>
+
+	  <!-- Cost Breakdown Summary -->
+	  <div class="cost-summary" aria-hidden>
+		<div class="summary-row"><span>Items (7)</span><span>$28.67</span></div>
+		<div class="summary-row"><span>Tax (10%)</span><span>$2.86</span></div>
+		<div class="summary-row" style="font-weight:800;"><span>Total</span><span>$31.53</span></div>
+	  </div>
+
+	  <!-- Payment Methods -->
+	  <div class="payment-methods" role="radiogroup" aria-label="Payment Methods">
+		<label><input type="radio" name="payment" value="cash"> Cash</label>
+		<label><input type="radio" name="payment" value="debit"> Debit Card</label>
+		<label><input type="radio" name="payment" value="ewallet"> E-Wallet</label>
+	  </div>
+
+	  <!-- Primary Action -->
+	  <button class="pay-action" type="button">Pay Bills</button>
+	</section>
+  </div>
+</div>
