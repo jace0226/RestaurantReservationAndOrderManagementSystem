@@ -15,6 +15,7 @@
 :root {
     --sidebar-width: 260px;
     --brand-color: #011bd8;
+    --subtext-color: #7a8aff;
     --subbrand-color: #ebeeff;
     --brand-border: #ccd5ff;
     --gap: 1rem;
