@@ -21,9 +21,9 @@
   <!-- Main Two-Column Container -->
   <div class="order-main">
 	<!-- LEFT PANEL: Order Cards List -->
-	<aside class="order-list" aria-label="Orders List">
+	<aside class="order-list" role="radiogroup" aria-label="Orders List">
 	  <!-- Example order card (repeatable) -->
-	  <article class="order-card" tabindex="0">
+	  <article class="order-card selected" role="radio" aria-checked="true" tabindex="0" data-order-id="907653">
 		<div class="order-card-header">
 		  <div class="order-id">Orders : #907653</div>
 		  <time class="order-time">20:30pm</time>
@@ -33,12 +33,12 @@
 		  <div>Qta : 7</div>
 		</div>
 		<div class="order-card-footer">
-		  <div class="order-total">$40.49</div>
+		  <div class="order-total">$31.54</div>
 		  <div class="badge">Dine-in</div>
 		</div>
 	  </article>
 
-	  <article class="order-card">
+	  <article class="order-card" role="radio" aria-checked="false" tabindex="-1" data-order-id="907654">
 		<div class="order-card-header">
 		  <div class="order-id">Orders : #907654</div>
 		  <time class="order-time">20:35pm</time>
@@ -48,23 +48,28 @@
 		  <div>Qta : 4</div>
 		</div>
 		<div class="order-card-footer">
-		  <div class="order-total">$45.08</div>
+		  <div class="order-total">$45.10</div>
 		  <div class="badge">Takeaway</div>
 		</div>
 	  </article>
-
-	  <!-- more order cards... -->
 	</aside>
 
 	<!-- RIGHT PANEL: Selected Order Detail View -->
 	<section class="order-detail-panel" aria-label="Selected Order Details">
-	  <header class="detail-header">
-		<div class="detail-order-id">#907653</div>
-		<div class="detail-table">T1</div>
+	  <header class="detail-header" aria-live="polite">
+		<div class="top-section">
+			<div class="detail-title">Selected Order</div>
+			<div class="badge">Preparing</div>
+		</div>
+		<div class="detail-order-id" id="detail-order-id">#907653</div>
+		<div class="bottom-section">
+			<div class="detail-table" id="detail-table">T1</div>
+			<div class="detail-time" id="detail-time">20:30pm</div>
+		</div>
 	  </header>
 
 	  <!-- Itemized Order List -->
-	  <div class="order-items" role="list">
+	  <div class="order-items" id="order-items" role="list">
 		<div class="order-item" role="listitem">
 		  <div class="thumb" aria-hidden>IMG</div>
 		  <div class="item-meta">
@@ -90,22 +95,13 @@
 			<div>$4.87</div>
 		  </div>
 		</div>
-
-		<!-- more items... -->
 	  </div>
 
 	  <!-- Cost Breakdown Summary -->
-	  <div class="cost-summary" aria-hidden>
+	  <div class="cost-summary" id="cost-summary">
 		<div class="summary-row"><span>Items (7)</span><span>$28.67</span></div>
-		<div class="summary-row"><span>Tax (10%)</span><span>$2.86</span></div>
-		<div class="summary-row" style="font-weight:800;"><span>Total</span><span>$31.53</span></div>
-	  </div>
-
-	  <!-- Payment Methods -->
-	  <div class="payment-methods" role="radiogroup" aria-label="Payment Methods">
-		<label><input type="radio" name="payment" value="cash"> Cash</label>
-		<label><input type="radio" name="payment" value="debit"> Debit Card</label>
-		<label><input type="radio" name="payment" value="ewallet"> E-Wallet</label>
+		<div class="summary-row"><span>Tax (10%)</span><span>$2.87</span></div>
+		<div class="summary-row" style="font-weight:800;"><span>Total</span><span>$31.54</span></div>
 	  </div>
 
 	  <!-- Primary Action -->
@@ -113,3 +109,126 @@
 	</section>
   </div>
 </div>
+
+@section Scripts {
+	<script>
+		(() => {
+			const orders = {
+				"907653": {
+					table: "Table T1",
+					itemCount: 7,
+					subtotal: 28.67,
+					tax: 2.87,
+					total: 31.54,
+					items: [
+						{ name: "Orange Juice", note: "Note: Less Ice", price: 2.87, quantity: 4 },
+						{ name: "American Favorite", note: "Crust: Stuffed | Extras: Mozzarella", price: 12.19, quantity: 1 },
+						{ name: "French Fries", note: "", price: 2.50, quantity: 2 }
+					]
+				},
+				"907654": {
+					table: "Takeaway",
+					itemCount: 4,
+					subtotal: 41.00,
+					tax: 4.10,
+					total: 45.10,
+					items: [
+						{ name: "Classic Burger", note: "Extras: Cheddar, Pickles", price: 12.50, quantity: 2 },
+						{ name: "Fresh Lemonade", note: "Note: No Ice", price: 8.00, quantity: 2 }
+					]
+				}
+			};
+
+			const cards = Array.from(document.querySelectorAll(".order-card[role='radio']"));
+			const itemList = document.getElementById("order-items");
+			const orderId = document.getElementById("detail-order-id");
+			const table = document.getElementById("detail-table");
+			const summary = document.getElementById("cost-summary");
+			const money = value => `$${value.toFixed(2)}`;
+
+			function addTextElement(parent, className, text) {
+				const element = document.createElement("div");
+				if (className) element.className = className;
+				element.textContent = text;
+				parent.appendChild(element);
+				return element;
+			}
+
+			function selectOrder(card, moveFocus = false) {
+				const orderNumber = card.dataset.orderId;
+				const order = orders[orderNumber];
+				if (!order) return;
+
+				cards.forEach(candidate => {
+					const isSelected = candidate === card;
+					candidate.classList.toggle("selected", isSelected);
+					candidate.setAttribute("aria-checked", String(isSelected));
+					candidate.tabIndex = isSelected ? 0 : -1;
+				});
+
+				if (moveFocus) card.focus();
+				orderId.textContent = `#${orderNumber}`;
+				table.textContent = order.table;
+				itemList.replaceChildren();
+
+				order.items.forEach(item => {
+					const row = document.createElement("div");
+					row.className = "order-item";
+					row.setAttribute("role", "listitem");
+					addTextElement(row, "thumb", "IMG").setAttribute("aria-hidden", "true");
+
+					const meta = document.createElement("div");
+					meta.className = "item-meta";
+					addTextElement(meta, "item-name", item.name);
+					if (item.note) addTextElement(meta, "item-custom", item.note);
+					row.appendChild(meta);
+
+					const pricing = document.createElement("div");
+					pricing.className = "item-pricing";
+					addTextElement(pricing, "", money(item.price));
+					addTextElement(pricing, "", `x${item.quantity}`);
+					addTextElement(pricing, "", money(item.price * item.quantity));
+					row.appendChild(pricing);
+					itemList.appendChild(row);
+				});
+
+				summary.replaceChildren();
+				const summaryRows = [
+					[`Items (${order.itemCount})`, money(order.subtotal)],
+					["Tax (10%)", money(order.tax)],
+					["Total", money(order.total)]
+				];
+				summaryRows.forEach(([label, value], index) => {
+					const row = document.createElement("div");
+					row.className = "summary-row";
+					if (index === summaryRows.length - 1) row.style.fontWeight = "800";
+					addTextElement(row, "", label);
+					addTextElement(row, "", value);
+					summary.appendChild(row);
+				});
+			}
+
+			cards.forEach((card, index) => {
+				card.addEventListener("click", () => selectOrder(card));
+				card.addEventListener("keydown", event => {
+					let nextIndex = index;
+					if (event.key === "ArrowDown" || event.key === "ArrowRight") nextIndex = (index + 1) % cards.length;
+					else if (event.key === "ArrowUp" || event.key === "ArrowLeft") nextIndex = (index - 1 + cards.length) % cards.length;
+					else if (event.key === "Home") nextIndex = 0;
+					else if (event.key === "End") nextIndex = cards.length - 1;
+					else if (event.key === " " || event.key === "Enter") {
+						event.preventDefault();
+						selectOrder(card);
+						return;
+					} else return;
+
+					event.preventDefault();
+					selectOrder(cards[nextIndex], true);
+				});
+			});
+
+			const initiallySelected = cards.find(card => card.getAttribute("aria-checked") === "true");
+			if (initiallySelected) selectOrder(initiallySelected);
+		})();
+	</script>
+}

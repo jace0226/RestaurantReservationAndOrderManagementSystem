@@ -16,6 +16,7 @@
     --sidebar-width: 260px;
     --brand-color: #011bd8;
     --subbrand-color: #ebeeff;
+    --brand-border: #ccd5ff;
     --gap: 1rem;
 }
 
@@ -24,7 +25,7 @@
     grid-template-columns: var(--sidebar-width) 1fr;
     min-height: 100vh;
     gap: 0;
-    background: #fafafa;
+    background: #fafaff;
 }
 
 /* Content body where pages render their content */

@@ -1,30 +1,49 @@
 ﻿@page "/Authenticate"
 @model RestaurantReservationAndOrderManagementSystem.Pages.authenticationModel
 @{
+	Layout = null;
 }
 
-<link rel="stylesheet" href="~/css/authentication_page.css" />
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - RestaurantReservationAndOrderManagementSystem</title>
+    <script type="importmap"></script>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+	<link rel="stylesheet" href="~/css/authentication_page.css" />
+    <link rel="stylesheet" href="~/RestaurantReservationAndOrderManagementSystem.styles.css" asp-append-version="true" />
+</head>
+<body>
+	<div class="authentication-container">
+		<form method="post">
+			<div class="inner-container">
+				<div class="form-header">
+					<h2>Sign in to continue</h2>
 
-<div class="authentication-container">
-	<form method="post">
-		<div class="inner-container">
-			<div class="form-header">
-				<h2>Sign in to continue</h2>
+					<p>Please sign in to your account to continue.</p>
+				</div>
 
-				<p>Please sign in to your account to continue.</p>
+				<div class="form-input">
+					<i class="fa-solid fa-envelope"></i>
+					<input type="email" id="email" name="email" placeholder="Email Address" required />
+				</div>
+				<div class="form-input">
+					<i class="fa-solid fa-key"></i>
+					<input type="password" id="password" name="password" placeholder="Password" required />
+				</div>
+				<button type="submit">Sign in</button>
 			</div>
 
-			<div class="form-input">
-				<i class="fa-solid fa-envelope"></i>
-				<input type="email" id="email" name="email" placeholder="Email Address" required />
-			</div>
-			<div class="form-input">
-				<i class="fa-solid fa-key"></i>
-				<input type="password" id="password" name="password" placeholder="Password" required />
-			</div>
-			<button type="submit">Sign in</button>
-		</div>
+			<span class="footer-text">Don't have an account? <a href="#">Sign up</a></span>
+		</form>
+	</div>
 
-		<span class="footer-text">Don't have an account? <a href="#">Sign up</a></span>
-	</form>
-</div>
+	<script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="https://kit.fontawesome.com/f3ce044c74.js" crossorigin="anonymous"></script>
+</body>
+</html>
