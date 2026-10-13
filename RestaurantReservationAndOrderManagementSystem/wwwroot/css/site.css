@@ -57,6 +57,6 @@
 }
 
 ::selection {
-    background: #f0ddd6;
-    color: #e88c6b;
+    background: var(--subbrand-color);
+    color: var(--brand-color);
 }

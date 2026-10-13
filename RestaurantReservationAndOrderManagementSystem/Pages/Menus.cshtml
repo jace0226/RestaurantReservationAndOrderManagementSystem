@@ -1,0 +1,138 @@
+﻿@page "/Menus"
+@model RestaurantReservationAndOrderManagementSystem.Pages.MenusModel
+@{
+}
+
+<link rel="stylesheet" href="~/css/menus_page.css" />
+
+<section class="menu-page">
+	  <header class="menu-header">
+			<div>
+				<h2 class="menu-title">Menu Items</h2>
+			</div>
+		<div class="menu-count" id="items-count">0 Items</div>
+	  </header>
+
+	  <!-- Top Navigation / Status Filter Bar -->
+	  <nav class="filter-nav" role="navigation" aria-label="Order Status Filters">
+		<button type="button" aria-pressed="true">All</button>
+		<button type="button">Sandwich</button>
+		<button type="button">Salads</button>
+		<button type="button">Tasty Plates</button>
+		<button type="button">Sides</button>
+		<button type="button">Beverages</button>
+	  </nav>
+
+	  <div class="menu-grid" id="menuGrid">
+			<!-- Example menu cards -->
+			<article class="menu-card">
+				  <img src="https://via.placeholder.com/320x180?text=Food+1" alt="Food 1" />
+				  <div>
+						<h4>Hash Brown Sandwich</h4>
+						<p>toasted milk loaf stuffed with hash brown accompanied with slice of chicken slice, sunny side up, green carol, seasoned with in-house cheese sauce.</p>
+				  </div>
+				  <div class="menu-meta">
+						<div class="price">RM18.80</div>
+						<button class="availability-toggle" aria-pressed="false">Currently Not Available</button>
+				  </div>
+			</article>
+
+			<article class="menu-card">
+				  <img src="https://via.placeholder.com/320x180?text=Food+2" alt="Food 2" />
+				  <div>
+						<h4>Honey Mustard Chicken Sandwich</h4>
+						<p>toasted milk loaf stuffed with in-house marinated chicken accompanied with slice of tomato, green carol, seasoned with in-house honey mustard sauce.</p>
+				  </div>
+				  <div class="menu-meta">
+						<div class="price">RM20.80</div>
+						<button class="availability-toggle" aria-pressed="false">Currently Not Available</button>
+				  </div>
+			</article>
+
+			<article class="menu-card">
+				  <img src="https://via.placeholder.com/320x180?text=Food+3" alt="Food 3" />
+				  <div>
+						<h4>Smoky Barbeque Chicken Sandwich</h4>
+						<p>Tender chicken infused with smoky barbeque flavors, served with a tangy twist for a mouthwatering bite every time.</p>
+				  </div>
+				  <div class="menu-meta">
+						<div class="price">RM20.80</div>
+						<button class="availability-toggle" aria-pressed="false">Currently Not Available</button>
+				  </div>
+			</article>
+
+			<article class="menu-card">
+				  <img src="https://via.placeholder.com/320x180?text=Food+4" alt="Food 4" />
+				  <div>
+						<h4>Berry Nutty Duo</h4>
+						<p>A delightful pairing of creamy nut butter and fresh, juicy berries on one toast, and sweet berry compote with crunchy nuts on the other. A perfect balance of sweet and savory in every bite!</p>
+				  </div>
+				  <div class="menu-meta">
+						<div class="price">RM31.00</div>
+						<button class="availability-toggle" aria-pressed="false">Currently Not Available</button>
+				  </div>
+			</article>
+
+			<article class="menu-card">
+				  <img src="https://via.placeholder.com/320x180?text=Food+5" alt="Food 5" />
+				  <div>
+						<h4>Salmon Cloud Toast</h4>
+						<p>Silky smoked salmon layered over cream cheese on crisp toast, garnished with fresh herbs for a luxurious bite.</p>
+				  </div>
+				  <div class="menu-meta">
+						<div class="price">RM29.00</div>
+						<button class="availability-toggle" aria-pressed="false">Currently Not Available</button>
+				  </div>
+			</article>
+
+			<article class="menu-card">
+				  <img src="https://via.placeholder.com/320x180?text=Food+6" alt="Food 6" />
+				  <div>
+						<h4>Nature Energy Bowl</h4>
+						<p>Baby greens with jammy egg, chickpeas, almond flakes, corn, tomatoes, edible flowers, served with Sama Goddess Ranch.</p>
+				  </div>
+				  <div class="menu-meta">
+						<div class="price">RM19.90</div>
+						<button class="availability-toggle" aria-pressed="false">Currently Not Available</button>
+				  </div>
+			</article>
+	  </div>
+
+	  <script>
+			// Toggle availability: change button text and apply/remove grayscale on image
+			(function () {
+				  const grid = document.getElementById('menuGrid');
+				  const buttons = grid.querySelectorAll('.availability-toggle');
+
+				  function updateCount() {
+						const count = grid.querySelectorAll('.menu-card').length;
+						const el = document.getElementById('items-count');
+						if (el) el.textContent = count + (count === 1 ? ' Item' : ' Items');
+				  }
+
+				  buttons.forEach(btn => {
+						btn.addEventListener('click', function (e) {
+							  const button = e.currentTarget;
+							  const card = button.closest('.menu-card');
+							  const img = card.querySelector('img');
+							  const isAvailable = button.textContent.trim() === 'Available';
+
+							  if (isAvailable) {
+									// Set to not available
+									button.textContent = 'Currently Not Available';
+									button.setAttribute('aria-pressed', 'false');
+									img.classList.remove('grayscale');
+							  } else {
+									// Set to available
+									button.textContent = 'Available';
+									button.setAttribute('aria-pressed', 'true');
+									img.classList.add('grayscale');
+							  }
+						});
+				  });
+
+				  // initialize count
+				  updateCount();
+			})();
+	  </script>
+</section>

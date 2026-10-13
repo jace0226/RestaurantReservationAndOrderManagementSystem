@@ -1,0 +1,165 @@
+﻿@page "/Reservations"
+@model RestaurantReservationAndOrderManagementSystem.Pages.ReservationsModel
+@{
+}
+
+<link rel="stylesheet" href="~/css/reservations_page.css" />
+
+<section class="reservations-page">
+  <header class="page-header">
+	<h2>Reservation list</h2>
+  </header>
+
+  <table class="reservations-table" aria-label="Reservation list table">
+	<thead>
+	  <tr>
+		<th>Booking date</th>
+		<th>Reservation date</th>
+		<th>Reservation time</th>
+		<th>Name of reservation</th>
+		<th>Number of people</th>
+		<th>Reserved table</th>
+		<th>Contact number</th>
+		<th>Action</th>
+	  </tr>
+	</thead>
+	<tbody>
+	  <tr>
+		<td>2026/OCT/13</td>
+		<td>2026/OCT/17</td>
+		<td>12:30 PM</td>
+		<td>John Doe</td>
+		<td>4</td>
+		<td>table no. 7</td>
+		<td>012-3456789</td>
+		<td><button class="edit-button" aria-expanded="false" aria-controls="edit-1">Edit</button></td>
+	  </tr>
+
+	  <!-- Expanded inline edit row (example) -->
+	  <tr class="edit-row">
+		<td colspan="8">
+		  <form class="edit-form" id="edit-1">
+			<div>
+			  <label>Updated date<br />
+				<input type="datetime-local" readonly value="2026-10-13T09:00">
+			  </label>
+			</div>
+
+			<div>
+			  <label>Reservation date<br />
+				<input type="date" name="reservationDate" value="2026-10-17">
+			  </label>
+			</div>
+
+			<div>
+			  <label>Reservation time<br />
+				<input type="time" name="reservationTime" value="12:30">
+			  </label>
+			</div>
+
+			<div>
+			  <label>Name of reservation<br />
+				<input type="text" name="name" value="John Doe">
+			  </label>
+			</div>
+
+			<div>
+			  <label>Number of people<br />
+				<input type="number" name="people" min="1" value="4">
+			  </label>
+			</div>
+
+			<div>
+			  <label>Reservation table<br />
+				<select name="table">
+				  <option>table no. 7</option>
+				  <option>table no. 8</option>
+				  <option>table no. 9</option>
+				</select>
+			  </label>
+			</div>
+
+			<div>
+			  <label>Contact number<br />
+				<input type="tel" name="contact" value="012-3456789">
+			  </label>
+			</div>
+
+			<div class="form-actions">
+			  <button type="button">Cancel</button>
+			  <button type="submit">Submit</button>
+			</div>
+		  </form>
+		</td>
+	  </tr>
+
+	  <tr>
+		<td>2026/OCT/12</td>
+		<td>2026/OCT/17</td>
+		<td>12:30 PM</td>
+		<td>Jane Smith</td>
+		<td>2</td>
+		<td>table no. 3</td>
+		<td>098-7654321</td>
+		<td><button class="edit-button">Edit</button></td>
+	  </tr>
+
+	  <tr>
+		<td>2026/OCT/11</td>
+		<td>2026/OCT/18</td>
+		<td>18:00 PM</td>
+		<td>Tim Lee</td>
+		<td>6</td>
+		<td>table no. 1</td>
+		<td>011-2233445</td>
+		<td><button class="edit-button">Edit</button></td>
+	  </tr>
+
+	  <!-- additional sample rows -->
+	  <tr>
+		<td>2026/OCT/10</td>
+		<td>2026/OCT/20</td>
+		<td>19:30 PM</td>
+		<td>Maria Gomez</td>
+		<td>3</td>
+		<td>table no. 5</td>
+		<td>022-3344556</td>
+		<td><button class="edit-button">Edit</button></td>
+	  </tr>
+
+	  <tr>
+		<td>2026/OCT/09</td>
+		<td>2026/OCT/21</td>
+		<td>20:00 PM</td>
+		<td>Arun Patel</td>
+		<td>5</td>
+		<td>table no. 2</td>
+		<td>033-4455667</td>
+		<td><button class="edit-button">Edit</button></td>
+	  </tr>
+
+	</tbody>
+  </table>
+
+  <footer class="table-footer" aria-label="Table footer pagination">
+	<div class="goto-page">
+	  <label for="goto">Go to page</label>
+	  <input id="goto" type="number" min="1" value="1" style="width:4rem; padding:0.25rem;">
+	  <button type="button">Go</button>
+	</div>
+
+	<nav aria-label="Pagination">
+	  <ul class="pagination">
+		<li>&lt; Previous</li>
+		<li>1</li>
+		<li>2</li>
+		<li>3</li>
+		<li>4</li>
+		<li>5</li>
+		<li>...</li>
+		<li>49</li>
+		<li>Next &gt;</li>
+	  </ul>
+	</nav>
+  </footer>
+</section>

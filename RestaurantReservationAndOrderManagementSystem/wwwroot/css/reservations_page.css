@@ -1,0 +1,110 @@
+﻿/* Minimal structural CSS for reservation table layout */
+.reservations-page {
+    padding: 1rem;
+    box-sizing: border-box;
+}
+
+.page-header {
+    margin-bottom: 0.75rem;
+}
+
+table.reservations-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.reservations-table thead th {
+    text-align: left;
+    padding: 0.65rem 0.75rem;
+    border-bottom: 1px solid #ddd;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.reservations-table tbody td {
+    padding: 0.65rem 0.75rem;
+    border-bottom: 1px solid #f1f1f1;
+    vertical-align: middle;
+    font-size: 0.95rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.reservations-table tbody tr.edit-row td {
+    background: #fbfbfb;
+    padding: 0.5rem;
+}
+
+.edit-form {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+    .edit-form label {
+        font-size: 0.85rem;
+    }
+
+    .edit-form input,
+    .edit-form select {
+        padding: 0.4rem 0.5rem;
+        font-size: 0.95rem;
+        box-sizing: border-box;
+    }
+
+.form-actions {
+    margin-left: auto;
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Footer / pagination */
+.table-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 0.75rem;
+    gap: 1rem;
+}
+
+.goto-page {
+    display: inline-flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.pagination {
+    display: inline-flex;
+    gap: 0.25rem;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+    .pagination li {
+        padding: 0.25rem 0.5rem;
+        border: 1px solid #e6e6e6;
+    }
+
+.edit-button {
+    padding: 0.35rem 0.5rem;
+    cursor: pointer;
+}
+
+@media (max-width: 780px) {
+    .edit-form {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .form-actions {
+        margin-left: 0;
+    }
+
+    .reservations-table thead th, .reservations-table tbody td {
+        font-size: 0.85rem;
+    }
+}
