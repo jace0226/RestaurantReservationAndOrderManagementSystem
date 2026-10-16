@@ -19,15 +19,18 @@ jobs:
 
     - name: Restore Dependencies
       run: dotnet restore
+      working-directory: ./RestaurantReservationAndOrderManagementSystem
 
     - name: Build Project
       run: dotnet build --configuration Release --no-restore
+      working-directory: ./RestaurantReservationAndOrderManagementSystem
 
     - name: Publish Artifact
       run: dotnet publish --configuration Release --no-build --output ./publish-output
+      working-directory: ./RestaurantReservationAndOrderManagementSystem
 
     - name: Upload Build Artifact
       uses: actions/upload-artifact@v4
       with:
         name: webapp-artifact
-        path: ./publish-output
+        path: ./RestaurantReservationAndOrderManagementSystem/publish-output
