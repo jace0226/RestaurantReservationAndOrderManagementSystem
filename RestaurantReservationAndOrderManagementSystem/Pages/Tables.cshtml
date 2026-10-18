@@ -1,91 +1,87 @@
 ﻿@page "/Tables"
 @model RestaurantReservationAndOrderManagementSystem.Pages.TablesModel
 @{
+    ViewData["Title"] = "Tables";
 }
 
-<link rel="stylesheet" href="~/css/tables_page.css" />
+<link rel="stylesheet" href="~/css/tables_page.css" asp-append-version="true" />
 
-<section class="tables-page">
-  <header class="tables-header">
-	<div>
-	  <h2>Manage Tables</h2>
-	</div>
+<section class="tables-page" aria-label="Table management">
+    <header class="tables-hero">
+        <div>
+            <p class="eyebrow">The room at a glance</p>
+            <h1>How's the floor feeling?</h1>
+            <p class="hero-caption">Tap a table to see who's sitting pretty.</p>
+        </div>
+        <button class="add-table-button" type="button">
+            <i class="fa-solid fa-plus" aria-hidden="true"></i>
+            Add table
+        </button>
+    </header>
 
-	<div style="display:flex; flex-direction:column; align-items:flex-end; gap:0.6rem;">
-	  <div class="filters" role="tablist" aria-label="Dining area filters">
-		<button class="filter-btn active" role="tab">Main Dining</button>
-		<button class="filter-btn" role="tab">Terrace</button>
-		<button class="filter-btn" role="tab">Outdoor</button>
-	  </div>
+    <section class="table-summary" aria-label="Table availability summary">
+        <div class="total-tables"><strong>12</strong><span>tables total</span></div>
+        <div class="status-legend">
+            <span class="legend-item"><i class="legend-dot legend-available"></i>Available <strong>6</strong></span>
+            <span class="legend-item"><i class="legend-dot legend-reserved"></i>Reserved <strong>3</strong></span>
+            <span class="legend-item"><i class="legend-dot legend-occupied"></i>On dine-in <strong>3</strong></span>
+        </div>
+    </section>
 
-	  <div class="status-legend" aria-hidden="true">
-		<div class="legend-item"><span class="legend-dot" style="background:#2aa55a;"></span><span>Available</span></div>
-		<div class="legend-item"><span class="legend-dot" style="background:#f39c9c;"></span><span>Reserved</span></div>
-		<div class="legend-item"><span class="legend-dot" style="background:#f2b84b;"></span><span>On Dine</span></div>
-	  </div>
-	</div>
-  </header>
+    <nav class="area-filters" aria-label="Dining area">
+        <button class="filter-button active" type="button" aria-pressed="true">Main dining</button>
+        <button class="filter-button" type="button" aria-pressed="false">Terrace</button>
+        <button class="filter-button" type="button" aria-pressed="false">Outdoor</button>
+    </nav>
 
-  <div class="tables-grid" role="list">
-	<!-- Sample table cards (mix of sizes and statuses) -->
-	<article class="table-card status-available large" role="listitem">
-	  <div class="table-id">Table #1</div>
-	  <div class="table-capacity"><span class="person-icon">👥</span><span>8</span></div>
-	</article>
-
-	<article class="table-card status-reserved" role="listitem">
-	  <div class="table-id">Table #2</div>
-	  <div class="table-capacity"><span class="person-icon">👥</span><span>2</span></div>
-	</article>
-
-	<article class="table-card status-available" role="listitem">
-	  <div class="table-id">Table #3</div>
-	  <div class="table-capacity"><span class="person-icon">👥</span><span>2</span></div>
-	</article>
-
-	<article class="table-card status-ondine" role="listitem">
-	  <div class="table-id">Table #4</div>
-	  <div class="table-capacity"><span class="person-icon">👥</span><span>3</span></div>
-	</article>
-
-	<article class="table-card status-available" role="listitem">
-	  <div class="table-id">Table #5</div>
-	  <div class="table-capacity"><span class="person-icon">👥</span><span>6</span></div>
-	</article>
-
-	<article class="table-card status-reserved large" role="listitem">
-	  <div class="table-id">Table #6</div>
-	  <div class="table-capacity"><span class="person-icon">👥</span><span>7</span></div>
-	</article>
-
-	<article class="table-card status-available" role="listitem">
-	  <div class="table-id">Table #7</div>
-	  <div class="table-capacity"><span class="person-icon">👥</span><span>10</span></div>
-	</article>
-
-	<article class="table-card status-ondine" role="listitem">
-	  <div class="table-id">Table #8</div>
-	  <div class="table-capacity"><span class="person-icon">👥</span><span>2</span></div>
-	</article>
-
-	<article class="table-card status-reserved" role="listitem">
-	  <div class="table-id">Table #9</div>
-	  <div class="table-capacity"><span class="person-icon">👥</span><span>4</span></div>
-	</article>
-
-	<article class="table-card status-available large" role="listitem">
-	  <div class="table-id">Table #10</div>
-	  <div class="table-capacity"><span class="person-icon">👥</span><span>8</span></div>
-	</article>
-
-	<article class="table-card status-available" role="listitem">
-	  <div class="table-id">Table #11</div>
-	  <div class="table-capacity"><span class="person-icon">👥</span><span>2</span></div>
-	</article>
-
-	<article class="table-card status-ondine" role="listitem">
-	  <div class="table-id">Table #12</div>
-	  <div class="table-capacity"><span class="person-icon">👥</span><span>8</span></div>
-	</article>
-  </div>
+    <section class="tables-grid" aria-label="Tables in main dining">
+        <article class="table-card table-occupied">
+            <div class="table-card-inner"><h2>Table 1</h2><span class="table-capacity"><i class="fa-regular fa-user" aria-hidden="true"></i>8 pax</span></div>
+            <p>Guests dining</p>
+        </article>
+        <article class="table-card table-available">
+            <div class="table-card-inner"><h2>Table 2</h2><span class="table-capacity"><i class="fa-regular fa-user" aria-hidden="true"></i>2 pax</span></div>
+            <p>Ready for guests</p>
+        </article>
+        <article class="table-card table-available">
+            <div class="table-card-inner"><h2>Table 3</h2><span class="table-capacity"><i class="fa-regular fa-user" aria-hidden="true"></i>2 pax</span></div>
+            <p>Ready for guests</p>
+        </article>
+        <article class="table-card table-reserved">
+            <div class="table-card-inner"><h2>Table 4</h2><span class="table-capacity"><i class="fa-regular fa-user" aria-hidden="true"></i>3 pax</span></div>
+            <p>Reservation soon</p>
+        </article>
+        <article class="table-card table-occupied">
+            <div class="table-card-inner"><h2>Table 5</h2><span class="table-capacity"><i class="fa-regular fa-user" aria-hidden="true"></i>6 pax</span></div>
+            <p>Guests dining</p>
+        </article>
+        <article class="table-card table-available">
+            <div class="table-card-inner"><h2>Table 6</h2><span class="table-capacity"><i class="fa-regular fa-user" aria-hidden="true"></i>7 pax</span></div>
+            <p>Ready for guests</p>
+        </article>
+        <article class="table-card table-available">
+            <div class="table-card-inner"><h2>Table 7</h2><span class="table-capacity"><i class="fa-regular fa-user" aria-hidden="true"></i>10 pax</span></div>
+            <p>Ready for guests</p>
+        </article>
+        <article class="table-card table-reserved">
+            <div class="table-card-inner"><h2>Table 8</h2><span class="table-capacity"><i class="fa-regular fa-user" aria-hidden="true"></i>2 pax</span></div>
+            <p>Reservation soon</p>
+        </article>
+        <article class="table-card table-available">
+            <div class="table-card-inner"><h2>Table 9</h2><span class="table-capacity"><i class="fa-regular fa-user" aria-hidden="true"></i>4 pax</span></div>
+            <p>Ready for guests</p>
+        </article>
+        <article class="table-card table-occupied">
+            <div class="table-card-inner"><h2>Table 10</h2><span class="table-capacity"><i class="fa-regular fa-user" aria-hidden="true"></i>8 pax</span></div>
+            <p>Guests dining</p>
+        </article>
+        <article class="table-card table-available">
+            <div class="table-card-inner"><h2>Table 11</h2><span class="table-capacity"><i class="fa-regular fa-user" aria-hidden="true"></i>2 pax</span></div>
+            <p>Ready for guests</p>
+        </article>
+        <article class="table-card table-reserved">
+            <div class="table-card-inner"><h2>Table 12</h2><span class="table-capacity"><i class="fa-regular fa-user" aria-hidden="true"></i>8 pax</span></div>
+            <p>Reservation soon</p>
+        </article>
+    </section>
 </section>

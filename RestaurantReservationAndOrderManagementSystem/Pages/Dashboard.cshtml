@@ -1,87 +1,118 @@
 ﻿@page "/Dashboard"
 @model RestaurantReservationAndOrderManagementSystem.Pages.DashboardModel
 @{
+    ViewData["Title"] = "Dashboard";
 }
 
-<link rel="stylesheet" href="~/css/dashboard_page.css" />
+<link rel="stylesheet" href="~/css/dashboard_page.css" asp-append-version="true" />
 
-<section class="dashboard">
-  <!-- Page header -->
-  <header>
-    <h2>Dashboard Overview</h2>
-  </header>
-
-  <!-- Top stats cards -->
-  <div class="stats-grid" aria-label="Top statistics">
-    <div class="stat-card">
-      <div class="stat-number">12</div>
-      <div class="stat-label">Today's Active Orders</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-number">8</div>
-      <div class="stat-label">Today's Reservations</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-number">6 / 12</div>
-      <div class="stat-label">Available Tables</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-number">4</div>
-      <div class="stat-label">Occupied (On Dine)</div>
-    </div>
-  </div>
-
-  <!-- Main two-column section -->
-  <div class="main-grid">
-    <!-- Left: Live Kitchen Orders Queue -->
-    <section class="panel">
-      <h3>Active Orders</h3>
-      <div class="orders-list" aria-live="polite">
-        <div class="order-item">
-          <div class="order-meta"><strong>#907653</strong><span>Table T1</span><span>20:30</span></div>
-          <div class="order-meta"><span>Items: 7</span><button class="order-action">Mark as Ready</button></div>
+<section class="dashboard" aria-label="Restaurant dashboard">
+    <header class="dashboard-hero">
+        <div>
+            <p class="eyebrow">Good morning, Joshua</p>
+            <h1>Let's make today delicious.</h1>
+            <p class="hero-caption">Here's the little snapshot of everything happening at Between Bites.</p>
         </div>
+        <span class="hero-icon" aria-hidden="true"><i class="fa-solid fa-mug-hot"></i></span>
+    </header>
 
-        <div class="order-item">
-          <div class="order-meta"><strong>#907654</strong><span>Table T2</span><span>20:35</span></div>
-          <div class="order-meta"><span>Items: 4</span><button class="order-action">Mark as Ready</button></div>
-        </div>
-
-        <div class="order-item">
-          <div class="order-meta"><strong>#907655</strong><span>Table T3</span><span>20:40</span></div>
-          <div class="order-meta"><span>Items: 2</span><button class="order-action">Mark as Ready</button></div>
-        </div>
-
-        <!-- more order items... -->
-      </div>
+    <section class="stats-grid" aria-label="Today's statistics">
+        <article class="stat-card">
+            <div class="stat-heading"><span>Active orders</span><i class="fa-solid fa-receipt" aria-hidden="true"></i></div>
+            <strong class="stat-number">12</strong>
+            <span class="stat-note">3 ready for handoff</span>
+        </article>
+        <article class="stat-card">
+            <div class="stat-heading"><span>Reservations</span><i class="fa-regular fa-calendar-days" aria-hidden="true"></i></div>
+            <strong class="stat-number">08</strong>
+            <span class="stat-note">Next one at 12:30 PM</span>
+        </article>
+        <article class="stat-card">
+            <div class="stat-heading"><span>Tables available</span><i class="fa-solid fa-table-cells" aria-hidden="true"></i></div>
+            <strong class="stat-number">06 / 12</strong>
+            <span class="stat-note">Half the room is free</span>
+        </article>
+        <article class="stat-card">
+            <div class="stat-heading"><span>Guests dining in</span><i class="fa-solid fa-user-group" aria-hidden="true"></i></div>
+            <strong class="stat-number">24</strong>
+            <span class="stat-note">A lovely lunch rush</span>
+        </article>
     </section>
 
-    <!-- Right: Upcoming Reservations -->
-    <aside class="panel">
-      <h3>Upcoming Reservations</h3>
-      <table class="reservations-table" aria-label="Today's reservations">
-        <thead>
-          <tr><th>Time</th><th>Name</th><th>Guests</th><th>Table</th><th>Status</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>12:30</td><td>John Doe</td><td>4</td><td>7</td><td class="status-available">Available</td></tr>
-          <tr><td>13:00</td><td>Jane Smith</td><td>2</td><td>3</td><td class="status-reserved">Reserved</td></tr>
-          <tr><td>18:00</td><td>Tim Lee</td><td>6</td><td>1</td><td class="status-ondine">On Dine</td></tr>
-        </tbody>
-      </table>
-    </aside>
-  </div>
+    <div class="main-grid">
+        <section class="panel orders-panel" aria-labelledby="active-orders-title">
+            <div class="panel-heading">
+                <div>
+                    <p class="eyebrow">Fresh from the kitchen</p>
+                    <h2 id="active-orders-title">Active orders</h2>
+                </div>
+                <a class="panel-link" href="/Orders">See all</a>
+            </div>
+            <div class="orders-list" aria-live="polite">
+                <article class="order-item">
+                    <span class="order-icon" aria-hidden="true"><i class="fa-solid fa-receipt"></i></span>
+                    <div class="order-details"><strong>#907653 · Sarah Kim</strong><span>Table T1 · 7 items</span></div>
+                    <span class="order-status status-preparing">Preparing</span>
+                    <i class="order-check fa-solid fa-check" aria-label="In progress"></i>
+                </article>
+                <article class="order-item">
+                    <span class="order-icon" aria-hidden="true"><i class="fa-solid fa-receipt"></i></span>
+                    <div class="order-details"><strong>#907654 · Marcus Lee</strong><span>Table T2 · 4 items</span></div>
+                    <span class="order-status status-pending">Pending</span>
+                    <i class="order-check fa-solid fa-check" aria-label="In progress"></i>
+                </article>
+                <article class="order-item">
+                    <span class="order-icon" aria-hidden="true"><i class="fa-solid fa-receipt"></i></span>
+                    <div class="order-details"><strong>#907655 · Nina Patel</strong><span>Table T5 · 3 items</span></div>
+                    <span class="order-status status-ready">Ready to serve</span>
+                    <i class="order-check fa-solid fa-check" aria-label="Ready"></i>
+                </article>
+            </div>
+        </section>
 
-  <!-- Bottom: Quick table occupancy overview -->
-  <section class="panel">
-    <h3>Table Status Overview</h3>
-    <div class="tables-overview" aria-label="Table overview">
-      <div class="table-box status-available">Table #1<br/><small>8 pax</small></div>
-      <div class="table-box status-reserved">Table #2<br/><small>2 pax</small></div>
-      <div class="table-box status-available">Table #3<br/><small>2 pax</small></div>
-      <div class="table-box status-ondine">Table #4<br/><small>3 pax</small></div>
-      <div class="table-box status-available">Table #5<br/><small>6 pax</small></div>
-      <div class="table-box status-reserved">Table #6<br/><small>7 pax</small></div>
+        <section class="panel reservations-panel" aria-labelledby="upcoming-title">
+            <div class="panel-heading">
+                <div>
+                    <p class="eyebrow">Save their seats</p>
+                    <h2 id="upcoming-title">Coming up</h2>
+                </div>
+                <a class="panel-link" href="/Reservations">Open book</a>
+            </div>
+            <div class="reservation-list" aria-label="Today's reservations">
+                <article class="reservation-item">
+                    <time datetime="12:30">12:30</time>
+                    <div><strong>John Doe</strong><span>4 guests · Table T7</span></div>
+                    <span class="reservation-status">Arriving</span>
+                </article>
+                <article class="reservation-item">
+                    <time datetime="13:00">13:00</time>
+                    <div><strong>Jane Smith</strong><span>2 guests · Table T3</span></div>
+                    <span class="reservation-status">Confirmed</span>
+                </article>
+                <article class="reservation-item">
+                    <time datetime="18:00">18:00</time>
+                    <div><strong>Tim Lee</strong><span>6 guests · Table T1</span></div>
+                    <span class="reservation-status">On dine-in</span>
+                </article>
+            </div>
+        </section>
     </div>
-  </section>
+
+    <section class="panel tables-panel" aria-labelledby="table-checkin-title">
+        <div class="panel-heading">
+            <div>
+                <p class="eyebrow">A peek at the room</p>
+                <h2 id="table-checkin-title">Table check-in</h2>
+            </div>
+            <a class="panel-link" href="/Tables">Manage tables</a>
+        </div>
+        <div class="tables-overview" aria-label="Table occupancy overview">
+            <div class="table-box table-busy"><span>T1 · 8 pax</span></div>
+            <div class="table-box table-free"><span>T2 · 2 pax</span></div>
+            <div class="table-box table-free"><span>T3 · 2 pax</span></div>
+            <div class="table-box table-reserved"><span>T4 · 3 pax</span></div>
+            <div class="table-box table-busy"><span>T5 · 6 pax</span></div>
+            <div class="table-box table-free"><span>T6 · 7 pax</span></div>
+        </div>
+    </section>
 </section>

@@ -1,165 +1,116 @@
 ﻿@page "/Reservations"
 @model RestaurantReservationAndOrderManagementSystem.Pages.ReservationsModel
 @{
+    ViewData["Title"] = "Reservations";
 }
 
-<link rel="stylesheet" href="~/css/reservations_page.css" />
+<link rel="stylesheet" href="~/css/reservations_page.css" asp-append-version="true" />
 
-<section class="reservations-page">
-  <header class="page-header">
-	<h2>Reservation list</h2>
-  </header>
+<section class="reservations-page" aria-label="Reservation management">
+    <header class="reservation-hero">
+        <div>
+            <p class="eyebrow">The reservation book</p>
+            <h1>Who's joining us?</h1>
+            <p class="hero-caption">Keep the room feeling easy, one booking at a time.</p>
+        </div>
+        <button class="new-reservation-button" type="button">
+            <i class="fa-solid fa-plus" aria-hidden="true"></i>
+            New reservation
+        </button>
+    </header>
 
-  <table class="reservations-table" aria-label="Reservation list table">
-	<thead>
-	  <tr>
-		<th>Booking date</th>
-		<th>Reservation date</th>
-		<th>Reservation time</th>
-		<th>Name of reservation</th>
-		<th>Number of people</th>
-		<th>Reserved table</th>
-		<th>Contact number</th>
-		<th>Action</th>
-	  </tr>
-	</thead>
-	<tbody>
-	  <tr>
-		<td>2026/OCT/13</td>
-		<td>2026/OCT/17</td>
-		<td>12:30 PM</td>
-		<td>John Doe</td>
-		<td>4</td>
-		<td>table no. 7</td>
-		<td>012-3456789</td>
-		<td><button class="edit-button" aria-expanded="false" aria-controls="edit-1">Edit</button></td>
-	  </tr>
+    <section class="reservation-stats" aria-label="Reservation summary">
+        <article class="summary-card">
+            <i class="fa-regular fa-calendar-days" aria-hidden="true"></i>
+            <div><strong>8</strong><span>bookings today</span></div>
+        </article>
+        <article class="summary-card">
+            <i class="fa-solid fa-user-group" aria-hidden="true"></i>
+            <div><strong>20</strong><span>guests expected</span></div>
+        </article>
+        <article class="summary-card">
+            <i class="fa-solid fa-table-cells" aria-hidden="true"></i>
+            <div><strong>4</strong><span>tables still free</span></div>
+        </article>
+    </section>
 
-	  <!-- Expanded inline edit row (example) -->
-	  <tr class="edit-row">
-		<td colspan="8">
-		  <form class="edit-form" id="edit-1">
-			<div>
-			  <label>Updated date<br />
-				<input type="datetime-local" readonly value="2026-10-13T09:00">
-			  </label>
-			</div>
+    <form class="reservation-filters" role="search">
+        <label class="search-control">
+            <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+            <span class="visually-hidden">Search guests or tables</span>
+            <input type="search" placeholder="Search guests or tables..." />
+        </label>
+        <label class="date-control">
+            <i class="fa-regular fa-calendar-days" aria-hidden="true"></i>
+            <span class="visually-hidden">Filter by reservation date</span>
+            <input type="date" value="2026-10-17" />
+        </label>
+    </form>
 
-			<div>
-			  <label>Reservation date<br />
-				<input type="date" name="reservationDate" value="2026-10-17">
-			  </label>
-			</div>
+    <section class="reservation-list-panel" aria-labelledby="reservation-list-title">
+        <div class="list-heading">
+            <div>
+                <p class="eyebrow">Friday service</p>
+                <h2 id="reservation-list-title">Reservation list</h2>
+            </div>
+            <span class="booking-count">5 bookings</span>
+        </div>
 
-			<div>
-			  <label>Reservation time<br />
-				<input type="time" name="reservationTime" value="12:30">
-			  </label>
-			</div>
-
-			<div>
-			  <label>Name of reservation<br />
-				<input type="text" name="name" value="John Doe">
-			  </label>
-			</div>
-
-			<div>
-			  <label>Number of people<br />
-				<input type="number" name="people" min="1" value="4">
-			  </label>
-			</div>
-
-			<div>
-			  <label>Reservation table<br />
-				<select name="table">
-				  <option>table no. 7</option>
-				  <option>table no. 8</option>
-				  <option>table no. 9</option>
-				</select>
-			  </label>
-			</div>
-
-			<div>
-			  <label>Contact number<br />
-				<input type="tel" name="contact" value="012-3456789">
-			  </label>
-			</div>
-
-			<div class="form-actions">
-			  <button type="button">Cancel</button>
-			  <button type="submit">Submit</button>
-			</div>
-		  </form>
-		</td>
-	  </tr>
-
-	  <tr>
-		<td>2026/OCT/12</td>
-		<td>2026/OCT/17</td>
-		<td>12:30 PM</td>
-		<td>Jane Smith</td>
-		<td>2</td>
-		<td>table no. 3</td>
-		<td>098-7654321</td>
-		<td><button class="edit-button">Edit</button></td>
-	  </tr>
-
-	  <tr>
-		<td>2026/OCT/11</td>
-		<td>2026/OCT/18</td>
-		<td>18:00 PM</td>
-		<td>Tim Lee</td>
-		<td>6</td>
-		<td>table no. 1</td>
-		<td>011-2233445</td>
-		<td><button class="edit-button">Edit</button></td>
-	  </tr>
-
-	  <!-- additional sample rows -->
-	  <tr>
-		<td>2026/OCT/10</td>
-		<td>2026/OCT/20</td>
-		<td>19:30 PM</td>
-		<td>Maria Gomez</td>
-		<td>3</td>
-		<td>table no. 5</td>
-		<td>022-3344556</td>
-		<td><button class="edit-button">Edit</button></td>
-	  </tr>
-
-	  <tr>
-		<td>2026/OCT/09</td>
-		<td>2026/OCT/21</td>
-		<td>20:00 PM</td>
-		<td>Arun Patel</td>
-		<td>5</td>
-		<td>table no. 2</td>
-		<td>033-4455667</td>
-		<td><button class="edit-button">Edit</button></td>
-	  </tr>
-
-	</tbody>
-  </table>
-
-  <footer class="table-footer" aria-label="Table footer pagination">
-	<div class="goto-page">
-	  <label for="goto">Go to page</label>
-	  <input id="goto" type="number" min="1" value="1" style="width:4rem; padding:0.25rem;">
-	  <button type="button">Go</button>
-	</div>
-
-	<nav aria-label="Pagination">
-	  <ul class="pagination">
-		<li>&lt; Previous</li>
-		<li>1</li>
-		<li>2</li>
-		<li>3</li>
-		<li>4</li>
-		<li>5</li>
-		<li>...</li>
-		<li>49</li>
-		<li>Next &gt;</li>
-	  </ul>
-	</nav>
-  </footer>
+        <div class="reservation-table-wrap">
+            <table class="reservation-table" aria-label="Friday reservation list">
+                <thead class="visually-hidden">
+                    <tr>
+                        <th scope="col">Time and date</th>
+                        <th scope="col">Guest</th>
+                        <th scope="col">Guests</th>
+                        <th scope="col">Table</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="time-cell"><span class="time-info"><strong>12:30 PM</strong><span>Oct 17, 2026</span></span></td>
+                        <td class="guest-cell"><span class="guest-profile"><span class="guest-avatar">JD</span><span class="guest-info"><strong>John Doe</strong><small>012-3456789</small></span></span></td>
+                        <td data-label="Guests">4 guests</td>
+                        <td data-label="Table">Table 7</td>
+                        <td><span class="booking-status status-arriving">Arriving</span></td>
+                        <td class="action-cell"><button type="button" class="edit-button" aria-label="Edit John Doe reservation"><i class="fa-regular fa-pen-to-square" aria-hidden="true"></i></button></td>
+                    </tr>
+                    <tr>
+                        <td class="time-cell"><span class="time-info"><strong>1:00 PM</strong><span>Oct 17, 2026</span></span></td>
+                        <td class="guest-cell"><span class="guest-profile"><span class="guest-avatar">JS</span><span class="guest-info"><strong>Jane Smith</strong><small>098-7654321</small></span></span></td>
+                        <td data-label="Guests">2 guests</td>
+                        <td data-label="Table">Table 3</td>
+                        <td><span class="booking-status status-confirmed">Confirmed</span></td>
+                        <td class="action-cell"><button type="button" class="edit-button" aria-label="Edit Jane Smith reservation"><i class="fa-regular fa-pen-to-square" aria-hidden="true"></i></button></td>
+                    </tr>
+                    <tr>
+                        <td class="time-cell"><span class="time-info"><strong>6:00 PM</strong><span>Oct 17, 2026</span></span></td>
+                        <td class="guest-cell"><span class="guest-profile"><span class="guest-avatar">TL</span><span class="guest-info"><strong>Tim Lee</strong><small>011-2233445</small></span></span></td>
+                        <td data-label="Guests">6 guests</td>
+                        <td data-label="Table">Table 1</td>
+                        <td><span class="booking-status status-dining">On dine-in</span></td>
+                        <td class="action-cell"><button type="button" class="edit-button" aria-label="Edit Tim Lee reservation"><i class="fa-regular fa-pen-to-square" aria-hidden="true"></i></button></td>
+                    </tr>
+                    <tr>
+                        <td class="time-cell"><span class="time-info"><strong>7:30 PM</strong><span>Oct 17, 2026</span></span></td>
+                        <td class="guest-cell"><span class="guest-profile"><span class="guest-avatar">MG</span><span class="guest-info"><strong>Maria Gomez</strong><small>022-3344556</small></span></span></td>
+                        <td data-label="Guests">3 guests</td>
+                        <td data-label="Table">Table 5</td>
+                        <td><span class="booking-status status-confirmed">Confirmed</span></td>
+                        <td class="action-cell"><button type="button" class="edit-button" aria-label="Edit Maria Gomez reservation"><i class="fa-regular fa-pen-to-square" aria-hidden="true"></i></button></td>
+                    </tr>
+                    <tr>
+                        <td class="time-cell"><span class="time-info"><strong>8:00 PM</strong><span>Oct 17, 2026</span></span></td>
+                        <td class="guest-cell"><span class="guest-profile"><span class="guest-avatar">AP</span><span class="guest-info"><strong>Arun Patel</strong><small>033-4455667</small></span></span></td>
+                        <td data-label="Guests">5 guests</td>
+                        <td data-label="Table">Table 2</td>
+                        <td><span class="booking-status status-confirmed">Waiting</span></td>
+                        <td class="action-cell"><button type="button" class="edit-button" aria-label="Edit Arun Patel reservation"><i class="fa-regular fa-pen-to-square" aria-hidden="true"></i></button></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
 </section>

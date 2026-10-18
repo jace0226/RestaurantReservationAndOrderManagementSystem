@@ -28,7 +28,7 @@
     background: var(--subbrand-color);
     border-radius: 20px;
     width: 100%;
-    max-width: 420px;
+    max-width: 480px;
     padding: 4px;
 
     .inner-container {
