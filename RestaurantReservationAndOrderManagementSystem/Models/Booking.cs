@@ -27,6 +27,9 @@ namespace RestaurantReservationAndOrderManagementSystem.Models
         [Required(ErrorMessage = "Booking Time is required")]
         public TimeOnly BookingTime { get; set; } = TimeOnly.MinValue;
 
+        [Range(1, 100)]
+        public int PartySize { get; set; } = 1;
+
         public string BookingStatus { get; set; } = string.Empty;
 
         public string BookingNotes { get; set; } = string.Empty;

@@ -9,7 +9,7 @@ namespace RestaurantReservationAndOrderManagementSystem.Models
         [Required(ErrorMessage = "Table ID is required")]
         public string TableID { get; set; } = string.Empty;
         
-        [Required(ErrorMessage = "Maximum Pax is required")]
+        [Range(1, 100, ErrorMessage = "Capacity must be between 1 and 100.")]
         public int MaxPax { get; set; } = 0;
 
         [Required(ErrorMessage = "Table Availability is required")]

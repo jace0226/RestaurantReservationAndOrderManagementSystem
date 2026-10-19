@@ -1,4 +1,4 @@
-﻿@page "/Staff/Reservations"
+@page "/Staff/Reservations"
 @model RestaurantReservationAndOrderManagementSystem.Pages.ReservationsModel
 @{
     ViewData["Title"] = "Reservations";
@@ -13,7 +13,7 @@
             <h1>Who's joining us?</h1>
             <p class="hero-caption">Keep the room feeling easy, one booking at a time.</p>
         </div>
-        <button class="new-reservation-button" type="button">
+        <button class="new-reservation-button" type="button" id="openReservationDialog">
             <i class="fa-solid fa-plus" aria-hidden="true"></i>
             New reservation
         </button>
@@ -22,95 +22,215 @@
     <section class="reservation-stats" aria-label="Reservation summary">
         <article class="summary-card">
             <i class="fa-regular fa-calendar-days" aria-hidden="true"></i>
-            <div><strong>8</strong><span>bookings today</span></div>
+            <div><strong>@Model.BookingsToday</strong><span>bookings today</span></div>
         </article>
         <article class="summary-card">
             <i class="fa-solid fa-user-group" aria-hidden="true"></i>
-            <div><strong>20</strong><span>guests expected</span></div>
+            <div><strong>@Model.GuestsToday</strong><span>guests expected today</span></div>
         </article>
         <article class="summary-card">
             <i class="fa-solid fa-table-cells" aria-hidden="true"></i>
-            <div><strong>4</strong><span>tables still free</span></div>
+            <div><strong>@Model.AvailableTables</strong><span>tables available</span></div>
         </article>
     </section>
 
-    <form class="reservation-filters" role="search">
+    <form class="reservation-filters" method="get" action="/Staff/Reservations" role="search">
         <label class="search-control">
             <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
             <span class="visually-hidden">Search guests or tables</span>
-            <input type="search" placeholder="Search guests or tables..." />
+            <input asp-for="Search" type="search" placeholder="Search guests or tables..." />
         </label>
         <label class="date-control">
             <i class="fa-regular fa-calendar-days" aria-hidden="true"></i>
             <span class="visually-hidden">Filter by reservation date</span>
-            <input type="date" value="2026-10-17" />
+            <input asp-for="DateFilter" type="date" />
         </label>
+        <button class="filter-submit" type="submit">Filter</button>
     </form>
 
     <section class="reservation-list-panel" aria-labelledby="reservation-list-title">
         <div class="list-heading">
             <div>
-                <p class="eyebrow">Friday service</p>
+                <p class="eyebrow">Reservation schedule</p>
                 <h2 id="reservation-list-title">Reservation list</h2>
             </div>
-            <span class="booking-count">5 bookings</span>
+            <span class="booking-count">@Model.Reservations.Count booking@(Model.Reservations.Count == 1 ? "" : "s")</span>
         </div>
 
         <div class="reservation-table-wrap">
-            <table class="reservation-table" aria-label="Friday reservation list">
-                <thead class="visually-hidden">
+            <table class="reservation-table" aria-label="Reservations">
+                <thead>
                     <tr>
                         <th scope="col">Time and date</th>
                         <th scope="col">Guest</th>
                         <th scope="col">Guests</th>
                         <th scope="col">Table</th>
                         <th scope="col">Status</th>
-                        <th scope="col">Action</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td class="time-cell"><span class="time-info"><strong>12:30 PM</strong><span>Oct 17, 2026</span></span></td>
-                        <td class="guest-cell"><span class="guest-profile"><span class="guest-avatar">JD</span><span class="guest-info"><strong>John Doe</strong><small>012-3456789</small></span></span></td>
-                        <td data-label="Guests">4 guests</td>
-                        <td data-label="Table">Table 7</td>
-                        <td><span class="booking-status status-arriving">Arriving</span></td>
-                        <td class="action-cell"><button type="button" class="edit-button" aria-label="Edit John Doe reservation"><i class="fa-regular fa-pen-to-square" aria-hidden="true"></i></button></td>
-                    </tr>
-                    <tr>
-                        <td class="time-cell"><span class="time-info"><strong>1:00 PM</strong><span>Oct 17, 2026</span></span></td>
-                        <td class="guest-cell"><span class="guest-profile"><span class="guest-avatar">JS</span><span class="guest-info"><strong>Jane Smith</strong><small>098-7654321</small></span></span></td>
-                        <td data-label="Guests">2 guests</td>
-                        <td data-label="Table">Table 3</td>
-                        <td><span class="booking-status status-confirmed">Confirmed</span></td>
-                        <td class="action-cell"><button type="button" class="edit-button" aria-label="Edit Jane Smith reservation"><i class="fa-regular fa-pen-to-square" aria-hidden="true"></i></button></td>
-                    </tr>
-                    <tr>
-                        <td class="time-cell"><span class="time-info"><strong>6:00 PM</strong><span>Oct 17, 2026</span></span></td>
-                        <td class="guest-cell"><span class="guest-profile"><span class="guest-avatar">TL</span><span class="guest-info"><strong>Tim Lee</strong><small>011-2233445</small></span></span></td>
-                        <td data-label="Guests">6 guests</td>
-                        <td data-label="Table">Table 1</td>
-                        <td><span class="booking-status status-dining">On dine-in</span></td>
-                        <td class="action-cell"><button type="button" class="edit-button" aria-label="Edit Tim Lee reservation"><i class="fa-regular fa-pen-to-square" aria-hidden="true"></i></button></td>
-                    </tr>
-                    <tr>
-                        <td class="time-cell"><span class="time-info"><strong>7:30 PM</strong><span>Oct 17, 2026</span></span></td>
-                        <td class="guest-cell"><span class="guest-profile"><span class="guest-avatar">MG</span><span class="guest-info"><strong>Maria Gomez</strong><small>022-3344556</small></span></span></td>
-                        <td data-label="Guests">3 guests</td>
-                        <td data-label="Table">Table 5</td>
-                        <td><span class="booking-status status-confirmed">Confirmed</span></td>
-                        <td class="action-cell"><button type="button" class="edit-button" aria-label="Edit Maria Gomez reservation"><i class="fa-regular fa-pen-to-square" aria-hidden="true"></i></button></td>
-                    </tr>
-                    <tr>
-                        <td class="time-cell"><span class="time-info"><strong>8:00 PM</strong><span>Oct 17, 2026</span></span></td>
-                        <td class="guest-cell"><span class="guest-profile"><span class="guest-avatar">AP</span><span class="guest-info"><strong>Arun Patel</strong><small>033-4455667</small></span></span></td>
-                        <td data-label="Guests">5 guests</td>
-                        <td data-label="Table">Table 2</td>
-                        <td><span class="booking-status status-confirmed">Waiting</span></td>
-                        <td class="action-cell"><button type="button" class="edit-button" aria-label="Edit Arun Patel reservation"><i class="fa-regular fa-pen-to-square" aria-hidden="true"></i></button></td>
-                    </tr>
+                    @if (Model.Reservations.Count == 0)
+                    {
+                        <tr>
+                            <td class="empty-reservations" colspan="5">No reservations match this date and search.</td>
+                        </tr>
+                    }
+                    @foreach (var reservation in Model.Reservations)
+                    {
+                        <tr>
+                            <td class="time-cell">
+                                <span class="time-info">
+                                    <strong>@reservation.BookingTime.ToString("h:mm tt")</strong>
+                                    <span>@reservation.BookingDate.ToString("MMM d, yyyy")</span>
+                                </span>
+                            </td>
+                            <td class="guest-cell">
+                                <span class="guest-profile">
+                                    <span class="guest-avatar">@GetInitials(reservation.GuestName)</span>
+                                    <span class="guest-info">
+                                        <strong>@reservation.GuestName</strong>
+                                        <small>@reservation.GuestPhone</small>
+                                    </span>
+                                </span>
+                            </td>
+                            <td data-label="Guests">@reservation.PartySize @(reservation.PartySize == 1 ? "guest" : "guests")</td>
+                            <td data-label="Table">@reservation.TableID</td>
+                            <td>
+                                <form method="post" action="/Staff/Reservations?handler=UpdateStatus" class="status-edit-form">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="StatusUpdate.BookingID" value="@reservation.BookingID" />
+                                    <input type="hidden" name="DateFilter" value="@Model.DateFilter?.ToString("yyyy-MM-dd")" />
+                                    <input type="hidden" name="Search" value="@Model.Search" />
+                                    <label class="visually-hidden" for="status-@reservation.BookingID">Status for @reservation.GuestName</label>
+                                    <select id="status-@reservation.BookingID"
+                                            name="StatusUpdate.Status"
+                                            class="status-select @ReservationsModel.StatusCssClass(reservation.Status)">
+                                        @foreach (var status in Model.Statuses)
+                                        {
+                                            if (status == reservation.Status)
+                                            {
+                                                <option value="@status" selected>@status</option>
+                                            }
+                                            else
+                                            {
+                                                <option value="@status">@status</option>
+                                            }
+                                        }
+                                    </select>
+                                    <button class="save-status-button" type="submit">Save</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
                 </tbody>
             </table>
         </div>
     </section>
 </section>
+
+<dialog class="reservation-dialog" id="reservationDialog" aria-labelledby="reservation-dialog-title">
+    <form method="post" action="/Staff/Reservations?handler=Create" class="reservation-dialog-form">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="DateFilter" value="@Model.DateFilter?.ToString("yyyy-MM-dd")" />
+        <input type="hidden" name="Search" value="@Model.Search" />
+        <header class="dialog-heading">
+            <div>
+                <p class="eyebrow">Add to the book</p>
+                <h2 id="reservation-dialog-title">New reservation</h2>
+            </div>
+            <button type="button" class="dialog-close" id="closeReservationDialog" aria-label="Close">&times;</button>
+        </header>
+        <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+
+        <label class="dialog-field">
+            <span>Customer</span>
+            <select asp-for="NewReservation.CustomerID">
+                <option value="">Select a customer</option>
+                @foreach (var customer in Model.Customers)
+                {
+                    <option value="@customer.CustomerID">@customer.FullName · @customer.Phone</option>
+                }
+            </select>
+            <span asp-validation-for="NewReservation.CustomerID" class="text-danger"></span>
+        </label>
+
+        <div class="dialog-field-row">
+            <label class="dialog-field">
+                <span>Date</span>
+                <input asp-for="NewReservation.BookingDate" type="date" />
+                <span asp-validation-for="NewReservation.BookingDate" class="text-danger"></span>
+            </label>
+            <label class="dialog-field">
+                <span>Time</span>
+                <input asp-for="NewReservation.BookingTime" type="time" />
+                <span asp-validation-for="NewReservation.BookingTime" class="text-danger"></span>
+            </label>
+        </div>
+
+        <div class="dialog-field-row">
+            <label class="dialog-field">
+                <span>Party size</span>
+                <input asp-for="NewReservation.PartySize" type="number" min="1" max="100" />
+                <span asp-validation-for="NewReservation.PartySize" class="text-danger"></span>
+            </label>
+            <label class="dialog-field">
+                <span>Table</span>
+                <select asp-for="NewReservation.TableID">
+                    <option value="">Select a table</option>
+                    @foreach (var table in Model.Tables)
+                    {
+                        <option value="@table.TableID">@table.TableID · @table.Capacity seats (@table.Availability)</option>
+                    }
+                </select>
+                <span asp-validation-for="NewReservation.TableID" class="text-danger"></span>
+            </label>
+        </div>
+
+        <label class="dialog-field">
+            <span>Notes <small>(optional)</small></span>
+            <textarea asp-for="NewReservation.BookingNotes" rows="3" maxlength="500"></textarea>
+            <span asp-validation-for="NewReservation.BookingNotes" class="text-danger"></span>
+        </label>
+
+        <footer class="dialog-actions">
+            <button type="button" class="dialog-cancel" id="cancelReservationDialog">Cancel</button>
+            <button type="submit" class="dialog-submit">Create reservation</button>
+        </footer>
+    </form>
+</dialog>
+
+@functions {
+    private static string GetInitials(string fullName)
+    {
+        return string.Join("", fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+            .Take(2)
+            .Select(part => char.ToUpperInvariant(part[0])));
+    }
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        const reservationDialog = document.getElementById("reservationDialog");
+        document.getElementById("openReservationDialog").addEventListener("click", () => reservationDialog.showModal());
+        document.getElementById("closeReservationDialog").addEventListener("click", () => reservationDialog.close());
+        document.getElementById("cancelReservationDialog").addEventListener("click", () => reservationDialog.close());
+        reservationDialog.addEventListener("click", event => {
+            if (event.target === reservationDialog) reservationDialog.close();
+        });
+        if (@Model.ShowCreateModal.ToString().ToLowerInvariant()) reservationDialog.showModal();
+
+        document.querySelectorAll(".status-select").forEach(select => {
+            select.addEventListener("change", () => {
+                select.className = `status-select ${{
+                    "Waiting": "status-waiting",
+                    "Confirmed": "status-confirmed",
+                    "Arriving": "status-arriving",
+                    "On dine-in": "status-dining",
+                    "Completed": "status-completed",
+                    "Cancelled": "status-cancelled"
+                }[select.value] ?? "status-waiting"}`;
+            });
+        });
+    </script>
+}
