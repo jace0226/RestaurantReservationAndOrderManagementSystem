@@ -3,6 +3,8 @@
   grid-template-rows: auto 1fr;
   gap: 1rem;
   height: calc(100vh - 40px);
+  width: min(100%, 1200px);
+  margin: 0 auto;
   padding: 1rem;
   box-sizing: border-box;
 }
@@ -34,7 +36,7 @@
 /* Main two-column area */
 .order-main {
   display: grid;
-  grid-template-columns: 1fr 380px; /* left flexible, right fixed */
+  grid-template-columns: minmax(0, 1fr) 420px; /* left flexible, right fixed */
   gap: 1rem;
   align-items: start;
   overflow: hidden;

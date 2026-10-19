@@ -1,0 +1,164 @@
+@page "/Staff/Tables"
+@model RestaurantReservationAndOrderManagementSystem.Pages.TablesModel
+@{
+    ViewData["Title"] = "Tables";
+}
+
+<link rel="stylesheet" href="~/css/tables_page.css" asp-append-version="true" />
+
+<section class="tables-page" aria-label="Table management">
+    <header class="tables-hero">
+        <div>
+            <p class="eyebrow">The room at a glance</p>
+            <h1>How's the floor feeling?</h1>
+            <p class="hero-caption">Manage table capacity and availability.</p>
+        </div>
+        <button class="add-table-button" type="button" id="openAddTable">
+            <i class="fa-solid fa-plus" aria-hidden="true"></i>
+            Add table
+        </button>
+    </header>
+
+    @if (TempData["TableMessage"] is string tableMessage)
+    {
+        <div class="table-success-message" role="status">@tableMessage</div>
+    }
+
+    <div asp-validation-summary="ModelOnly" class="text-danger table-validation-summary" role="alert"></div>
+
+    <section class="table-summary" aria-label="Table availability summary">
+        <div class="total-tables"><strong>@Model.TotalTables</strong><span>tables total</span></div>
+        <div class="status-legend">
+            <span class="legend-item"><i class="legend-dot legend-available"></i>Available <strong>@Model.AvailableTables</strong></span>
+            <span class="legend-item"><i class="legend-dot legend-reserved"></i>Reserved <strong>@Model.ReservedTables</strong></span>
+            <span class="legend-item"><i class="legend-dot legend-occupied"></i>On dine-in <strong>@Model.OccupiedTables</strong></span>
+        </div>
+    </section>
+
+    <form class="table-filters" method="get" action="/Staff/Tables">
+        <label class="table-search">
+            <span class="visually-hidden">Search table IDs</span>
+            <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+            <input asp-for="Search" type="search" placeholder="Search tables..." />
+        </label>
+        <input type="hidden" name="StatusFilter" value="@Model.StatusFilter" />
+        <button class="table-filter-submit" type="submit">Search</button>
+    </form>
+
+    <nav class="area-filters" aria-label="Filter tables by availability">
+        <a class="filter-button @(Model.StatusFilter == "All" ? "active" : "")" href="/Staff/Tables?StatusFilter=All">All tables</a>
+        <a class="filter-button @(Model.StatusFilter == "Available" ? "active" : "")" href="/Staff/Tables?StatusFilter=Available">Available</a>
+        <a class="filter-button @(Model.StatusFilter == "Reserved" ? "active" : "")" href="/Staff/Tables?StatusFilter=Reserved">Reserved</a>
+        <a class="filter-button @(Model.StatusFilter == "On dine-in" ? "active" : "")" href="/Staff/Tables?StatusFilter=On%20dine-in">On dine-in</a>
+    </nav>
+
+    @if (Model.Tables.Count == 0)
+    {
+        <p class="no-tables">No tables match this filter. Add a table to get started.</p>
+    }
+    else
+    {
+        <section class="tables-grid" aria-label="Tables">
+            @foreach (var table in Model.Tables)
+            {
+                <article class="table-card @TablesModel.StatusCssClass(table.Availability)">
+                    <div class="table-card-inner">
+                        <h2>@table.TableID</h2>
+                        <span class="table-capacity"><i class="fa-regular fa-user" aria-hidden="true"></i>@table.Capacity seats</span>
+                    </div>
+
+                    <form method="post" action="/Staff/Tables?handler=Update" class="table-edit-form">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="tableId" value="@table.TableID" />
+                        <input type="hidden" name="StatusFilter" value="@Model.StatusFilter" />
+                        <input type="hidden" name="Search" value="@Model.Search" />
+                        <label class="table-edit-field">
+                            <span>Capacity</span>
+                            <input type="number" name="capacity" value="@table.Capacity" min="1" max="100" required />
+                        </label>
+                        <label class="table-edit-field">
+                            <span>Status</span>
+                            <select name="availability" class="table-status-select">
+                                @foreach (var status in Model.AvailabilityStatuses)
+                                {
+                                    if (status.Equals(table.Availability, StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        <option value="@status" selected>@status</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@status">@status</option>
+                                    }
+                                }
+                            </select>
+                        </label>
+                        <button type="submit" class="save-table-button">Save changes</button>
+                        <span asp-validation-for="TableUpdate.Capacity" class="text-danger"></span>
+                    </form>
+                </article>
+            }
+        </section>
+    }
+</section>
+
+<dialog class="table-dialog" id="addTableDialog" aria-labelledby="add-table-title">
+    <form method="post" action="/Staff/Tables?handler=Add" class="table-dialog-form">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="StatusFilter" value="@Model.StatusFilter" />
+        <input type="hidden" name="Search" value="@Model.Search" />
+        <header class="table-dialog-heading">
+            <div>
+                <p class="eyebrow">Set another place</p>
+                <h2 id="add-table-title">Add table</h2>
+            </div>
+            <button type="button" class="table-dialog-close" id="closeAddTable" aria-label="Close">&times;</button>
+        </header>
+        <div asp-validation-summary="All" class="text-danger" role="alert"></div>
+
+        <label class="table-dialog-field">
+            <span>Table ID</span>
+            <input name="tableId" id="NewTable_TableID" value="@Model.NewTable.TableID" placeholder="e.g. Table 13" />
+            <span asp-validation-for="NewTable.TableID" class="text-danger"></span>
+        </label>
+        <label class="table-dialog-field">
+            <span>Capacity (seats)</span>
+            <input name="capacity" id="NewTable_Capacity" type="number" min="1" max="100" value="@Model.NewTable.Capacity" />
+            <span asp-validation-for="NewTable.Capacity" class="text-danger"></span>
+        </label>
+        <label class="table-dialog-field">
+            <span>Availability</span>
+            <select name="availability" id="NewTable_Availability">
+                @foreach (var status in Model.AvailabilityStatuses)
+                {
+                    if (status == Model.NewTable.Availability)
+                    {
+                        <option value="@status" selected>@status</option>
+                    }
+                    else
+                    {
+                        <option value="@status">@status</option>
+                    }
+                }
+            </select>
+            <span asp-validation-for="NewTable.Availability" class="text-danger"></span>
+        </label>
+        <footer class="table-dialog-actions">
+            <button type="button" class="table-dialog-cancel" id="cancelAddTable">Cancel</button>
+            <button type="submit" class="table-dialog-submit">Add table</button>
+        </footer>
+    </form>
+</dialog>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        const addTableDialog = document.getElementById("addTableDialog");
+        document.getElementById("openAddTable").addEventListener("click", () => addTableDialog.showModal());
+        document.getElementById("closeAddTable").addEventListener("click", () => addTableDialog.close());
+        document.getElementById("cancelAddTable").addEventListener("click", () => addTableDialog.close());
+        addTableDialog.addEventListener("click", event => {
+            if (event.target === addTableDialog) addTableDialog.close();
+        });
+        if (@Model.ShowAddDialog.ToString().ToLowerInvariant()) addTableDialog.showModal();
+    </script>
+}

@@ -1,12 +1,14 @@
 ﻿.authentication-container {
   padding: 12px;
   position: relative;
-  height: 100dvh;
+  min-height: 100dvh;
+  height: auto;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-direction: column;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 
   .brand {
     bottom: 0;
@@ -28,8 +30,12 @@
     background: var(--subbrand-color);
     border-radius: 20px;
     width: 100%;
-    max-width: 420px;
+    max-width: 480px;
     padding: 4px;
+
+    &[hidden] {
+      display: none;
+    }
 
     .inner-container {
       background: white;
@@ -112,6 +118,14 @@
       a {
         color: var(--brand-color);
         text-decoration: none;
+        font-weight: 500;
+      }
+
+      .auth-switch {
+        padding: 0;
+        border: 0;
+        background: none;
+        color: var(--brand-color);
         font-weight: 500;
       }
     }

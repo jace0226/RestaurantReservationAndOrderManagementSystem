@@ -5,6 +5,10 @@
     font-style: normal;
 }
 
+html {
+    font-size: 17px;
+}
+
 * {
     box-sizing: border-box;
     margin: 0;

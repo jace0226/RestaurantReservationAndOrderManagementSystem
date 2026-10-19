@@ -11,6 +11,10 @@
 </head>
 <body>
 
+    @{
+        var currentPath = Context.Request.Path;
+    }
+
     <div class="app-wrapper">
         <!-- LEFT SIDEBAR NAVIGATION -->
         <aside class="sidebar" role="navigation" aria-label="Main Navigation">
@@ -19,33 +23,36 @@
             </h4>
 
             <nav class="nav-menu" aria-label="Sidebar Menu">
-                <a class="nav-item" href="/Dashboard">
+                <a class="nav-item @(currentPath.StartsWithSegments("/Staff/Dashboard", StringComparison.OrdinalIgnoreCase) ? "active" : null)" href="/Staff/Dashboard" aria-current="@(currentPath.StartsWithSegments("/Staff/Dashboard", StringComparison.OrdinalIgnoreCase) ? "page" : null)">
                     <i class="fa-solid fa-house"></i>
                     <span>Dashboard</span>
                 </a>
-                <a class="nav-item" href="/Menus">
+                <a class="nav-item @(currentPath.StartsWithSegments("/Staff/Menus", StringComparison.OrdinalIgnoreCase) ? "active" : null)" href="/Staff/Menus" aria-current="@(currentPath.StartsWithSegments("/Staff/Menus", StringComparison.OrdinalIgnoreCase) ? "page" : null)">
                     <i class="fa-solid fa-burger"></i>
                     <span>Menus</span>
                 </a>
-                <a class="nav-item active" href="/Orders">
+                <a class="nav-item @(currentPath.StartsWithSegments("/Staff/Orders", StringComparison.OrdinalIgnoreCase) ? "active" : null)" href="/Staff/Orders" aria-current="@(currentPath.StartsWithSegments("/Staff/Orders", StringComparison.OrdinalIgnoreCase) ? "page" : null)">
                     <i class="fa-solid fa-utensils"></i>
                     <span>Orders</span>
                 </a>
-                <a class="nav-item" href="/Reservations">
+                <a class="nav-item @(currentPath.StartsWithSegments("/Staff/Reservations", StringComparison.OrdinalIgnoreCase) ? "active" : null)" href="/Staff/Reservations" aria-current="@(currentPath.StartsWithSegments("/Staff/Reservations", StringComparison.OrdinalIgnoreCase) ? "page" : null)">
                     <i class='fas fa-calendar-check'></i>
                     <span>Reservation</span>
                 </a>
-                <a class="nav-item" href="/Tables">
+                <a class="nav-item @(currentPath.StartsWithSegments("/Staff/Tables", StringComparison.OrdinalIgnoreCase) ? "active" : null)" href="/Staff/Tables" aria-current="@(currentPath.StartsWithSegments("/Staff/Tables", StringComparison.OrdinalIgnoreCase) ? "page" : null)">
                     <i class='fas fa-chair'></i>
                     <span>Tables</span>
                 </a>
             </nav>
 
             <div class="sidebar-footer">
-                <a class="nav-item logout-btn" href="/Authenticate">
-                    <i class="fa-solid fa-right-from-bracket"></i>
-                    <span>Logout</span>
-                </a>
+                <form method="post" action="/Authenticate?handler=Logout">
+                    @Html.AntiForgeryToken()
+                    <button class="nav-item logout-btn" type="submit">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                        <span>Logout</span>
+                    </button>
+                </form>
             </div>
         </aside>
 
