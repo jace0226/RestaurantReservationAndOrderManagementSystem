@@ -1,4 +1,4 @@
-﻿@page "/Dashboard"
+﻿@page "/Staff/Dashboard"
 @model RestaurantReservationAndOrderManagementSystem.Pages.DashboardModel
 @{
     ViewData["Title"] = "Dashboard";
@@ -46,7 +46,7 @@
                     <p class="eyebrow">Fresh from the kitchen</p>
                     <h2 id="active-orders-title">Active orders</h2>
                 </div>
-                <a class="panel-link" href="/Orders">See all</a>
+                <a class="panel-link" href="/Staff/Orders">See all</a>
             </div>
             <div class="orders-list" aria-live="polite">
                 <article class="order-item">
@@ -76,7 +76,7 @@
                     <p class="eyebrow">Save their seats</p>
                     <h2 id="upcoming-title">Coming up</h2>
                 </div>
-                <a class="panel-link" href="/Reservations">Open book</a>
+                <a class="panel-link" href="/Staff/Reservations">Open book</a>
             </div>
             <div class="reservation-list" aria-label="Today's reservations">
                 <article class="reservation-item">

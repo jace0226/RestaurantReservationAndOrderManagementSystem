@@ -1,5 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel.DataAnnotations;
 
 namespace RestaurantReservationAndOrderManagementSystem.Models
 {
@@ -14,22 +13,15 @@ namespace RestaurantReservationAndOrderManagementSystem.Models
 
         [Required(ErrorMessage = "Email is required.")]
         [EmailAddress(ErrorMessage = "Please enter a valid email address.")]
+        [StringLength(254)]
         public string Email { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Password is required.")]
-        [MinLength(6, ErrorMessage = "Password must be at least 6 characters.")]
-        [DataType(DataType.Password)]
-        public string Password { get; set; } = string.Empty;
-
-        [NotMapped]
-        [Required(ErrorMessage = "Please confirm your password.")]
-        [Compare("Password")]
-        [Display(Name = "Confirm Password")]
-        public string ConfirmPassword { get; set; } = string.Empty;
+        [Required]
+        public string PasswordHash { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Phone Number is required.")]
-        [MinLength(11, ErrorMessage = "Please enter a valid phone number.")]
+        [Phone(ErrorMessage = "Please enter a valid phone number.")]
+        [StringLength(32)]
         public string Phone { get; set; } = string.Empty;
-
     }
 }
