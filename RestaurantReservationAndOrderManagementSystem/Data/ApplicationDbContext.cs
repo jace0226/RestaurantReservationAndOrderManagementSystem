@@ -70,6 +70,51 @@ namespace RestaurantReservationAndOrderManagementSystem.Data
                 .WithMany()
                 .HasForeignKey(p => p.StaffID)
                 .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<Customer>()
+                .HasOne(c => c.User)
+                .WithOne()
+                .HasForeignKey<Customer>(c => c.UserID);
+
+            modelBuilder.Entity<Staff>()
+                .HasOne(s => s.User)
+                .WithOne()
+                .HasForeignKey<Staff>(s => s.UserID);
+
+            modelBuilder.Entity<Transaction>()
+                .HasOne(t => t.Order)
+                .WithOne()
+                .HasForeignKey<Transaction>(t => t.OrderID);
+
+            modelBuilder.Entity<Order_Items>()
+                .HasOne(oi => oi.Order)
+                .WithMany()
+                .HasForeignKey(oi => oi.OrderID)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<Order_Items>()
+                .HasOne(oi => oi.Food)
+                .WithMany()
+                .HasForeignKey(oi => oi.FoodID)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<Food_Items>()
+                .HasOne(fi => fi.Staff)
+                .WithMany()
+                .HasForeignKey(fi => fi.StaffID) 
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<Booking>()
+                .HasOne(b => b.Customer)
+                .WithMany()
+                .HasForeignKey(b => b.CustomerID);
+
+            modelBuilder.Entity<Booking>()
+                .HasOne(b => b.Table)
+                .WithMany()
+                .HasForeignKey(b => b.TableID)
+                .OnDelete(DeleteBehavior.NoAction);
+
         }
     }
 }

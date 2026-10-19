@@ -6,22 +6,25 @@ namespace RestaurantReservationAndOrderManagementSystem.Models
     public class Promotion
     {
         [Key]
-        public string PromoID { get; set; }
+        [Required(ErrorMessage = "Promo ID is required")]
+        public string PromoID { get; set; } = string.Empty;
 
-        public string FoodID { get; set; }
+        [Required(ErrorMessage = "Food ID is required")]
+        public string FoodID { get; set; } = string.Empty;
 
         [ForeignKey(nameof(FoodID))]
         public Food_Items Food { get; set; } = null!;
 
-        public string StaffID { get; set; }
+        [Required(ErrorMessage = "Staff ID is required")]
+        public string StaffID { get; set; } = string.Empty;
 
         [ForeignKey(nameof(StaffID))]
         public Staff Staff { get; set; } = null!;
 
-        public decimal DiscountedPrice { get; set; }
+        public decimal DiscountedPrice { get; set; } = 0.0m;
 
-        public DateOnly DurationStart { get; set; }
+        public DateOnly DurationStart { get; set; } = DateOnly.MinValue;
 
-        public TimeOnly DurationEnd { get; set; }
+        public TimeOnly DurationEnd { get; set; } = TimeOnly.MinValue;
     }
 }

@@ -6,14 +6,17 @@ namespace RestaurantReservationAndOrderManagementSystem.Models
     public class Staff
     {
         [Key]
-        public string StaffID { get; set; }
+        [Required(ErrorMessage = "Staff ID is required")]
+        public string StaffID { get; set; } = string.Empty;
 
-        public int UserID { get; set; }
+        [Required(ErrorMessage = "User ID is required")]
+        public string UserID { get; set; } = string.Empty;
 
         [ForeignKey(nameof(UserID))]
         public User User { get; set; } = null!;
 
-        public Roles Role { get; set; }
+        [Required(ErrorMessage = "Role is required")]
+        public Roles Role { get; set; } = Roles.Staff;
 
     }
 

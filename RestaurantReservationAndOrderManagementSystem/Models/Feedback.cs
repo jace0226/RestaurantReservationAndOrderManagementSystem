@@ -6,15 +6,17 @@ namespace RestaurantReservationAndOrderManagementSystem.Models
     public class Feedback
     {
         [Key]
-        public string FeedbackID { get; set; }
+        [Required(ErrorMessage = "Feedback ID is required")]
+        public string FeedbackID { get; set; } = string.Empty;
 
-        public string CustomerID { get; set; }
+        [Required(ErrorMessage = "Customer ID is required")]
+        public string CustomerID { get; set; } = string.Empty;
 
         [ForeignKey(nameof(CustomerID))]
         public Customer Customer { get; set; } = null!;
 
-        public int Stars { get; set; }
+        public int Stars { get; set; } = 0;
 
-        public string Message { get; set; }
+        public string Message { get; set; } = string.Empty;
     }
 }

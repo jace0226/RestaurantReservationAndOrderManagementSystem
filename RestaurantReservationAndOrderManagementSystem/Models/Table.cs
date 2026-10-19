@@ -6,10 +6,13 @@ namespace RestaurantReservationAndOrderManagementSystem.Models
     public class Table
     {
         [Key]
-        public string TableID { get; set; }
+        [Required(ErrorMessage = "Table ID is required")]
+        public string TableID { get; set; } = string.Empty;
+        
+        [Required(ErrorMessage = "Maximum Pax is required")]
+        public int MaxPax { get; set; } = 0;
 
-        public int MaxPax { get; set; }
-
-        public string TableAvailability { get; set; }
+        [Required(ErrorMessage = "Table Availability is required")]
+        public string TableAvailability { get; set; } = string.Empty;
     }
 }

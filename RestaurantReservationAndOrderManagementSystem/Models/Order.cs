@@ -6,34 +6,39 @@ namespace RestaurantReservationAndOrderManagementSystem.Models
     public class Order
     {
         [Key]
-        public string OrderID { get; set; }
+        [Required(ErrorMessage = "Order ID is required")]
+        public string OrderID { get; set; } = string.Empty;
 
-        public string CustomerID { get; set; }
+        [Required(ErrorMessage = "Customer ID is required")]
+        public string CustomerID { get; set; } = string.Empty;
 
         [ForeignKey(nameof(CustomerID))]
         public Customer Customer { get; set; } = null!;
 
-        public string StaffID { get; set; }
+        [Required(ErrorMessage = "Staff ID is required")]
+        public string StaffID { get; set; } = string.Empty;
 
         [ForeignKey(nameof(StaffID))]
         public Staff Staff { get; set; } = null!;
 
-        public string BookingID { get; set; }
+        [Required(ErrorMessage = "Booking ID is required")]
+        public string BookingID { get; set; } = string.Empty;
 
         [ForeignKey(nameof(BookingID))]
         public Booking Booking { get; set; } = null!;
 
-        public string TableID { get; set; }
+        [Required(ErrorMessage = "Table ID is required")]
+        public string TableID { get; set; } = string.Empty;
 
         [ForeignKey(nameof(TableID))]
         public Table Table { get; set; } = null!;
 
-        public DateTime CreatedAt { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
 
-        public DateTime CompletedAt { get; set; }
+        public DateTime CompletedAt { get; set; } = DateTime.Now;
 
-        public string OrderStatus { get; set; }
+        public string OrderStatus { get; set; } = string.Empty;
 
-        public string OrderNotes { get; set; }
+        public string OrderNotes { get; set; } = string.Empty;
     }
 }

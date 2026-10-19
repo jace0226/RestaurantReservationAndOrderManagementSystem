@@ -6,7 +6,7 @@ namespace RestaurantReservationAndOrderManagementSystem.Models
     public class User
     {
         [Key]
-        public int UserID { get; set; }
+        public string UserID { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Full Name is required.")]
         [Display(Name = "Full Name")]

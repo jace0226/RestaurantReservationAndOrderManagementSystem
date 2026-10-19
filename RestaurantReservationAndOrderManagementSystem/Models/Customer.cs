@@ -6,15 +6,17 @@ namespace RestaurantReservationAndOrderManagementSystem.Models
     public class Customer
     {
         [Key]
-        public string CustomerID { get; set; }
+        [Required(ErrorMessage = "Customer ID is required")]
+        public string CustomerID { get; set; } = string.Empty;
 
-        public int UserID { get; set; }
+        [Required(ErrorMessage = "User ID is required")]
+        public string UserID { get; set; } = string.Empty;
 
         [ForeignKey(nameof(UserID))]
         public User User { get; set; } = null!;
 
-        public DateOnly DateOfBirth { get; set; }
+        public DateOnly DateOfBirth { get; set; } = DateOnly.MinValue;
 
-        public string Address { get; set; }
+        public string Address { get; set; } = string.Empty;
     }
 }

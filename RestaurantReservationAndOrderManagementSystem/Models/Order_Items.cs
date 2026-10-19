@@ -6,18 +6,21 @@ namespace RestaurantReservationAndOrderManagementSystem.Models
     public class Order_Items
     {
         [Key]
-        public string OrderItemID { get; set; }
+        [Required(ErrorMessage = "Order Item ID is required")]
+        public string OrderItemID { get; set; } = string.Empty;
 
-        public string OrderID { get; set; }
+        [Required(ErrorMessage = "Order ID is required")]
+        public string OrderID { get; set; } = string.Empty;
 
         [ForeignKey(nameof(OrderID))]
         public Order Order { get; set; } = null!;
 
+        [Required(ErrorMessage = "Food ID is required")]
         public string FoodID { get; set; }
 
         [ForeignKey(nameof(FoodID))]
         public Food_Items Food { get; set; } = null!;
 
-        public int Quantity { get; set; }
+        public int Quantity { get; set; } = 0;
     }
 }
