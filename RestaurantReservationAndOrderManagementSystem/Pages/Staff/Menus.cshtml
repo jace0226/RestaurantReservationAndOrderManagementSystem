@@ -14,33 +14,54 @@
                 <h1>What are we serving today?</h1>
                 <p class="menu-intro">Keep the counter colorful, the menu fresh, and every bite worth coming back for.</p>
             </div>
-            <button class="add-menu-btn" type="button" aria-label="Add menu item"><i class="fa-solid fa-plus" aria-hidden="true"></i> Add menu item</button>
+            <button class="add-menu-btn" id="toggle-create-form" type="button" aria-expanded="@Model.ShowCreateForm" aria-controls="create-menu-form">
+                <i class="fa-solid fa-plus" aria-hidden="true"></i> Add menu item
+            </button>
         </div>
     </header>
 
-    <section class="menu-stats" aria-label="Today's restaurant overview">
+    <form id="create-menu-form" method="post" asp-page-handler="Create" hidden="@(!Model.ShowCreateForm)">
+        <input type="hidden" name="search" value="@Model.Search" />
+        <input type="hidden" name="availabilityFilter" value="@Model.AvailabilityFilter" />
+        <div asp-validation-summary="All" class="text-danger"></div>
+        <label asp-for="NewMenuItem.Name"></label>
+        <input asp-for="NewMenuItem.Name" />
+        <span asp-validation-for="NewMenuItem.Name" class="text-danger"></span>
+
+        <label asp-for="NewMenuItem.Price"></label>
+        <input asp-for="NewMenuItem.Price" type="number" min="0.01" step="0.01" />
+        <span asp-validation-for="NewMenuItem.Price" class="text-danger"></span>
+
+        <label asp-for="NewMenuItem.Description"></label>
+        <textarea asp-for="NewMenuItem.Description"></textarea>
+        <span asp-validation-for="NewMenuItem.Description" class="text-danger"></span>
+
+        <button type="submit">Save menu item</button>
+    </form>
+
+    <section class="menu-stats" aria-label="Restaurant overview">
         <article class="menu-stat menu-stat-primary">
             <div class="stat-label">
                 <span>Today’s orders</span>
                 <span class="stat-icon fa-solid fa-receipt" aria-hidden="true"></span>
             </div>
-            <strong>48</strong>
-            <span class="stat-note">↑ 12% from yesterday</span>
+            <strong>@Model.TodayOrderCount</strong>
+            <span class="stat-note">Orders created today</span>
         </article>
         <article class="menu-stat">
             <div class="stat-label">
                 <span>Available items</span>
                 <span class="stat-icon fa-solid fa-utensils" aria-hidden="true"></span>
             </div>
-            <strong>6</strong>
-            <span class="stat-note stat-note-success">All systems ready</span>
+            <strong>@Model.AvailableItemCount</strong>
+            <span class="stat-note stat-note-success">Currently available</span>
         </article>
         <article class="menu-stat">
             <div class="stat-label">
                 <span>Reservations</span>
                 <span class="stat-icon fa-solid fa-bell-concierge" aria-hidden="true"></span>
             </div>
-            <strong>16</strong>
+            <strong>@Model.TodayReservationCount</strong>
             <span class="stat-note">For today</span>
         </article>
     </section>
@@ -48,170 +69,122 @@
     <section class="menu-listing" aria-labelledby="menu-list-title">
         <div class="listing-heading">
             <div class="listing-title-group">
-                <p class="menu-eyebrow">Pick a flavour</p>
                 <div class="listing-title-line">
                     <h2 id="menu-list-title">Menu items</h2>
-                    <span class="menu-count" id="items-count">6 items</span>
+                    <span class="menu-count" id="items-count">@Model.MenuItems.Count items</span>
                 </div>
             </div>
 
-            <label class="menu-search">
+            <form method="get" class="menu-search">
                 <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
-                <span class="visually-hidden">Search menu items</span>
-                <input id="menuSearch" type="search" placeholder="Search menu..." />
-            </label>
+                <label class="visually-hidden" for="menuSearch">Search menu items</label>
+                <input id="menuSearch" name="search" type="search" value="@Model.Search" placeholder="Search menu..." />
+                <input type="hidden" name="availabilityFilter" value="@Model.AvailabilityFilter" />
+            </form>
         </div>
 
-        <nav class="filter-nav" aria-label="Filter menu by category">
-            <button type="button" class="active" data-category="all" aria-pressed="true">All bites</button>
-            <button type="button" data-category="Sandwiches" aria-pressed="false">Sandwiches</button>
-            <button type="button" data-category="Salads" aria-pressed="false">Salads</button>
-            <button type="button" data-category="Tasty plates" aria-pressed="false">Tasty plates</button>
-            <button type="button" data-category="Sides" aria-pressed="false">Sides</button>
-            <button type="button" data-category="Beverages" aria-pressed="false">Beverages</button>
+        <nav class="filter-nav" aria-label="Filter menu by availability">
+            @foreach (var filter in new[] { "All", "Available", "Unavailable" })
+            {
+                <a asp-page="/Staff/Menus"
+                   asp-route-availabilityFilter="@filter"
+                   asp-route-search="@Model.Search"
+                   class="@(Model.AvailabilityFilter == filter ? "active" : null)"
+                   aria-pressed="@(Model.AvailabilityFilter == filter)">@filter</a>
+            }
         </nav>
 
         <div class="menu-grid" id="menuGrid">
-            <article class="menu-card" data-category="Sandwiches">
-                <div class="menu-image-wrap">
-                    <img src="https://images.unsplash.com/photo-1528735602780-2552fd46c7af?auto=format&amp;fit=crop&amp;w=900&amp;q=85" alt="Toasted sandwich with fresh greens" />
-                    <span class="category-tag">Sandwiches</span>
-                </div>
-                <div class="menu-card-content">
-                    <div class="menu-card-title">
-                        <h3>Hash Brown Sandwich</h3>
-                        <span class="price">RM18.80</span>
+            @if (Model.MenuItems.Count == 0)
+            {
+                <p>No menu items found. Add an item to get started.</p>
+            }
+            @foreach (var item in Model.MenuItems)
+            {
+                var isAvailable = item.Availability.Equals("Available", StringComparison.OrdinalIgnoreCase);
+                <article class="menu-card" data-category="@(isAvailable ? "Available" : "Unavailable")">
+                    <div class="menu-image-wrap menu-item-placeholder" aria-hidden="true">
+                        <i class="fa-solid fa-utensils"></i>
+                        <span class="category-tag">Menu item</span>
                     </div>
-                    <p class="menu-description">Toasted milk loaf stuffed with hash brown, chicken slice, sunny side up, and our house sauce.</p>
-                    <div class="menu-card-footer">
-                        <span class="availability"><span aria-hidden="true"></span>Available today</span>
+                    <div class="menu-card-content">
+                        <div class="menu-card-title">
+                            <h3>@item.Name</h3>
+                            <span class="price">RM @item.Price.ToString("N2")</span>
+                        </div>
+                        @if (!string.IsNullOrWhiteSpace(item.Description))
+                        {
+                            <p class="menu-description">@item.Description</p>
+                        }
+                        <div class="menu-card-footer">
+                            <span class="availability @(isAvailable ? null : "unavailable")">
+                                <span aria-hidden="true"></span>@item.Availability
+                            </span>
+                            <form method="post" asp-page-handler="UpdateAvailability">
+                                <input type="hidden" name="foodId" value="@item.FoodId" />
+                                <input type="hidden" name="availability" value="@(isAvailable ? "Unavailable" : "Available")" />
+                                <input type="hidden" name="search" value="@Model.Search" />
+                                <input type="hidden" name="availabilityFilter" value="@Model.AvailabilityFilter" />
+                                <button type="submit">Mark @(isAvailable ? "unavailable" : "available")</button>
+                            </form>
+                        </div>
                     </div>
-                </div>
-            </article>
-
-            <article class="menu-card" data-category="Sandwiches">
-                <div class="menu-image-wrap">
-                    <img src="https://images.unsplash.com/photo-1553909489-cd47e0ef937f?auto=format&amp;fit=crop&amp;w=900&amp;q=85" alt="Chicken sandwich layered with vegetables" />
-                    <span class="category-tag">Sandwiches</span>
-                </div>
-                <div class="menu-card-content">
-                    <div class="menu-card-title">
-                        <h3>Honey Mustard Chicken Sandwich</h3>
-                        <span class="price">RM20.80</span>
-                    </div>
-                    <p class="menu-description">Toasted milk loaf stuffed with marinated chicken, tomato, greens, and house-made honey mustard.</p>
-                    <div class="menu-card-footer">
-                        <span class="availability"><span aria-hidden="true"></span>Available today</span>
-                    </div>
-                </div>
-            </article>
-
-            <article class="menu-card" data-category="Sandwiches">
-                <div class="menu-image-wrap">
-                    <img src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&amp;fit=crop&amp;w=900&amp;q=85" alt="Grilled chicken burger with fresh toppings" />
-                    <span class="category-tag">Sandwiches</span>
-                </div>
-                <div class="menu-card-content">
-                    <div class="menu-card-title">
-                        <h3>Smoky Barbeque Chicken Sandwich</h3>
-                        <span class="price">RM20.80</span>
-                    </div>
-                    <p class="menu-description">Tender chicken infused with smoky barbeque flavors, served with a tangy twist for a mouthwatering bite.</p>
-                    <div class="menu-card-footer">
-                        <span class="availability"><span aria-hidden="true"></span>Available today</span>
-                    </div>
-                </div>
-            </article>
-
-            <article class="menu-card" data-category="Tasty plates">
-                <div class="menu-image-wrap">
-                    <img src="https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&amp;fit=crop&amp;w=900&amp;q=85" alt="Freshly made coffee with latte art" />
-                    <span class="category-tag">Tasty plates</span>
-                </div>
-                <div class="menu-card-content">
-                    <div class="menu-card-title">
-                        <h3>Berry Nutty Duo</h3>
-                        <span class="price">RM31.00</span>
-                    </div>
-                    <p class="menu-description">Creamy nut butter and fresh berries paired with sweet berry compote and crunchy nuts.</p>
-                    <div class="menu-card-footer">
-                        <span class="availability"><span aria-hidden="true"></span>Available today</span>
-                    </div>
-                </div>
-            </article>
-
-            <article class="menu-card" data-category="Tasty plates">
-                <div class="menu-image-wrap">
-                    <img src="https://images.unsplash.com/photo-1498837167922-ddd27525d352?auto=format&amp;fit=crop&amp;w=900&amp;q=85" alt="Freshly prepared cafe plate with herbs and vegetables" />
-                    <span class="category-tag">Tasty plates</span>
-                </div>
-                <div class="menu-card-content">
-                    <div class="menu-card-title">
-                        <h3>Salmon Cloud Toast</h3>
-                        <span class="price">RM29.00</span>
-                    </div>
-                    <p class="menu-description">Silky smoked salmon layered over cream cheese on crisp toast, finished with fresh herbs.</p>
-                    <div class="menu-card-footer">
-                        <span class="availability"><span aria-hidden="true"></span>Available today</span>
-                    </div>
-                </div>
-            </article>
-
-            <article class="menu-card" data-category="Salads">
-                <div class="menu-image-wrap">
-                    <img src="https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&amp;fit=crop&amp;w=900&amp;q=85" alt="Colorful salad with greens, tomatoes, and vegetables" />
-                    <span class="category-tag">Salads</span>
-                </div>
-                <div class="menu-card-content">
-                    <div class="menu-card-title">
-                        <h3>Nature Energy Bowl</h3>
-                        <span class="price">RM19.90</span>
-                    </div>
-                    <p class="menu-description">Baby greens, chickpeas, corn, tomatoes, and edible flowers with our Sama Goddess Ranch.</p>
-                    <div class="menu-card-footer">
-                        <span class="availability"><span aria-hidden="true"></span>Available today</span>
-                    </div>
-                </div>
-            </article>
+                </article>
+            }
         </div>
     </section>
 </section>
 
-<script>
-    (() => {
-        const grid = document.getElementById("menuGrid");
-        const count = document.getElementById("items-count");
-        const filters = document.querySelectorAll(".filter-nav button");
-        const search = document.getElementById("menuSearch");
-        let activeCategory = "all";
+@section Scripts {
+    <script>
+        (() => {
+            const createForm = document.getElementById("create-menu-form");
+            const toggleButton = document.getElementById("toggle-create-form");
+            const grid = document.getElementById("menuGrid");
+            const count = document.getElementById("items-count");
+            const searchForm = document.querySelector(".menu-search");
+            const search = document.getElementById("menuSearch");
+            const filters = document.querySelectorAll(".filter-nav a");
+            let activeAvailability = "@Model.AvailabilityFilter";
 
-        function updateMenu() {
-            const query = search.value.trim().toLocaleLowerCase();
-            let visibleItems = 0;
-
-            grid.querySelectorAll(".menu-card").forEach((card) => {
-                const matchesCategory = activeCategory === "all" || card.dataset.category === activeCategory;
-                const matchesSearch = card.textContent.toLocaleLowerCase().includes(query);
-                const isVisible = matchesCategory && matchesSearch;
-                card.hidden = !isVisible;
-                if (isVisible) visibleItems++;
+            toggleButton.addEventListener("click", () => {
+                createForm.hidden = !createForm.hidden;
+                toggleButton.setAttribute("aria-expanded", String(!createForm.hidden));
             });
 
-            count.textContent = `${visibleItems} ${visibleItems === 1 ? "item" : "items"}`;
-        }
-
-        filters.forEach((filter) => {
-            filter.addEventListener("click", () => {
-                activeCategory = filter.dataset.category;
-                filters.forEach((button) => {
-                    const isActive = button === filter;
-                    button.classList.toggle("active", isActive);
-                    button.setAttribute("aria-pressed", isActive.toString());
+            function updateMenu() {
+                const query = search.value.trim().toLocaleLowerCase();
+                let visibleItems = 0;
+                grid.querySelectorAll(".menu-card").forEach(card => {
+                    const matchesAvailability = activeAvailability === "All" ||
+                        card.dataset.category === activeAvailability;
+                    const matchesSearch = card.textContent.toLocaleLowerCase().includes(query);
+                    const isVisible = matchesAvailability && matchesSearch;
+                    card.hidden = !isVisible;
+                    if (isVisible) visibleItems++;
                 });
-                updateMenu();
-            });
-        });
+                count.textContent = `${visibleItems} ${visibleItems === 1 ? "item" : "items"}`;
+                document.querySelectorAll("#create-menu-form input[name='search'], .menu-card form input[name='search']")
+                    .forEach(input => input.value = search.value);
+                document.querySelectorAll("#create-menu-form input[name='availabilityFilter'], .menu-card form input[name='availabilityFilter']")
+                    .forEach(input => input.value = activeAvailability);
+            }
 
-        search.addEventListener("input", updateMenu);
-    })();
-</script>
+            search.addEventListener("input", updateMenu);
+            searchForm.addEventListener("submit", event => event.preventDefault());
+            filters.forEach(filter => {
+                filter.addEventListener("click", event => {
+                    event.preventDefault();
+                    activeAvailability = new URL(filter.href).searchParams.get("availabilityFilter") || "All";
+                    filters.forEach(candidate => {
+                        const isActive = candidate === filter;
+                        candidate.classList.toggle("active", isActive);
+                        candidate.setAttribute("aria-pressed", String(isActive));
+                    });
+                    updateMenu();
+                });
+            });
+            updateMenu();
+        })();
+    </script>
+}

@@ -5,8 +5,8 @@
     --reservation-shadow: #dce2ff;
 
     display: grid;
-    gap: 1.15rem;
-    width: min(100%, 1200px);
+    gap: var(--staff-page-gap);
+    width: min(100%, var(--staff-page-width));
     margin: 0 auto;
     padding: 0.5rem 0 1rem;
     color: var(--reservation-ink);
@@ -17,18 +17,18 @@
     min-height: 150px;
     align-items: center;
     justify-content: space-between;
-    gap: 1.25rem;
-    padding: 1.5rem 1.75rem;
+    gap: 1.5rem;
+    padding: var(--staff-hero-padding);
     border: 1px solid var(--brand-border);
-    border-radius: 20px;
+    border-radius: var(--staff-hero-radius);
     background: var(--subbrand-color);
-    box-shadow: 5px 6px 0 var(--reservation-shadow);
+    box-shadow: var(--staff-shadow);
 }
 
 .eyebrow {
     margin: 0 0 0.35rem;
     color: var(--subtext-color);
-    font-size: 0.68rem;
+    font-size: var(--staff-eyebrow-size);
     font-weight: 700;
     letter-spacing: 0.08em;
     line-height: 1.4;
@@ -38,7 +38,7 @@
 .reservation-hero h1 {
     margin: 0;
     color: var(--reservation-ink);
-    font-size: clamp(1.8rem, 4vw, 2.45rem);
+    font-size: var(--staff-hero-heading-size);
     font-weight: 500;
     letter-spacing: -0.055em;
     line-height: 1.1;
@@ -47,12 +47,12 @@
 .hero-caption {
     margin: 0.55rem 0 0;
     color: var(--reservation-muted);
-    font-size: 0.8rem;
+    font-size: var(--staff-caption-size);
 }
 
 .new-reservation-button {
     display: inline-flex;
-    min-height: 38px;
+    min-height: 40px;
     flex: 0 0 auto;
     align-items: center;
     justify-content: center;
@@ -86,7 +86,7 @@
     gap: 0.7rem;
     padding: 0.7rem 0.9rem;
     border: 1px solid var(--reservation-line);
-    border-radius: 16px;
+    border-radius: var(--staff-card-radius);
     background: #fff;
     box-shadow: 4px 5px 0 var(--reservation-shadow);
 }
@@ -104,7 +104,7 @@
 
 .summary-card strong {
     color: var(--reservation-ink);
-    font-size: 1rem;
+    font-size: 1.35rem;
     line-height: 1;
 }
 
@@ -162,11 +162,11 @@
 
 .reservation-list-panel {
     min-width: 0;
-    padding: 1.3rem 1.35rem 0.65rem;
+    padding: var(--staff-panel-padding);
     border: 1px solid var(--reservation-line);
-    border-radius: 19px;
+    border-radius: var(--staff-panel-radius);
     background: #fff;
-    box-shadow: 5px 6px 0 var(--reservation-shadow);
+    box-shadow: var(--staff-shadow);
 }
 
 .list-heading {
@@ -184,7 +184,7 @@
 .list-heading h2 {
     margin: 0;
     color: var(--reservation-ink);
-    font-size: 1.15rem;
+    font-size: var(--staff-section-heading-size);
     font-weight: 500;
     letter-spacing: -0.035em;
 }
@@ -195,7 +195,7 @@
     border-radius: 999px;
     background: var(--subbrand-color);
     color: var(--brand-color);
-    font-size: 0.58rem;
+    font-size: 0.61rem;
 }
 
 .reservation-table {
@@ -238,7 +238,7 @@
 .time-cell span,
 .guest-info small {
     color: #9299b2;
-    font-size: 0.55rem;
+    font-size: 0.61rem;
 }
 
 .guest-profile {
@@ -256,7 +256,7 @@
     border-radius: 50%;
     background: #e9edff;
     color: var(--brand-color);
-    font-size: 0.52rem;
+    font-size: 0.61rem;
     font-weight: 700;
 }
 
@@ -264,7 +264,7 @@
     display: inline-block;
     padding: 0.3rem 0.5rem;
     border-radius: 999px;
-    font-size: 0.57rem;
+    font-size: 0.61rem;
 }
 
 .status-edit-form {
@@ -279,7 +279,7 @@
     border: 0;
     border-radius: 999px;
     font: inherit;
-    font-size: 0.57rem;
+    font-size: 0.61rem;
     cursor: pointer;
 }
 
@@ -312,7 +312,7 @@
     color: var(--brand-color);
     cursor: pointer;
     font: inherit;
-    font-size: 0.58rem;
+    font-size: 0.61rem;
 }
 
 .save-status-button:hover,
@@ -334,7 +334,7 @@
     padding: 0;
     overflow: auto;
     border: 1px solid var(--reservation-line);
-    border-radius: 20px;
+    border-radius: var(--staff-panel-radius);
     background: #fff;
     color: var(--reservation-ink);
     box-shadow: 0 20px 70px rgb(22 27 70 / 25%);
@@ -348,7 +348,7 @@
 .reservation-dialog-form {
     display: grid;
     gap: 1rem;
-    padding: 1.4rem;
+    padding: var(--staff-panel-padding);
 }
 
 .dialog-heading {
@@ -360,7 +360,7 @@
 
 .dialog-heading h2 {
     margin: 0;
-    font-size: 1.35rem;
+    font-size: var(--staff-section-heading-size);
     font-weight: 600;
 }
 
@@ -525,7 +525,7 @@
 
 @media (max-width: 560px) {
     .reservations-page {
-        gap: 0.9rem;
+        gap: 1rem;
     }
 
     .reservation-hero {
@@ -558,7 +558,7 @@
     }
 
     .summary-card span {
-        font-size: 0.54rem;
+        font-size: 0.61rem;
     }
 
     .reservation-filters {
@@ -578,7 +578,7 @@
 
     .date-control input {
         width: 95px;
-        font-size: 0.58rem;
+        font-size: 0.61rem;
     }
 
     .reservation-list-panel {
@@ -587,7 +587,7 @@
 
     .reservation-table tbody td {
         height: 52px;
-        font-size: 0.56rem;
+        font-size: 0.61rem;
     }
 
     .reservation-table tbody td:nth-child(3) {
@@ -610,7 +610,7 @@
 
     .booking-status {
         padding: 0.25rem 0.35rem;
-        font-size: 0.52rem;
+        font-size: 0.61rem;
     }
 }
 
