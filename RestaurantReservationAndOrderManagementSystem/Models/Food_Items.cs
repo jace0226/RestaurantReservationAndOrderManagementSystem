@@ -23,6 +23,19 @@ namespace RestaurantReservationAndOrderManagementSystem.Models
 
         public string FoodDescription { get; set; } = string.Empty;
 
+        public string FullDescription { get; set; } = string.Empty;
+
+        public string Category { get; set; } = string.Empty;
+
         public string FoodAvailability { get; set; } = string.Empty;
+
+        public string ImageUrl { get; set; } = string.Empty;
+
+        public string ImageAlt { get; set; } = string.Empty;
+
+        public string PrepTime { get; set; } = string.Empty;
+
+        public string Dietary { get; set; } = string.Empty;
+
     }
 }

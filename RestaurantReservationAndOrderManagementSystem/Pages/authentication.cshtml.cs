@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using RestaurantReservationAndOrderManagementSystem.Data;
 using RestaurantReservationAndOrderManagementSystem.Models;
+using CustomerModel = RestaurantReservationAndOrderManagementSystem.Models.Customer;
 
 namespace RestaurantReservationAndOrderManagementSystem.Pages
 {
@@ -145,7 +146,7 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
             };
             user.PasswordHash = _passwordHasher.HashPassword(user, Registration.Password);
 
-            var customer = new Customer
+            var customer = new CustomerModel
             {
                 CustomerID = Guid.NewGuid().ToString("N"),
                 UserID = user.UserID,

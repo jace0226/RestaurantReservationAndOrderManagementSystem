@@ -1,0 +1,104 @@
+﻿@page "/Customer/CustomerMenus"
+@model RestaurantReservationAndOrderManagementSystem.Pages.Customer.CustomerMenusModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Our Menu";
+}
+
+<link rel="stylesheet" href="~/css/customer_menus.css" asp-append-version="true" />
+
+<section class="customer-menu" aria-labelledby="customer-menu-title">
+    <header class="customer-menu-hero">
+        <div>
+            <p class="customer-menu-eyebrow">Made with care, served with a smile</p>
+            <h1 id="customer-menu-title">Our Menu</h1>
+            <p class="customer-menu-intro">Find a new favorite, or settle in with a dish you already love.</p>
+        </div>
+        <span class="customer-menu-hero-icon" aria-hidden="true"><i class="fa-solid fa-bowl-food"></i></span>
+    </header>
+
+    <section class="customer-recommendations" aria-labelledby="customer-recommendations-title">
+        <div class="customer-section-heading">
+            <div>
+                <p class="customer-menu-eyebrow">A few guest favorites</p>
+                <h2 id="customer-recommendations-title">Recommended for You</h2>
+            </div>
+            <span class="customer-recommendation-note"><i class="fa-solid fa-heart" aria-hidden="true"></i> Handpicked from our menu</span>
+        </div>
+        <div class="customer-recommendation-grid" id="recommendationGrid"></div>
+    </section>
+
+    <section class="customer-menu-listing" aria-labelledby="customer-menu-list-title">
+        <div class="customer-section-heading customer-listing-heading">
+            <div>
+                <p class="customer-menu-eyebrow">Something delicious awaits</p>
+                <h2 id="customer-menu-list-title">Browse the menu</h2>
+            </div>
+            <div class="customer-menu-search">
+                <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                <label class="visually-hidden" for="customerMenuSearch">Search menu items by name</label>
+                <input id="customerMenuSearch" type="search" placeholder="Search dishes..." autocomplete="off" />
+                <button class="customer-search-reset" id="customerMenuReset" type="button" aria-label="Clear search and reset category filter" title="Clear search and filters">
+                    <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                </button>
+            </div>
+        </div>
+
+        <nav class="customer-category-filters" id="customerCategoryFilters" aria-label="Filter menu by category">
+            <button type="button" class="active" data-category="All" aria-pressed="true">All</button>
+            <button type="button" data-category="Main Course" aria-pressed="false">Main Course</button>
+            <button type="button" data-category="Appetizers" aria-pressed="false">Appetizers</button>
+            <button type="button" data-category="Desserts" aria-pressed="false">Desserts</button>
+            <button type="button" data-category="Beverages" aria-pressed="false">Beverages</button>
+        </nav>
+
+        <p class="customer-menu-result-count" id="customerMenuResultCount" aria-live="polite"></p>
+        <div class="customer-menu-grid" id="customerMenuGrid" aria-live="polite"></div>
+        <div class="customer-menu-empty" id="customerMenuEmpty" hidden>
+            <span class="customer-empty-icon" aria-hidden="true"><i class="fa-solid fa-utensils"></i></span>
+            <h3>No dishes found</h3>
+            <p>Try another search or clear your filters to see the full menu.</p>
+            <button class="customer-reset-button" id="customerEmptyReset" type="button">Show all dishes</button>
+        </div>
+    </section>
+</section>
+
+<div class="customer-menu-modal" id="customerFoodModal" hidden>
+    <div class="customer-modal-panel" role="dialog" aria-modal="true" aria-labelledby="customerModalTitle" aria-describedby="customerModalDescription" tabindex="-1">
+        <button class="customer-modal-close" type="button" data-close-modal aria-label="Close dish details">
+            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        </button>
+        <img class="customer-modal-image" id="customerModalImage" src="" alt="" />
+        <div class="customer-modal-content">
+            <div class="customer-modal-heading">
+                <div>
+                    <span class="customer-category-tag" id="customerModalCategory"></span>
+                    <h2 id="customerModalTitle"></h2>
+                </div>
+                <strong class="customer-modal-price" id="customerModalPrice"></strong>
+            </div>
+            <p class="customer-modal-description" id="customerModalDescription"></p>
+            <div class="customer-modal-facts">
+                <span><i class="fa-regular fa-clock" aria-hidden="true"></i><span id="customerModalPrepTime"></span></span>
+                <span><i class="fa-solid fa-circle-check" aria-hidden="true"></i><span id="customerModalAvailability"></span></span>
+                <span><i class="fa-solid fa-leaf" aria-hidden="true"></i><span id="customerModalDietary"></span></span>
+
+                <button type="button" class="customer-add-order-btn" id="customerAddOrderBtn">
+                    <i class="fa-solid fa-plus" aria-hidden="true"></i> Add to Order
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Pass database menu items to JS with CamelCase naming convention
+        window.menuItemsData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+                    Model.MenuItems,
+                    new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }
+            ));
+    </script>
+    <script src="~/js/customer_menus.js" asp-append-version="true"></script>
+}
+
