@@ -1,4 +1,4 @@
-﻿@page "/Customer/CustomerMenus"
+﻿@page "/Customer/Menus"
 @model RestaurantReservationAndOrderManagementSystem.Pages.Customer.CustomerMenusModel
 @{
     Layout = "_Layout";
@@ -82,14 +82,77 @@
                 <span><i class="fa-regular fa-clock" aria-hidden="true"></i><span id="customerModalPrepTime"></span></span>
                 <span><i class="fa-solid fa-circle-check" aria-hidden="true"></i><span id="customerModalAvailability"></span></span>
                 <span><i class="fa-solid fa-leaf" aria-hidden="true"></i><span id="customerModalDietary"></span></span>
+            </div>
 
-                <button type="button" class="customer-add-order-btn" id="customerAddOrderBtn">
-                    <i class="fa-solid fa-plus" aria-hidden="true"></i> Add to Order
-                </button>
+            <div class="customer-order-builder" id="customerOrderBuilder">
+                <div class="customer-order-customizations" id="customerOrderCustomizations"></div>
+
+                <label class="customer-order-remarks" for="customerOrderRemarks">
+                    <span>Remarks</span>
+                    <textarea id="customerOrderRemarks" rows="3" placeholder="Optional notes for the kitchen"></textarea>
+                </label>
+
+                <div class="customer-order-controls">
+                    <div class="customer-quantity-stepper" aria-label="Quantity selector">
+                        <button type="button" class="customer-quantity-btn" id="customerQtyMinus" aria-label="Decrease quantity">-</button>
+                        <span id="customerQtyValue" aria-live="polite">1</span>
+                        <button type="button" class="customer-quantity-btn" id="customerQtyPlus" aria-label="Increase quantity">+</button>
+                    </div>
+
+                    <button type="button" class="customer-add-order-btn" id="customerAddOrderBtn">
+                        <i class="fa-solid fa-plus" aria-hidden="true"></i> Add to Order
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+<button class="customer-cart-toggle" id="customerCartToggle" type="button" aria-label="Open cart" aria-controls="customerCartPanel">
+    <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>
+    <span class="customer-cart-badge" id="customerCartBadge">0</span>
+</button>
+
+<aside class="customer-cart-panel" id="customerCartPanel" aria-hidden="true" aria-label="Shopping cart">
+    <div class="customer-cart-header">
+        <div>
+            <p class="customer-menu-eyebrow">Your selection</p>
+            <h2>My Cart</h2>
+        </div>
+        <button type="button" class="customer-cart-close" id="customerCartClose" aria-label="Close cart">
+            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        </button>
+    </div>
+
+    <div class="customer-cart-items" id="customerCartItems"></div>
+
+    <div class="customer-cart-empty" id="customerCartEmpty" hidden>
+        <span class="customer-empty-icon" aria-hidden="true"><i class="fa-solid fa-bag-shopping"></i></span>
+        <h3>Your cart is empty</h3>
+        <p>Add a dish or beverage to start your order.</p>
+    </div>
+
+    <div class="customer-cart-summary" id="customerCartSummary">
+        <div class="customer-cart-row">
+            <span>Subtotal</span>
+            <strong id="customerCartSubtotal">RM0.00</strong>
+        </div>
+        <div class="customer-cart-row">
+            <span>Tax (10%)</span>
+            <strong id="customerCartTax">RM0.00</strong>
+        </div>
+        <div class="customer-cart-divider"></div>
+        <div class="customer-cart-row customer-cart-total-row">
+            <span>Total (RM)</span>
+            <strong id="customerCartTotal">RM0.00</strong>
+        </div>
+        <button class="customer-confirm-order-btn" id="customerConfirmOrder" type="button" disabled>
+            Confirm Order
+        </button>
+    </div>
+</aside>
+
+<div class="customer-cart-overlay" id="customerCartOverlay" hidden></div>
 
 @section Scripts {
     <script>
@@ -101,4 +164,3 @@
     </script>
     <script src="~/js/customer_menus.js" asp-append-version="true"></script>
 }
-
