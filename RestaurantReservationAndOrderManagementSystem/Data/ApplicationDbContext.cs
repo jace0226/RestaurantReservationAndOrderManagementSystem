@@ -35,6 +35,14 @@ namespace RestaurantReservationAndOrderManagementSystem.Data
         {
             base.OnModelCreating(modelBuilder);
 
+            modelBuilder.Entity<User>()
+                .HasIndex(u => u.Email)
+                .IsUnique();
+
+            modelBuilder.Entity<User>()
+                .HasIndex(u => u.Phone)
+                .IsUnique();
+
             modelBuilder.Entity<Order>()
                 .HasOne(o => o.Customer)
                 .WithMany()

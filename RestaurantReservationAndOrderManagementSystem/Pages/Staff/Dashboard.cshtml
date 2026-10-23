@@ -1,0 +1,119 @@
+﻿@page "/Staff/Dashboard"
+@model RestaurantReservationAndOrderManagementSystem.Pages.DashboardModel
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<link rel="stylesheet" href="~/css/dashboard_page.css" asp-append-version="true" />
+
+<section class="dashboard" aria-label="Restaurant dashboard">
+    <header class="dashboard-hero">
+        <div>
+            <p class="eyebrow">@Model.Greeting, @Model.StaffName</p>
+            <h1>Let's make today delicious.</h1>
+            <p class="hero-caption">Here's the little snapshot of everything happening at Between Bites.</p>
+        </div>
+        <span class="hero-icon" aria-hidden="true"><i class="fa-solid fa-mug-hot"></i></span>
+    </header>
+
+    <section class="stats-grid" aria-label="Today's statistics">
+        <article class="stat-card">
+            <div class="stat-heading"><span>Active orders</span><i class="fa-solid fa-receipt" aria-hidden="true"></i></div>
+            <strong class="stat-number">@Model.ActiveOrderCount</strong>
+            <span class="stat-note">@Model.ReadyOrderCount ready for handoff</span>
+        </article>
+        <article class="stat-card">
+            <div class="stat-heading"><span>Reservations</span><i class="fa-regular fa-calendar-days" aria-hidden="true"></i></div>
+            <strong class="stat-number">@Model.TodayReservationCount</strong>
+            <span class="stat-note">Today's reservations</span>
+        </article>
+        <article class="stat-card">
+            <div class="stat-heading"><span>Tables available</span><i class="fa-solid fa-table-cells" aria-hidden="true"></i></div>
+            <strong class="stat-number">@Model.AvailableTableCount / @Model.TotalTableCount</strong>
+            <span class="stat-note">Tables available</span>
+        </article>
+        <article class="stat-card">
+            <div class="stat-heading"><span>Guests dining in</span><i class="fa-solid fa-user-group" aria-hidden="true"></i></div>
+            <strong class="stat-number">@Model.GuestsDiningIn</strong>
+            <span class="stat-note">Guests currently dining in</span>
+        </article>
+    </section>
+
+    <div class="main-grid">
+        <section class="panel orders-panel" aria-labelledby="active-orders-title">
+            <div class="panel-heading">
+                <div>
+                    <p class="eyebrow">Fresh from the kitchen</p>
+                    <h2 id="active-orders-title">Active orders</h2>
+                </div>
+                <a class="panel-link" href="/Staff/Orders">See all</a>
+            </div>
+            <div class="orders-list" aria-live="polite">
+                @if (Model.ActiveOrders.Count == 0)
+                {
+                    <p>No active orders right now.</p>
+                }
+                @foreach (var order in Model.ActiveOrders)
+                {
+                    <article class="order-item">
+                        <span class="order-icon" aria-hidden="true"><i class="fa-solid fa-receipt"></i></span>
+                        <div class="order-details">
+                            <strong>#@order.OrderId · @order.CustomerName</strong>
+                            <span>Table @order.TableId · @order.ItemCount items</span>
+                        </div>
+                        <span class="order-status @DashboardModel.OrderStatusCssClass(order.Status)">@order.Status</span>
+                    </article>
+                }
+            </div>
+        </section>
+
+        <section class="panel reservations-panel" aria-labelledby="upcoming-title">
+            <div class="panel-heading">
+                <div>
+                    <p class="eyebrow">Save their seats</p>
+                    <h2 id="upcoming-title">Coming up</h2>
+                </div>
+                <a class="panel-link" href="/Staff/Reservations">Open book</a>
+            </div>
+            <div class="reservation-list" aria-label="Today's reservations">
+                @if (Model.UpcomingReservations.Count == 0)
+                {
+                    <p>No upcoming reservations today.</p>
+                }
+                @foreach (var reservation in Model.UpcomingReservations)
+                {
+                    <article class="reservation-item">
+                        <time>@reservation.Time.ToString("HH:mm")</time>
+                        <div>
+                            <strong>@reservation.CustomerName</strong>
+                            <span>@reservation.PartySize guests · Table @reservation.TableId</span>
+                        </div>
+                        <span class="reservation-status">@reservation.Status</span>
+                    </article>
+                }
+            </div>
+        </section>
+    </div>
+
+    <section class="panel tables-panel" aria-labelledby="table-checkin-title">
+        <div class="panel-heading">
+            <div>
+                <p class="eyebrow">A peek at the room</p>
+                <h2 id="table-checkin-title">Table check-in</h2>
+            </div>
+            <a class="panel-link" href="/Staff/Tables">Manage tables</a>
+        </div>
+        <div class="tables-overview" aria-label="Table occupancy overview">
+            @if (Model.TablesPreview.Count == 0)
+            {
+                <p>No tables have been configured.</p>
+            }
+            @foreach (var table in Model.TablesPreview)
+            {
+                <div class="table-box @DashboardModel.TableStatusCssClass(table.Status)">
+                    <span>@table.TableId · @table.Capacity pax</span>
+                </div>
+            }
+        </div>
+    </section>
+</section>

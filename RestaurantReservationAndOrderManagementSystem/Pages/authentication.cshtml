@@ -1,7 +1,8 @@
-﻿@page "/Authenticate"
+@page "/Authenticate"
 @model RestaurantReservationAndOrderManagementSystem.Pages.authenticationModel
 @{
 	Layout = null;
+	ViewData["Title"] = "Sign in or sign up";
 }
 
 <!DOCTYPE html>
@@ -13,29 +14,78 @@
     <script type="importmap"></script>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-	<link rel="stylesheet" href="~/css/authentication_page.css" />
+	<link rel="stylesheet" href="~/css/authentication_page.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/RestaurantReservationAndOrderManagementSystem.styles.css" asp-append-version="true" />
 </head>
 <body>
 	<div class="authentication-container">
-		<form method="post">
+		<form method="post" action="/Authenticate?handler=Login" id="loginForm" hidden="@(Model.ActiveForm != "login")">
+			@Html.AntiForgeryToken()
+			<input type="hidden" name="returnUrl" value="@Request.Query["ReturnUrl"]" />
 			<div class="inner-container">
 				<div class="form-header">
 					<h2>Sign in</h2>
 				</div>
 
+				<div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
 				<div class="form-input">
 					<i class="fa-solid fa-envelope"></i>
-					<input type="email" id="email" name="email" placeholder="Email Address" required />
+					<input asp-for="Login.EmailOrPhone" type="text" autocomplete="username" placeholder="Email or phone number" />
 				</div>
+				<span asp-validation-for="Login.EmailOrPhone" class="text-danger"></span>
 				<div class="form-input">
 					<i class="fa-solid fa-key"></i>
-					<input type="password" id="password" name="password" placeholder="Password" required />
+					<input asp-for="Login.Password" autocomplete="current-password" placeholder="Password" />
 				</div>
+				<span asp-validation-for="Login.Password" class="text-danger"></span>
 				<button type="submit">Sign in</button>
 			</div>
 
-			<span class="footer-text">Don't have an account? <a href="#">Sign up</a></span>
+			<span class="footer-text">Don't have an account? <button type="button" class="auth-switch" data-show="register">Sign up</button></span>
+		</form>
+
+		<form method="post" action="/Authenticate?handler=Register" id="registerForm" hidden="@(Model.ActiveForm != "register")">
+			@Html.AntiForgeryToken()
+			<div class="inner-container">
+				<div class="form-header">
+					<h2>Sign up</h2>
+				</div>
+
+				<div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+				<div class="form-input">
+					<i class="fa-solid fa-user"></i>
+					<input asp-for="Registration.FullName" autocomplete="name" placeholder="Full name" />
+				</div>
+				<span asp-validation-for="Registration.FullName" class="text-danger"></span>
+				<div class="form-input">
+					<i class="fa-solid fa-envelope"></i>
+					<input asp-for="Registration.Email" type="email" autocomplete="email" placeholder="Email address" />
+				</div>
+				<span asp-validation-for="Registration.Email" class="text-danger"></span>
+				<div class="form-input">
+					<i class="fa-solid fa-key"></i>
+					<input asp-for="Registration.Password" autocomplete="new-password" placeholder="Password" />
+				</div>
+				<span asp-validation-for="Registration.Password" class="text-danger"></span>
+				<div class="form-input">
+					<i class="fa-solid fa-key"></i>
+					<input asp-for="Registration.ConfirmPassword" autocomplete="new-password" placeholder="Confirm password" />
+				</div>
+				<span asp-validation-for="Registration.ConfirmPassword" class="text-danger"></span>
+				<div class="form-input">
+					<i class="fa-solid fa-phone"></i>
+					<input asp-for="Registration.Phone" type="tel" autocomplete="tel" placeholder="Phone number" />
+				</div>
+				<span asp-validation-for="Registration.Phone" class="text-danger"></span>
+				<div class="form-input">
+					<i class="fa-solid fa-calendar"></i>
+					<input asp-for="Registration.DateOfBirth" autocomplete="bday" />
+				</div>
+				<span asp-validation-for="Registration.DateOfBirth" class="text-danger"></span>
+				<button type="submit">Create account</button>
+			</div>
+
+			<span class="footer-text">Already have an account? <button type="button" class="auth-switch" data-show="login">Sign in</button></span>
 		</form>
 
 		<h4 class="brand">
@@ -43,7 +93,17 @@
 		</h4>
 	</div>
 
+	<script>
+		document.querySelectorAll(".auth-switch").forEach(button => {
+			button.addEventListener("click", () => {
+				const showRegister = button.dataset.show === "register";
+				document.getElementById("loginForm").hidden = showRegister;
+				document.getElementById("registerForm").hidden = !showRegister;
+			});
+		});
+	</script>
 	<script src="~/lib/jquery/dist/jquery.min.js"></script>
+	<partial name="_ValidationScriptsPartial" />
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     <script src="https://kit.fontawesome.com/f3ce044c74.js" crossorigin="anonymous"></script>

@@ -1,10 +1,182 @@
-﻿@page
+@page
 @model IndexModel
 @{
-    ViewData["Title"] = "Home page";
+    ViewData["Title"] = "Between Bites";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/landing_page.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+</head>
+<body class="landing-body">
+
+<div class="landing-page">
+    <header class="landing-header">
+        <a class="landing-brand" href="/" aria-label="Between Bites home">
+            <span>BETWEEN</span>
+            <span>BITES</span>
+        </a>
+        <nav class="landing-nav" aria-label="Main navigation">
+            <a href="#menu">Menu</a>
+            <a href="#story">Our story</a>
+            <a href="#visit">Find us</a>
+            <a class="landing-nav-cta" href="/Authenticate">Order a bite <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+        </nav>
+    </header>
+
+    <main>
+        <section class="landing-hero" aria-labelledby="hero-title">
+            <div class="hero-copy">
+                <p class="landing-eyebrow">Good food. Good mood. Good company.</p>
+                <h1 id="hero-title">A happy little<br />place <span>between</span><br />meals.</h1>
+                <p class="hero-description">Come for the crispy toast, stay for the slow mornings. Between Bites is your neighborhood cafe for bright plates, warm cups, and conversations that run long.</p>
+                <div class="hero-actions">
+                    <a class="primary-link" href="#menu">See what's on <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+                    <span class="hero-note"><i class="fa-solid fa-heart" aria-hidden="true"></i> Made for your little breaks</span>
+                </div>
+                </body>
+                </html>
+            </div>
+            <div class="hero-art" role="img" aria-label="Illustration of a freshly brewed cup">
+                <span class="hero-art-orbit"></span>
+                <span class="hero-art-spark hero-art-spark-one">✦</span>
+                <span class="hero-art-spark hero-art-spark-two">✦</span>
+                <div class="hero-cup">
+                    <div class="cup-rim"></div>
+                    <div class="cup-body"><span>BB</span></div>
+                    <div class="cup-handle"></div>
+                    <div class="cup-steam"><i></i><i></i><i></i></div>
+                </div>
+                <span class="hero-art-caption">brewed with<br />a little extra <strong>love</strong></span>
+            </div>
+        </section>
+
+        <div class="brand-ribbon" aria-label="Freshly made, locally loved, always welcome">
+            <div class="brand-ribbon-track">
+                <span>Freshly made</span><i>✦</i><span>Locally loved</span><i>✦</i><span>Slow mornings welcome</span><i>✦</i><span>Freshly made</span>
+            </div>
+        </div>
+
+        <section class="landing-section featured-section" id="menu" aria-labelledby="menu-title">
+            <div class="section-heading">
+                <div>
+                    <p class="landing-eyebrow">A little something for everyone</p>
+                    <h2 id="menu-title">Today's good ideas</h2>
+                </div>
+                <a class="text-link" href="/Authenticate">Explore the menu <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+            </div>
+
+            @if (Model.FeaturedItems.Count == 0)
+            {
+                <p class="landing-empty-menu">Our menu is getting ready. Check back soon for something delicious.</p>
+            }
+            else
+            {
+                <div class="featured-grid">
+                    @for (var index = 0; index < Model.FeaturedItems.Count; index++)
+                    {
+                        var item = Model.FeaturedItems[index];
+                        <article class="featured-card featured-card-@index">
+                            <div class="featured-art featured-art-@index" aria-hidden="true">
+                                <span class="featured-art-sun"></span>
+                                <span class="featured-food-icon">
+                                    <i class="fa-solid @(index % 3 == 0 ? "fa-bread-slice" : index % 3 == 1 ? "fa-leaf" : "fa-cookie-bite")"></i>
+                                </span>
+                                <span class="featured-art-label">A little joy</span>
+                            </div>
+                            <div class="featured-content">
+                                <p class="featured-kicker">Made fresh for you</p>
+                                <div class="featured-title-row">
+                                    <h3>@item.Name</h3>
+                                    <span class="featured-price">RM @item.Price.ToString("N2")</span>
+                                </div>
+                                @if (!string.IsNullOrWhiteSpace(item.Description))
+                                {
+                                    <p class="featured-description">@item.Description</p>
+                                }
+                                <a href="/Authenticate" class="featured-link">Make it your day <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+                            </div>
+                        </article>
+                    }
+                </div>
+            }
+        </section>
+
+        <section class="landing-section story-section" id="story" aria-labelledby="story-title">
+            <div class="story-art" aria-hidden="true">
+                <span class="story-orbit"></span>
+                <span class="story-cup"><i class="fa-solid fa-mug-hot"></i></span>
+                <span class="story-since">since<br /><strong>day one</strong></span>
+            </div>
+            <div class="story-copy">
+                <p class="landing-eyebrow">A table for your kind of people</p>
+                <h2 id="story-title">Small moments make<br />the best meals.</h2>
+                <p>We started Between Bites because the in-between parts of the day deserve better food. A proper breakfast at 2pm. A bowl shared with a friend. One more coffee before heading home.</p>
+                <a class="text-link" href="#visit">Come say hello <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+            </div>
+        </section>
+
+        <section class="landing-section welcome-section" aria-labelledby="welcome-title">
+            <div class="section-heading">
+                <div>
+                    <p class="landing-eyebrow">A little joy in every visit</p>
+                    <h2 id="welcome-title">There's room for<br />every kind of day.</h2>
+                </div>
+                <div class="welcome-rating" aria-label="Made with care, every day">
+                    <i class="fa-solid fa-heart" aria-hidden="true"></i>
+                    <span>Made with care,<br />every single day</span>
+                </div>
+            </div>
+            <div class="welcome-cards">
+                <article class="welcome-card welcome-card-blue">
+                    <span class="welcome-card-icon"><i class="fa-solid fa-sun" aria-hidden="true"></i></span>
+                    <p>A cozy little pause in the middle of a busy day.</p>
+                    <span class="welcome-card-note">Make room for a slower moment</span>
+                </article>
+                <article class="welcome-card welcome-card-lilac">
+                    <span class="welcome-card-icon"><i class="fa-solid fa-mug-hot" aria-hidden="true"></i></span>
+                    <p>Good coffee, something lovely to eat, and no rush to leave.</p>
+                    <span class="welcome-card-note">Stay for another cup</span>
+                </article>
+                <article class="welcome-card welcome-card-mint">
+                    <span class="welcome-card-icon"><i class="fa-solid fa-heart" aria-hidden="true"></i></span>
+                    <p>A welcoming table for the people who make your day.</p>
+                    <span class="welcome-card-note">There's always room for you</span>
+                </article>
+            </div>
+        </section>
+
+        <section class="landing-section visit-section" id="visit" aria-labelledby="visit-title">
+            <div class="visit-copy">
+                <p class="landing-eyebrow">Come say hello</p>
+                <h2 id="visit-title">Find your way<br />to us.</h2>
+                <p>Good food tastes even better when shared. Sign in to reserve a table, bring a friend, and stay awhile.</p>
+                <a class="primary-link" href="/Authenticate">Plan your visit <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+            </div>
+            <iframe class="visit-map"
+                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2371.1381372661326!2d-2.0540544!3d53.537447699999994!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x487bc986d4c15b13%3A0xdd738494ac3a3f37!2sBetween%20Bites!5e0!3m2!1sen!2smy!4v1792683234215!5m2!1sen!2smy"
+                    title="Between Bites on Google Maps"
+                    width="600"
+                    height="450"
+                    allowfullscreen
+                    loading="lazy"
+                    referrerpolicy="strict-origin-when-cross-origin"></iframe>
+        </section>
+    </main>
+
+    <footer class="landing-footer">
+        <a class="landing-brand" href="/" aria-label="Between Bites home"><span>BETWEEN</span><span>BITES</span></a>
+        <p>Good things happen between bites.</p>
+        <nav aria-label="Footer navigation">
+            <a href="#menu">Menu</a>
+            <a href="#story">Our story</a>
+            <a href="/Authenticate">Contact</a>
+        </nav>
+    </footer>
 </div>

@@ -1,0 +1,190 @@
+@page "/Staff/Menus"
+@model RestaurantReservationAndOrderManagementSystem.Pages.MenusModel
+@{
+    ViewData["Title"] = "Menu Management";
+}
+
+<link rel="stylesheet" href="~/css/menus_page.css" asp-append-version="true" />
+
+<section class="menu-page">
+    <header class="section-header">
+        <div class="bottom-section">
+            <div>
+                <p class="menu-eyebrow">A little something for everyone</p>
+                <h1>What are we serving today?</h1>
+                <p class="menu-intro">Keep the counter colorful, the menu fresh, and every bite worth coming back for.</p>
+            </div>
+            <button class="add-menu-btn" id="toggle-create-form" type="button" aria-expanded="@Model.ShowCreateForm" aria-controls="create-menu-form">
+                <i class="fa-solid fa-plus" aria-hidden="true"></i> Add menu item
+            </button>
+        </div>
+    </header>
+
+    <form id="create-menu-form" method="post" asp-page-handler="Create" hidden="@(!Model.ShowCreateForm)">
+        <input type="hidden" name="search" value="@Model.Search" />
+        <input type="hidden" name="availabilityFilter" value="@Model.AvailabilityFilter" />
+        <div asp-validation-summary="All" class="text-danger"></div>
+        <label asp-for="NewMenuItem.Name"></label>
+        <input asp-for="NewMenuItem.Name" />
+        <span asp-validation-for="NewMenuItem.Name" class="text-danger"></span>
+
+        <label asp-for="NewMenuItem.Price"></label>
+        <input asp-for="NewMenuItem.Price" type="number" min="0.01" step="0.01" />
+        <span asp-validation-for="NewMenuItem.Price" class="text-danger"></span>
+
+        <label asp-for="NewMenuItem.Description"></label>
+        <textarea asp-for="NewMenuItem.Description"></textarea>
+        <span asp-validation-for="NewMenuItem.Description" class="text-danger"></span>
+
+        <button type="submit">Save menu item</button>
+    </form>
+
+    <section class="menu-stats" aria-label="Restaurant overview">
+        <article class="menu-stat menu-stat-primary">
+            <div class="stat-label">
+                <span>Today’s orders</span>
+                <span class="stat-icon fa-solid fa-receipt" aria-hidden="true"></span>
+            </div>
+            <strong>@Model.TodayOrderCount</strong>
+            <span class="stat-note">Orders created today</span>
+        </article>
+        <article class="menu-stat">
+            <div class="stat-label">
+                <span>Available items</span>
+                <span class="stat-icon fa-solid fa-utensils" aria-hidden="true"></span>
+            </div>
+            <strong>@Model.AvailableItemCount</strong>
+            <span class="stat-note stat-note-success">Currently available</span>
+        </article>
+        <article class="menu-stat">
+            <div class="stat-label">
+                <span>Reservations</span>
+                <span class="stat-icon fa-solid fa-bell-concierge" aria-hidden="true"></span>
+            </div>
+            <strong>@Model.TodayReservationCount</strong>
+            <span class="stat-note">For today</span>
+        </article>
+    </section>
+
+    <section class="menu-listing" aria-labelledby="menu-list-title">
+        <div class="listing-heading">
+            <div class="listing-title-group">
+                <div class="listing-title-line">
+                    <h2 id="menu-list-title">Menu items</h2>
+                    <span class="menu-count" id="items-count">@Model.MenuItems.Count items</span>
+                </div>
+            </div>
+
+            <form method="get" class="menu-search">
+                <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                <label class="visually-hidden" for="menuSearch">Search menu items</label>
+                <input id="menuSearch" name="search" type="search" value="@Model.Search" placeholder="Search menu..." />
+                <input type="hidden" name="availabilityFilter" value="@Model.AvailabilityFilter" />
+            </form>
+        </div>
+
+        <nav class="filter-nav" aria-label="Filter menu by availability">
+            @foreach (var filter in new[] { "All", "Available", "Unavailable" })
+            {
+                <a asp-page="/Staff/Menus"
+                   asp-route-availabilityFilter="@filter"
+                   asp-route-search="@Model.Search"
+                   class="@(Model.AvailabilityFilter == filter ? "active" : null)"
+                   aria-pressed="@(Model.AvailabilityFilter == filter)">@filter</a>
+            }
+        </nav>
+
+        <div class="menu-grid" id="menuGrid">
+            @if (Model.MenuItems.Count == 0)
+            {
+                <p>No menu items found. Add an item to get started.</p>
+            }
+            @foreach (var item in Model.MenuItems)
+            {
+                var isAvailable = item.Availability.Equals("Available", StringComparison.OrdinalIgnoreCase);
+                <article class="menu-card" data-category="@(isAvailable ? "Available" : "Unavailable")">
+                    <div class="menu-image-wrap menu-item-placeholder" aria-hidden="true">
+                        <i class="fa-solid fa-utensils"></i>
+                        <span class="category-tag">Menu item</span>
+                    </div>
+                    <div class="menu-card-content">
+                        <div class="menu-card-title">
+                            <h3>@item.Name</h3>
+                            <span class="price">RM @item.Price.ToString("N2")</span>
+                        </div>
+                        @if (!string.IsNullOrWhiteSpace(item.Description))
+                        {
+                            <p class="menu-description">@item.Description</p>
+                        }
+                        <div class="menu-card-footer">
+                            <span class="availability @(isAvailable ? null : "unavailable")">
+                                <span aria-hidden="true"></span>@item.Availability
+                            </span>
+                            <form method="post" asp-page-handler="UpdateAvailability">
+                                <input type="hidden" name="foodId" value="@item.FoodId" />
+                                <input type="hidden" name="availability" value="@(isAvailable ? "Unavailable" : "Available")" />
+                                <input type="hidden" name="search" value="@Model.Search" />
+                                <input type="hidden" name="availabilityFilter" value="@Model.AvailabilityFilter" />
+                                <button type="submit">Mark @(isAvailable ? "unavailable" : "available")</button>
+                            </form>
+                        </div>
+                    </div>
+                </article>
+            }
+        </div>
+    </section>
+</section>
+
+@section Scripts {
+    <script>
+        (() => {
+            const createForm = document.getElementById("create-menu-form");
+            const toggleButton = document.getElementById("toggle-create-form");
+            const grid = document.getElementById("menuGrid");
+            const count = document.getElementById("items-count");
+            const searchForm = document.querySelector(".menu-search");
+            const search = document.getElementById("menuSearch");
+            const filters = document.querySelectorAll(".filter-nav a");
+            let activeAvailability = "@Model.AvailabilityFilter";
+
+            toggleButton.addEventListener("click", () => {
+                createForm.hidden = !createForm.hidden;
+                toggleButton.setAttribute("aria-expanded", String(!createForm.hidden));
+            });
+
+            function updateMenu() {
+                const query = search.value.trim().toLocaleLowerCase();
+                let visibleItems = 0;
+                grid.querySelectorAll(".menu-card").forEach(card => {
+                    const matchesAvailability = activeAvailability === "All" ||
+                        card.dataset.category === activeAvailability;
+                    const matchesSearch = card.textContent.toLocaleLowerCase().includes(query);
+                    const isVisible = matchesAvailability && matchesSearch;
+                    card.hidden = !isVisible;
+                    if (isVisible) visibleItems++;
+                });
+                count.textContent = `${visibleItems} ${visibleItems === 1 ? "item" : "items"}`;
+                document.querySelectorAll("#create-menu-form input[name='search'], .menu-card form input[name='search']")
+                    .forEach(input => input.value = search.value);
+                document.querySelectorAll("#create-menu-form input[name='availabilityFilter'], .menu-card form input[name='availabilityFilter']")
+                    .forEach(input => input.value = activeAvailability);
+            }
+
+            search.addEventListener("input", updateMenu);
+            searchForm.addEventListener("submit", event => event.preventDefault());
+            filters.forEach(filter => {
+                filter.addEventListener("click", event => {
+                    event.preventDefault();
+                    activeAvailability = new URL(filter.href).searchParams.get("availabilityFilter") || "All";
+                    filters.forEach(candidate => {
+                        const isActive = candidate === filter;
+                        candidate.classList.toggle("active", isActive);
+                        candidate.setAttribute("aria-pressed", String(isActive));
+                    });
+                    updateMenu();
+                });
+            });
+            updateMenu();
+        })();
+    </script>
+}
