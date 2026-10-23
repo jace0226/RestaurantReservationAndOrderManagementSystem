@@ -27,6 +27,16 @@
                     <i class="fa-solid fa-house"></i>
                     <span>Dashboard</span>
                 </a>
+                @if (User.IsInRole("Administrator")){
+                    <a class="nav-item @(currentPath.StartsWithSegments("/Staff/StaffManagement", StringComparison.OrdinalIgnoreCase) ? "active" : null)" href="/Staff/StaffManagement" aria-current="@(currentPath.StartsWithSegments("/Staff/StaffManagement", StringComparison.OrdinalIgnoreCase) ? "page" : null)">
+                        <i class="fa-solid fa-users"></i>
+                        <span>Staff Management</span>
+                    </a>
+                    <a class="nav-item @(currentPath.StartsWithSegments("/Staff/CustomerManagement", StringComparison.OrdinalIgnoreCase) ? "active" : null)" href="/Staff/CustomerManagement" aria-current="@(currentPath.StartsWithSegments("/Staff/CustomerManagement", StringComparison.OrdinalIgnoreCase) ? "page" : null)">
+                        <i class="fa-solid fa-user-group"></i>
+                        <span>Customer Management</span>
+                    </a>
+                }
                 <a class="nav-item @(currentPath.StartsWithSegments("/Staff/Menus", StringComparison.OrdinalIgnoreCase) ? "active" : null)" href="/Staff/Menus" aria-current="@(currentPath.StartsWithSegments("/Staff/Menus", StringComparison.OrdinalIgnoreCase) ? "page" : null)">
                     <i class="fa-solid fa-burger"></i>
                     <span>Menus</span>

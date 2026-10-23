@@ -1,0 +1,310 @@
+﻿@page "/Staff/StaffManagement"
+@model RestaurantReservationAndOrderManagementSystem.Pages.Staff.StaffManagementModel
+@{
+}
+
+<link rel="stylesheet" href="~/css/usermanagement_page.css" asp-append-version="true" />
+
+<section class="usermanagement-page">
+    @* Header part *@
+    <div class="header">
+        @* Left content *@
+        <div>
+            <p class="eyebrow">STAFF MANAGEMENT</p>
+            <h1>Manange Your Staff</h1>
+            <p class="header-caption">View, add, and manage staff members and their roles.</p>
+        </div>
+
+        @* Right content *@
+        <div>
+            <button class="add-user-button" type="button" id="openAddUser">
+                <i class="fa-solid fa-plus"></i>
+                Add staff
+            </button>
+        </div>
+    </div>
+
+    @* Main content part *@
+    <div class="user-list-panel">
+        @* Top part of the main content *@
+        <div class="user-list-header">
+            @* Left content *@
+            <div class="user-list-header-left">
+                <div class="user-list-header-icon">
+                    <i class="fas fas fa-user"></i>
+                </div>
+
+                <div class="user-list-header-text">
+                    <p>Total Staff</p>
+                    <strong>@Model.Staffs.Count</strong>
+                </div>
+            </div>
+
+            @* Right content *@
+            <form method="get" id="search">
+                <div class="user-list-header-right">
+                    <div>
+                        <div class="user-search-form">
+                            <i class="fas fa-search"></i>
+
+                            <input
+                                type="text"
+                                name="SearchTerm"
+                                value="@Model.SearchTerm"
+                                placeholder="Search by name, email or staff ID..."/>
+
+                            <button type="submit" class="search-button">Search</button>
+                        </div>
+                    </div>
+
+
+                    <div class="user-filter" id="userFilter">
+                        <i class="fas fa-filter"></i>
+
+                        <select id="roleFilter" name="Filter">
+                            <option value="" selected="@(Model.Filter == "")">All Roles</option>
+                            <option value="0" selected="@(Model.Filter == "0")">Staff</option>
+                            <option value="1" selected="@(Model.Filter == "1")">Administrator</option>
+                        </select>
+                        <i class="fas fa-chevron-down dropdown-arrow" id="dropdownArrow"></i>
+                    </div>
+
+
+                    <div class="reset-filter" id="resetFilter" title="Reset filters">
+                        <i class="fas fa-rotate-left"></i>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        @* Middle part of the main content *@
+        <div>
+            <table class="user-table">
+                <thead>
+                    <tr>
+                        <th>Staff ID</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Role</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (var staff in Model.Staffs)
+                    {
+                        <tr>
+                            <td>@staff.StaffID</td>
+                            <td>@staff.FullName</td>
+                            <td>@staff.Email</td>
+                            <td>@staff.Phone</td>
+                            <td>@staff.Role</td>
+                            <td class="row-btn-cell">
+                                <div class="row-container">
+                                    <a class="row-edit" href="#"
+                                       data-staff-id="@staff.StaffID"
+                                       data-full-name="@staff.FullName"
+                                       data-email="@staff.Email"
+                                       data-phone="@staff.Phone"
+                                       data-role="@staff.Role">
+                                        <i class="fas fa-pen-to-square"></i>
+                                    </a>
+                                    <a class="row-delete" href="#"
+                                       data-staff-id="@staff.StaffID">
+                                        <i class="fas fa-trash-can"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+@* this is for the add user form *@
+<dialog class="user-dialog" id="addUserDialog">
+    <form method="post" asp-page-handler="AddUser" class="user-dialog-form">
+        @Html.AntiForgeryToken()
+
+        <header class="user-dialog-heading">
+            <div>
+                <p class="eyebrow">Staff Management</p>
+                <h2 id="add-staff-tittle">Add Staff</h2>
+            </div>
+
+            <button type="button" class="user-dialog-close" id="closeAddUser">&times;</button>
+        </header>
+
+        <div asp-validation-summary="All" class="" role="alert"></div>
+
+        <input type="hidden" name="Action" value="addUser" />
+
+        <label class="user-dialog-field">
+            <span>Full Name</span>
+            <input name="FullName" id="NewUser_FullName" placeholder="Enter full name..." required />
+        </label>
+
+        <label class="user-dialog-field">
+            <span>Email</span>
+            <input name="Email" id="NewUser_Email" placeholder="Enter email..." required/>
+        </label>
+
+        <label class="user-dialog-field">
+            <span>Phone Number</span>
+            <input name="Phone" id="NewUser_Phone" type="tel" placeholder="Enter phone number..." required/>
+        </label>
+
+        <label class="user-dialog-field">
+            <span>Role</span>
+            <select name="Role" id="NewStaff_Role">
+                <option value="0">Staff</option>
+                <option value="1">Administrator</option>
+            </select>
+        </label>
+
+        <footer class="user-dialog-actions">
+            <button type="button" class="user-dialog-cancel" id="cancelAddUser">Cancel</button>
+            <button type="submit" class="user-dialog-submit">Add Staff</button>
+        </footer>
+    </form>
+</dialog>
+
+@* this is for the edit user part *@
+<dialog class="user-dialog" id="editUserDialog">
+    <form method="post" asp-page-handler="EditUser" class="user-dialog-form">
+        @Html.AntiForgeryToken()
+
+        <header class="user-dialog-heading">
+            <div>
+                <p class="eyebrow">Staff Management</p>
+                <h2 id="add-staff-tittle">Edit Staff</h2>
+            </div>
+
+            <button type="button" class="user-dialog-close" id="closeEditUser">&times;</button>
+        </header>
+
+        <div asp-validation-summary="All" class="" role="alert"></div>
+
+        <input type="hidden" name="Action" value="editUser"/>
+        <input type="hidden" name="StaffID" id="EditStaffID" />
+
+        <label class="user-dialog-field">
+            <span>Full Name</span>
+            <input name="FullName" id="EditFullName" placeholder="Enter full name..." required />
+        </label>
+
+        <label class="user-dialog-field">
+            <span>Email</span>
+            <input name="Email" id="EditEmail" placeholder="Enter email..." required />
+        </label>
+
+        <label class="user-dialog-field">
+            <span>Phone Number</span>
+            <input name="Phone" id="EditPhone" type="tel" placeholder="Enter phone number..." required />
+        </label>
+
+        <label class="user-dialog-field">
+            <span>Role</span>
+            <select name="Role" id="EditRole">
+                <option value="Staff">Staff</option>
+                <option value="Admin">Administrator</option>
+            </select>
+        </label>
+
+        <footer class="user-dialog-actions">
+            <button type="button" class="user-dialog-cancel" id="cancelEditUser">Cancel</button>
+            <button type="submit" class="user-dialog-submit">Edit Staff</button>
+        </footer>
+    </form>
+</dialog>
+
+@section Scripts{
+    <script>
+        const search = document.getElementById("search");
+        const roleFilter = document.getElementById("roleFilter");
+        const userFilter = document.getElementById("userFilter");
+
+        roleFilter.addEventListener("mousedown", () => {
+            userFilter.classList.add("is-open");
+        });
+
+        roleFilter.addEventListener("change", () => {
+            userFilter.classList.remove("is-open");
+            search.submit();
+        });
+
+        roleFilter.addEventListener("blur", () => {
+            userFilter.classList.remove("is-open");
+        });
+
+        roleFilter.addEventListener("keydown", (event) => {
+            if (event.key === "Escape" || event.key === "Tab") {
+                userFilter.classList.remove("is-open");
+            }
+        });
+
+        document.getElementById("resetFilter").addEventListener("click", function() {
+            const form = document.getElementById("search");
+
+            const searchBar = form.querySelector('input[name="SearchTerm"]');
+            if (searchBar) {
+                searchBar.value = "";
+            }
+
+            form.querySelectorAll("select").forEach(select => {
+                select.selectedIndex = 0;
+            });
+
+            form.submit();
+        })
+
+        // add user form control
+        const addUserDialog = document.getElementById("addUserDialog");
+
+        document.getElementById("openAddUser").addEventListener("click", () => {
+            addUserDialog.showModal();
+        });
+
+        document.getElementById("closeAddUser").addEventListener("click", () => {
+            addUserDialog.close();
+        });
+
+        document.getElementById("cancelAddUser").addEventListener("click", () => {
+            addUserDialog.close();
+        });
+
+        // edit user form control
+        const editUserDialog = document.getElementById("editUserDialog");
+
+        document.getElementById("closeEditUser").addEventListener("click", () => {
+            editUserDialog.close();
+        });
+
+        document.getElementById("cancelEditUser").addEventListener("click", () => {
+            editUserDialog.close();
+        });
+
+        document.querySelectorAll(".row-edit").forEach(button => {
+            button.addEventListener("click", event => {
+                event.preventDefault();
+                
+                const staffId = button.dataset.staffId;
+                const fullName = button.dataset.fullName;
+                const email = button.dataset.email;
+                const phone = button.dataset.phone;
+                const role = button.dataset.role;
+                
+                document.getElementById("EditStaffID").value = staffId;
+                document.getElementById("EditFullName").value = fullName;
+                document.getElementById("EditEmail").value = email;
+                document.getElementById("EditPhone").value = phone;
+                document.getElementById("EditRole").value = role;
+
+                editUserDialog.showModal();
+            })
+        });
+    </script>
+}

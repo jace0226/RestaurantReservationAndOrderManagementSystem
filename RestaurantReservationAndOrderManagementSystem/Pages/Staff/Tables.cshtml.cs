@@ -174,6 +174,37 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
             return RedirectToPage(new { statusFilter = StatusFilter, search = Search });
         }
 
+        public async Task<IActionResult> OnPostDeleteAsync(string tableId)
+        {
+            if (!User.IsInRole("Administrator"))
+            {
+                return Forbid();
+            }
+
+            if (string.IsNullOrWhiteSpace(tableId))
+            {
+                return BadRequest();
+            }
+
+            var table = await _dbContext.Tables
+                .FirstOrDefaultAsync(t => t.TableID == tableId);
+
+            if (table == null)
+            {
+                return NotFound();
+            }
+
+            _dbContext.Tables.Remove(table);
+
+            await _dbContext.SaveChangesAsync();
+
+            return RedirectToPage(new
+            {
+                StatusFilter,
+                Search
+            });
+        }
+
         public static string StatusCssClass(string status) => status.ToLowerInvariant() switch
         {
             "available" => "table-available",
@@ -244,6 +275,18 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
         }
 
         public sealed class UpdateTableInput
+        {
+            [Required]
+            public string TableID { get; set; } = string.Empty;
+
+            [Range(1, 100, ErrorMessage = "Capacity must be between 1 and 100.")]
+            public int Capacity { get; set; }
+
+            [Required]
+            public string Availability { get; set; } = string.Empty;
+        }
+
+        public sealed class DeleteTableInput
         {
             [Required]
             public string TableID { get; set; } = string.Empty;
