@@ -60,6 +60,8 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseStaticFiles();
+
 app.UseRouting();
 
 // 2. Enable Session middleware (MUST be placed after UseRouting and before UseAuthorization)
@@ -73,4 +75,3 @@ app.MapRazorPages()
    .WithStaticAssets();
 
 app.Run();
-

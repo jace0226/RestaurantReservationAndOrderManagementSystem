@@ -1,0 +1,224 @@
+@page "/Admin/MenuManagement"
+@model RestaurantReservationAndOrderManagementSystem.Pages.Admin.MenuManagementModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Menu Management";
+}
+
+<link rel="stylesheet" href="~/css/menu_management.css" asp-append-version="true" />
+
+<section class="customer-menu staff-menu-management" aria-labelledby="staff-menu-title">
+    <header class="customer-menu-hero">
+        <div>
+            <p class="customer-menu-eyebrow">Keep every bite up to date</p>
+            <h1 id="staff-menu-title">Menu Management</h1>
+            <p class="customer-menu-intro">Manage dishes, prices, availability, and the details guests see.</p>
+        </div>
+        <button class="staff-add-menu-button" id="open-add-menu" type="button">
+            <i class="fa-solid fa-plus" aria-hidden="true"></i>
+            <span>Add Menu Item</span>
+        </button>
+    </header>
+
+    @if (TempData["SuccessMessage"] is string successMessage)
+    {
+        <div class="staff-menu-notice success" role="status">@successMessage</div>
+    }
+    @if (TempData["ErrorMessage"] is string errorMessage)
+    {
+        <div class="staff-menu-notice error" role="alert">@errorMessage</div>
+    }
+
+    <section class="customer-menu-listing" aria-labelledby="staff-menu-list-title">
+        <div class="customer-section-heading customer-listing-heading">
+            <div>
+                <p class="customer-menu-eyebrow">Your restaurant, your menu</p>
+                <h2 id="staff-menu-list-title">Browse menu items</h2>
+            </div>
+            <div class="customer-menu-search">
+                <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                <label class="visually-hidden" for="staffMenuSearch">Search menu items</label>
+                <input id="staffMenuSearch" type="search" value="@Model.Search" placeholder="Search dishes..." autocomplete="off" />
+                <button class="customer-search-reset" id="staffMenuReset" type="button" aria-label="Clear search and reset category filter" title="Clear search and filters">
+                    <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                </button>
+            </div>
+        </div>
+
+        <nav class="customer-category-filters" id="staffCategoryFilters" aria-label="Filter menu by category">
+            <button type="button" class="active" data-category="All" aria-pressed="true">All</button>
+            @foreach (var category in Model.Categories)
+            {
+                <button type="button" data-category="@category" aria-pressed="false">@category</button>
+            }
+        </nav>
+
+        <p class="customer-menu-result-count" id="staffMenuResultCount" aria-live="polite"></p>
+        <div class="customer-menu-grid staff-menu-grid" id="staffMenuGrid" aria-live="polite">
+            @foreach (var item in Model.MenuItems)
+            {
+                <article class="customer-food-card staff-food-card" data-food-id="@item.Id" data-category="@item.Category">
+                    <div class="customer-food-image-wrap">
+                        @if (!string.IsNullOrWhiteSpace(item.Image))
+                        {
+                            <img class="customer-food-image"
+                                 src="@item.Image"
+                                 alt="@item.ImageAlt"
+                                 loading="lazy" />
+                        }
+                        else
+                        {
+                            <div class="staff-image-placeholder" aria-hidden="true">
+                                <i class="fa-solid fa-utensils"></i>
+                            </div>
+                        }
+                        <span class="customer-category-tag">@item.Category</span>
+                    </div>
+                    <div class="customer-food-content">
+                        <div class="customer-food-title-row">
+                            <h3>@item.Name</h3>
+                            <span class="customer-food-price">RM @item.Price.ToString("N2")</span>
+                        </div>
+                        <p class="customer-food-description">@item.Description</p>
+                        <div class="staff-food-facts">
+                            <span><i class="fa-solid fa-leaf" aria-hidden="true"></i>@item.Dietary</span>
+                            <span><i class="fa-regular fa-clock" aria-hidden="true"></i>@item.PrepTime</span>
+                        </div>
+                        <div class="customer-food-footer">
+                            <span class="customer-food-availability @(item.Availability.Equals("Available", StringComparison.OrdinalIgnoreCase) ? null : "unavailable")">
+                                @(item.Availability.Equals("Available", StringComparison.OrdinalIgnoreCase) ? "Available" : "Unavailable")
+                            </span>
+                            <button class="customer-view-details staff-edit-menu" type="button" data-edit-food="@item.Id">
+                                Edit Menu
+                            </button>
+                        </div>
+                    </div>
+                </article>
+            }
+        </div>
+
+        <div class="customer-menu-empty" id="staffMenuEmpty" hidden>
+            <span class="customer-empty-icon" aria-hidden="true"><i class="fa-solid fa-utensils"></i></span>
+            <h3>No dishes found</h3>
+            <p>Try another search or clear your filters to see the full menu.</p>
+            <button class="customer-reset-button" id="staffEmptyReset" type="button">Show all dishes</button>
+        </div>
+    </section>
+</section>
+
+<div class="staff-menu-modal" id="menuItemModal" hidden>
+    <div class="staff-menu-modal-backdrop" data-close-menu-modal></div>
+    <section class="staff-menu-form-panel" role="dialog" aria-modal="true" aria-labelledby="menuFormTitle" tabindex="-1">
+        <header class="staff-menu-form-header">
+            <div>
+                <p class="customer-menu-eyebrow">Menu details</p>
+                <h2 id="menuFormTitle">Add Menu Item</h2>
+            </div>
+            <button class="customer-modal-close" type="button" data-close-menu-modal aria-label="Close menu form">
+                <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+            </button>
+        </header>
+
+        <form id="menuItemForm" method="post" enctype="multipart/form-data" asp-page-handler="Save">
+            <div asp-validation-summary="All" class="staff-validation-summary" role="alert"></div>
+            <input asp-for="Input.FoodId" type="hidden" />
+            <input type="hidden" name="search" value="@Model.Search" />
+
+            <div class="staff-form-grid">
+                <div class="staff-image-field">
+                    <label asp-for="Input.Image">Food Image</label>
+                    <div class="staff-image-preview-wrap">
+                        <img id="menuImagePreview" src="@Model.CurrentImageUrl" alt="Current menu item preview" hidden="@string.IsNullOrWhiteSpace(Model.CurrentImageUrl)" />
+                        <div class="staff-image-placeholder" id="menuImagePlaceholder" aria-hidden="true" hidden="@(!string.IsNullOrWhiteSpace(Model.CurrentImageUrl))">
+                            <i class="fa-solid fa-image"></i>
+                            <span>Image preview</span>
+                        </div>
+                    </div>
+                    <input asp-for="Input.Image" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" />
+                    <span asp-validation-for="Input.Image" class="staff-field-error"></span>
+                    <small>JPG, PNG, or WebP; maximum 5 MB.</small>
+                </div>
+
+                <div class="staff-form-fields">
+                    <label asp-for="Input.Name">Food Name</label>
+                    <input asp-for="Input.Name" autocomplete="off" />
+                    <span asp-validation-for="Input.Name" class="staff-field-error"></span>
+
+                    <label asp-for="Input.Price">Price (RM)</label>
+                    <div class="staff-price-input">
+                        <span>RM</span>
+                        <input asp-for="Input.Price" type="number" min="0.01" max="999999.99" step="0.01" />
+                    </div>
+                    <span asp-validation-for="Input.Price" class="staff-field-error"></span>
+
+                    <label asp-for="Input.Category">Category</label>
+                    <select asp-for="Input.Category">
+                        @foreach (var category in Model.Categories)
+                        {
+                            <option value="@category">@category</option>
+                        }
+                    </select>
+                    <span asp-validation-for="Input.Category" class="staff-field-error"></span>
+
+                    <label asp-for="Input.Dietary">Dietary</label>
+                    <input asp-for="Input.Dietary" list="dietary-options" autocomplete="off" />
+                    <datalist id="dietary-options">
+                        <option value="Standard"></option>
+                        <option value="Vegetarian"></option>
+                        <option value="Vegan"></option>
+                        <option value="Gluten-free"></option>
+                        <option value="Dairy-free"></option>
+                    </datalist>
+                    <span asp-validation-for="Input.Dietary" class="staff-field-error"></span>
+
+                    <label asp-for="Input.PrepTime">Preparation Time (minutes)</label>
+                    <input asp-for="Input.PrepTime" placeholder="e.g. 20 or 15-20" inputmode="numeric" />
+                    <span asp-validation-for="Input.PrepTime" class="staff-field-error"></span>
+
+                    <label asp-for="Input.Availability">Availability</label>
+                    <select asp-for="Input.Availability">
+                        <option value="Available">Available</option>
+                        <option value="Unavailable">Unavailable</option>
+                    </select>
+                    <span asp-validation-for="Input.Availability" class="staff-field-error"></span>
+                </div>
+
+                <div class="staff-description-fields">
+                    <label asp-for="Input.Description">Description</label>
+                    <textarea asp-for="Input.Description" rows="3" maxlength="300" placeholder="Short description shown on the menu card"></textarea>
+                    <span asp-validation-for="Input.Description" class="staff-field-error"></span>
+
+                    <label asp-for="Input.FullDescription">Full Description</label>
+                    <textarea asp-for="Input.FullDescription" rows="5" maxlength="2000" placeholder="More detail for guests about this dish"></textarea>
+                    <span asp-validation-for="Input.FullDescription" class="staff-field-error"></span>
+                </div>
+            </div>
+
+            <footer class="staff-form-actions">
+                <button class="staff-delete-menu-button" id="deleteMenuButton" type="submit" form="deleteMenuForm" hidden>
+                    <i class="fa-solid fa-trash" aria-hidden="true"></i> Delete Menu
+                </button>
+                <div class="staff-form-actions-right">
+                    <button class="staff-cancel-button" type="button" data-close-menu-modal>Cancel</button>
+                    <button class="staff-save-button" id="saveMenuButton" type="submit">Add Menu</button>
+                </div>
+            </footer>
+        </form>
+    </section>
+</div>
+
+<form id="deleteMenuForm" method="post" asp-page-handler="Delete" hidden>
+    <input type="hidden" id="deleteFoodId" name="foodId" />
+    <input type="hidden" name="search" value="@Model.Search" />
+</form>
+
+@section Scripts {
+    <script>
+        window.staffMenuItemsData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+            Model.MenuItems,
+            new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }
+        ));
+        window.staffMenuFormOpen = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.ShowForm));
+    </script>
+    <script src="~/js/menu_management.js" asp-append-version="true"></script>
+}
