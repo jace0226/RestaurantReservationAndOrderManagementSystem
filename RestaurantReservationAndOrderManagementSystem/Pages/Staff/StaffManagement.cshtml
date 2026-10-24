@@ -11,7 +11,7 @@
         @* Left content *@
         <div>
             <p class="eyebrow">STAFF MANAGEMENT</p>
-            <h1>Manange Your Staff</h1>
+            <h1>Manage Your Staff</h1>
             <p class="header-caption">View, add, and manage staff members and their roles.</p>
         </div>
 
@@ -111,7 +111,9 @@
                                         <i class="fas fa-pen-to-square"></i>
                                     </a>
                                     <a class="row-delete" href="#"
-                                       data-staff-id="@staff.StaffID">
+                                       data-staff-id="@staff.StaffID"
+                                       data-full-name="@staff.FullName"
+                                    >
                                         <i class="fas fa-trash-can"></i>
                                     </a>
                                 </div>
@@ -221,6 +223,42 @@
     </form>
 </dialog>
 
+@* this is for the delete user part *@
+<dialog class="user-dialog" id="deleteUserDialog">
+    <form method="post" asp-page-handler="DeleteUser" class="user-dialog-form">
+        @Html.AntiForgeryToken()
+
+        <header class="user-dialog-heading">
+            <div>
+                <p class="eyebrow">Staff Management</p>
+                <h2 id="add-staff-tittle">Delete Staff</h2>
+            </div>
+
+            <button type="button" class="user-dialog-close" id="closeDeleteUser">&times;</button>
+        </header>
+
+        <div asp-validation-summary="All" class="" role="alert"></div>
+
+        <input type="hidden" name="Action" value="editUser" />
+        <input type="hidden" name="StaffID" id="DeleteStaffID" />
+
+        <span>Are you sure you want to delete: </span>
+        <label>
+            <span>Staff ID:</span>
+            <span id="displayId"></span>
+        </label>
+        <label>
+            <span>Name:</span>
+            <span id="DeleteFullName"></span>
+        </label>
+
+        <footer class="user-dialog-actions">
+            <button type="button" class="user-dialog-cancel" id="cancelDeleteUser">Cancel</button>
+            <button type="submit" class="user-dialog-submit">Delete</button>
+        </footer>
+    </form>
+</dialog>
+
 @section Scripts{
     <script>
         const search = document.getElementById("search");
@@ -286,7 +324,8 @@
         document.getElementById("cancelEditUser").addEventListener("click", () => {
             editUserDialog.close();
         });
-
+        
+        // this is to pass data to the edit form
         document.querySelectorAll(".row-edit").forEach(button => {
             button.addEventListener("click", event => {
                 event.preventDefault();
@@ -304,6 +343,33 @@
                 document.getElementById("EditRole").value = role;
 
                 editUserDialog.showModal();
+            })
+        });
+
+        // delete user form control
+        const deleteUserDialog = document.getElementById("deleteUserDialog");
+
+        document.getElementById("closeDeleteUser").addEventListener("click", () => {
+            deleteUserDialog.close();
+        });
+
+        document.getElementById("cancelDeleteUser").addEventListener("click", () => {
+            deleteUserDialog.close();
+        });
+
+        // this is to pass data to the delete form
+        document.querySelectorAll(".row-delete").forEach(button => {
+            button.addEventListener("click", event => {
+                event.preventDefault();
+
+                const staffId = button.dataset.staffId;
+                const fullname = button.dataset.fullName;
+
+                document.getElementById("DeleteStaffID").value = staffId;
+                document.getElementById("displayId").textContent = staffId;
+                document.getElementById("DeleteFullName").textContent = fullname;
+
+                deleteUserDialog.showModal();
             })
         });
     </script>

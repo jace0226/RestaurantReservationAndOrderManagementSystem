@@ -342,5 +342,28 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Staff
             // 9. Return to the staff list.
             return RedirectToPage();
         }
+
+        public async Task<IActionResult> OnPostDeleteUserAsync() {
+            var staff = await _context.Staffs
+                .Include(s => s.User)
+                .FirstOrDefaultAsync(s => s.StaffID == StaffID);
+
+            if (staff == null || staff.User == null)
+            {
+                return NotFound();
+            }
+
+            var user = staff.User;
+
+            _context.Staffs.Remove(staff);
+
+            _context.Users.Remove(user);
+
+            // 8. Save changes.
+            await _context.SaveChangesAsync();
+
+            // 9. Return to the staff list.
+            return RedirectToPage();
+        }
     }
 }
