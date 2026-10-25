@@ -953,7 +953,7 @@ body.customer-modal-open {
 
 .customer-cart-header {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
     gap: 0.75rem;
     padding: 1rem 1rem 0.8rem;
@@ -962,10 +962,45 @@ body.customer-modal-open {
 }
 
     .customer-cart-header h2 {
-        margin: 0.35rem 0 0;
+        margin: 0.2rem 0 0;
         color: var(--customer-ink);
         font-size: 1.45rem;
         letter-spacing: -0.04em;
+    }
+
+/* Table selection styling in cart header */
+.customer-cart-table-select-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    margin-top: 0.6rem;
+}
+
+.customer-table-select-label {
+    color: var(--customer-muted);
+    font-size: 0.7rem;
+    font-weight: 700;
+}
+
+.customer-table-select {
+    width: 100%;
+    min-height: 36px;
+    padding: 0.35rem 0.65rem;
+    border: 1px solid var(--brand-border);
+    border-radius: 10px;
+    background-color: #f8f9ff;
+    color: var(--customer-ink);
+    font: inherit;
+    font-size: 0.76rem;
+    font-weight: 600;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+    .customer-table-select:focus {
+        border-color: var(--brand-color);
+        box-shadow: 0 0 0 3px rgb(1 27 216 / 12%);
     }
 
 .customer-cart-close {

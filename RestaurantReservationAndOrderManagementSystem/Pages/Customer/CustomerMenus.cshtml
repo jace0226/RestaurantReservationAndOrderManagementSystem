@@ -118,6 +118,12 @@
         <div>
             <p class="customer-menu-eyebrow">Your selection</p>
             <h2>My Cart</h2>
+            <div class="customer-cart-table-select-wrap">
+                <label for="customerTableSelect" class="customer-table-select-label">Select Table:</label>
+                <select id="customerTableSelect" class="customer-table-select" required>
+                    <option value="" selected disabled>-- Choose Table --</option>
+                </select>
+            </div>
         </div>
         <button type="button" class="customer-cart-close" id="customerCartClose" aria-label="Close cart">
             <i class="fa-solid fa-xmark" aria-hidden="true"></i>
@@ -156,11 +162,15 @@
 
 @section Scripts {
     <script>
-        // Pass database menu items to JS with CamelCase naming convention
         window.menuItemsData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
                     Model.MenuItems,
                     new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }
-            ));
+                    ));
+
+        window.availableTablesData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+                    Model.AvailableTables,
+                    new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }
+                    ));
     </script>
     <script src="~/js/customer_menus.js" asp-append-version="true"></script>
 }

@@ -37,5 +37,7 @@ namespace RestaurantReservationAndOrderManagementSystem.Models
 
         public string Dietary { get; set; } = string.Empty;
 
+        [NotMapped]
+        public string Recommendation { get; set; } = string.Empty;
     }
 }

@@ -1,5 +1,6 @@
 (() => {
     const menuItems = window.menuItemsData || [];
+    const availableTables = window.availableTablesData || [];
 
     const menuGrid = document.getElementById("customerMenuGrid");
     const recommendationGrid = document.getElementById("recommendationGrid");
@@ -19,6 +20,7 @@
     const cartTax = document.getElementById("customerCartTax");
     const cartTotal = document.getElementById("customerCartTotal");
     const confirmOrderButton = document.getElementById("customerConfirmOrder");
+    const tableSelect = document.getElementById("customerTableSelect");
     const quantityValue = document.getElementById("customerQtyValue");
     const quantityPlus = document.getElementById("customerQtyPlus");
     const quantityMinus = document.getElementById("customerQtyMinus");
@@ -40,7 +42,40 @@
         return `RM${numPrice.toFixed(2)}`;
     };
 
-    const formatMoneyNumber = (value) => Number(value || 0).toFixed(2);
+    // Helper to evaluate item availability safely
+    function isItemAvailable(item) {
+        if (typeof item.foodAvailability === "boolean") return item.foodAvailability;
+        const status = (item.foodAvailability || "").toLowerCase();
+        return status === "available" || status === "true";
+    }
+
+    function populateTableOptions() {
+        if (!tableSelect) return;
+        tableSelect.innerHTML = '<option value="" selected disabled>-- Choose Table --</option>';
+
+        if (availableTables.length === 0) {
+            const noOpt = document.createElement("option");
+            noOpt.value = "";
+            noOpt.textContent = "No dine-in tables available";
+            noOpt.disabled = true;
+            tableSelect.appendChild(noOpt);
+            return;
+        }
+
+        availableTables.forEach((t) => {
+            const opt = document.createElement("option");
+            const id = t.tableID || t.tableId;
+            opt.value = id;
+            opt.textContent = id;
+            tableSelect.appendChild(opt);
+        });
+    }
+
+    function validateOrderButton() {
+        const isTableSelected = tableSelect && tableSelect.value !== "";
+        const hasItems = cart.length > 0;
+        confirmOrderButton.disabled = !hasItems || !isTableSelected;
+    }
 
     function makeElement(tagName, className, text) {
         const element = document.createElement(tagName);
@@ -56,8 +91,8 @@
     function makeImage(item, className) {
         const image = document.createElement("img");
         image.className = className;
-        image.src = item.image;
-        image.alt = item.imageAlt || item.name;
+        image.src = item.imageUrl || "/images/placeholder-food.jpg";
+        image.alt = item.imageAlt || item.foodName || "Food Image";
         image.loading = "lazy";
         return image;
     }
@@ -68,35 +103,38 @@
 
     function createMenuCard(item) {
         const card = makeElement("article", "customer-food-card");
-        card.id = `dish-${item.id}`;
+        const itemId = item.foodID || item.foodId;
+        card.id = `dish-${itemId}`;
+
+        const available = isItemAvailable(item);
 
         const imageWrap = makeElement("div", "customer-food-image-wrap");
-        const categoryTag = makeElement("span", "customer-category-tag", item.category);
+        const categoryTag = makeElement("span", "customer-category-tag", item.category || "Main Course");
         imageWrap.append(makeImage(item, "customer-food-image"), categoryTag);
 
         const content = makeElement("div", "customer-food-content");
         const titleRow = makeElement("div", "customer-food-title-row");
         titleRow.append(
-            makeElement("h3", "", item.name),
+            makeElement("h3", "", item.foodName || "Unnamed Dish"),
             makeElement("span", "customer-food-price", formatPrice(item.price))
         );
 
         const footer = makeElement("div", "customer-food-footer");
         const availability = makeElement(
             "span",
-            `customer-food-availability${item.available ? "" : " unavailable"}`,
-            item.available ? "Available today" : "Currently unavailable"
+            `customer-food-availability${available ? "" : " unavailable"}`,
+            available ? "Available today" : "Currently unavailable"
         );
         const addOrderButtonCard = makeElement("button", "customer-view-details", "Add Order");
         addOrderButtonCard.type = "button";
-        addOrderButtonCard.disabled = !item.available;
-        addOrderButtonCard.setAttribute("aria-label", `Add ${item.name} to the order`);
+        addOrderButtonCard.disabled = !available;
+        addOrderButtonCard.setAttribute("aria-label", `Add ${item.foodName} to the order`);
         addOrderButtonCard.addEventListener("click", () => openOrderModal(item, addOrderButtonCard));
         footer.append(availability, addOrderButtonCard);
 
         content.append(
             titleRow,
-            makeElement("p", "customer-food-description", item.description),
+            makeElement("p", "customer-food-description", item.foodDescription || ""),
             footer
         );
         card.append(imageWrap, content);
@@ -122,23 +160,24 @@
 
     function createRecommendationCard(item) {
         const card = makeElement("article", "customer-recommendation-card");
+        const itemId = item.foodID || item.foodId;
         card.tabIndex = 0;
         card.setAttribute("role", "button");
-        card.setAttribute("aria-label", `Jump to ${item.name}`);
+        card.setAttribute("aria-label", `Jump to ${item.foodName}`);
 
         const details = makeElement("div", "customer-recommendation-details");
         details.append(
             makeElement("span", "customer-recommendation-label", item.recommendation),
-            makeElement("h3", "", item.name),
+            makeElement("h3", "", item.foodName),
             makeElement("span", "customer-recommendation-price", formatPrice(item.price))
         );
         card.append(makeImage(item, "customer-recommendation-image"), details);
 
-        card.addEventListener("click", () => scrollToDish(item.id));
+        card.addEventListener("click", () => scrollToDish(itemId));
         card.addEventListener("keydown", (e) => {
             if (e.key === "Enter" || e.key === " ") {
                 e.preventDefault();
-                scrollToDish(item.id);
+                scrollToDish(itemId);
             }
         });
 
@@ -154,7 +193,7 @@
         const query = searchInput.value.trim().toLocaleLowerCase();
         const filteredItems = menuItems.filter((item) => {
             const matchesCategory = selectedCategory === "All" || item.category === selectedCategory;
-            const matchesSearch = item.name.toLocaleLowerCase().includes(query);
+            const matchesSearch = (item.foodName || "").toLocaleLowerCase().includes(query);
             return matchesCategory && matchesSearch;
         });
 
@@ -228,27 +267,26 @@
         };
         currentQuantity = 1;
 
-        document.getElementById("customerModalImage").src = item.image;
-        document.getElementById("customerModalImage").alt = item.imageAlt || item.name;
-        document.getElementById("customerModalCategory").textContent = item.category;
-        document.getElementById("customerModalTitle").textContent = item.name;
+        const available = isItemAvailable(item);
+
+        document.getElementById("customerModalImage").src = item.imageUrl || "/images/placeholder-food.jpg";
+        document.getElementById("customerModalImage").alt = item.imageAlt || item.foodName;
+        document.getElementById("customerModalCategory").textContent = item.category || "Main Course";
+        document.getElementById("customerModalTitle").textContent = item.foodName;
         document.getElementById("customerModalPrice").textContent = formatPrice(item.price);
-        document.getElementById("customerModalDescription").textContent = item.fullDescription;
-        document.getElementById("customerModalPrepTime").textContent = item.prepTime;
-        document.getElementById("customerModalAvailability").textContent = item.available ? "Available today" : "Currently unavailable";
-        document.getElementById("customerModalDietary").textContent = item.dietary;
+        document.getElementById("customerModalDescription").textContent = item.fullDescription || item.foodDescription || "";
+        document.getElementById("customerModalPrepTime").textContent = item.prepTime || "15-20 mins";
+        document.getElementById("customerModalAvailability").textContent = available ? "Available today" : "Currently unavailable";
+        document.getElementById("customerModalDietary").textContent = item.dietary || "Standard";
 
         populateCustomizationOptions(item);
         orderRemarks.value = "";
         updateQuantityUI();
 
-        addOrderButton.hidden = !item.available;
+        addOrderButton.hidden = !available;
         addOrderButton.innerHTML = '<i class="fa-solid fa-plus" aria-hidden="true"></i> Add to Order';
         addOrderButton.onclick = () => {
-            if (!item.available) {
-                return;
-            }
-
+            if (!available) return;
             addItemToCart();
             closeDetails();
         };
@@ -272,15 +310,13 @@
     }
 
     function addItemToCart() {
-        if (!currentDraftItem || !currentDraftItem.item) {
-            return;
-        }
+        if (!currentDraftItem || !currentDraftItem.item) return;
 
         const item = currentDraftItem.item;
         const newSelection = {
-            foodId: item.id,
-            name: item.name,
-            image: item.image,
+            foodId: item.foodID || item.foodId,
+            name: item.foodName,
+            image: item.imageUrl || "/images/placeholder-food.jpg",
             price: Number(item.price) || 0,
             quantity: currentQuantity,
             sugar: currentDraftItem.sugar || "",
@@ -300,12 +336,8 @@
 
     function buildSelectionText(entry) {
         const selected = [];
-        if (entry.sugar) {
-            selected.push(entry.sugar);
-        }
-        if (entry.ice) {
-            selected.push(entry.ice);
-        }
+        if (entry.sugar) selected.push(entry.sugar);
+        if (entry.ice) selected.push(entry.ice);
         return selected.join(", ");
     }
 
@@ -321,7 +353,8 @@
         const totalUnits = cart.reduce((total, item) => total + Number(item.quantity || 0), 0);
         cartBadge.textContent = String(totalUnits);
         cartBadge.hidden = totalUnits === 0;
-        confirmOrderButton.disabled = cart.length === 0;
+
+        validateOrderButton();
 
         if (cart.length === 0) {
             cartEmptyState.hidden = false;
@@ -337,7 +370,7 @@
         cart.forEach((entry, index) => {
             const row = makeElement("div", "customer-cart-item");
             const itemImage = makeElement("img", "customer-cart-item-image");
-            itemImage.src = entry.image || "/images/placeholder-food.jpg";
+            itemImage.src = entry.image;
             itemImage.alt = entry.name;
 
             const itemBody = makeElement("div", "customer-cart-item-body");
@@ -379,14 +412,9 @@
 
     function updateAdjustment(action, index) {
         const item = cart[index];
-        if (!item) {
-            return;
-        }
+        if (!item) return;
 
-        if (action === "increase") {
-            item.quantity += 1;
-        }
-
+        if (action === "increase") item.quantity += 1;
         if (action === "decrease") {
             if (item.quantity > 1) {
                 item.quantity -= 1;
@@ -417,6 +445,10 @@
         searchInput.focus();
     }
 
+    if (tableSelect) {
+        tableSelect.addEventListener("change", validateOrderButton);
+    }
+
     quantityMinus.addEventListener("click", () => {
         if (currentQuantity > 1) {
             currentQuantity -= 1;
@@ -433,9 +465,7 @@
     });
 
     orderRemarks.addEventListener("input", (event) => {
-        if (!currentDraftItem) {
-            return;
-        }
+        if (!currentDraftItem) return;
         currentDraftItem.remarks = event.target.value;
     });
 
@@ -478,18 +508,23 @@
     cartCloseButton.addEventListener("click", () => toggleCart(false));
     confirmOrderButton.addEventListener("click", () => {
         if (cart.length === 0) {
-            confirmOrderButton.disabled = true;
+            validateOrderButton();
             return;
         }
 
-        window.alert("Demo: Not saving in database. Status will set to pending...");
+        if (!tableSelect || !tableSelect.value) {
+            window.alert("Please select a dine-in table before sending your order.");
+            if (tableSelect) tableSelect.focus();
+            return;
+        }
+
+        const selectedTableId = tableSelect.value;
+        window.alert(`Demo: Placing order for Table ${selectedTableId}. Status will set to pending...`);
     });
 
     cartItemsContainer.addEventListener("click", (event) => {
         const target = event.target.closest("button[data-cart-action]");
-        if (!target) {
-            return;
-        }
+        if (!target) return;
 
         const index = Number(target.dataset.cartIndex);
         const action = target.dataset.cartAction;
@@ -506,9 +541,7 @@
     });
 
     cartButton.addEventListener("pointermove", (event) => {
-        if (!cartButtonDragState) {
-            return;
-        }
+        if (!cartButtonDragState) return;
 
         const deltaX = event.clientX - cartButtonDragState.startX;
         const deltaY = event.clientY - cartButtonDragState.startY;
@@ -535,12 +568,8 @@
 
     document.addEventListener("keydown", (event) => {
         if (event.key === "Escape") {
-            if (!modal.hidden) {
-                closeDetails();
-            }
-            if (cartPanel.classList.contains("open")) {
-                toggleCart(false);
-            }
+            if (!modal.hidden) closeDetails();
+            if (cartPanel.classList.contains("open")) toggleCart(false);
             return;
         }
 
@@ -551,6 +580,7 @@
         }
     });
 
+    populateTableOptions();
     updateCartSummary();
     renderRecommendations();
     renderMenu();
