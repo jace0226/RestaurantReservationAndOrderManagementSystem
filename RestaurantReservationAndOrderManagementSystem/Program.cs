@@ -9,7 +9,10 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorPages(options =>
-    options.Conventions.AuthorizeFolder("/Staff", "StaffAccess"));
+{
+    options.Conventions.AuthorizeFolder("/Staff", "StaffAccess");
+    options.Conventions.AuthorizeFolder("/Customer", "CustomerAccess");
+});
 
 // 1. Register Session services
 builder.Services.AddDistributedMemoryCache(); // Stores session data in memory
@@ -37,8 +40,12 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     });
 
 builder.Services.AddAuthorization(options =>
+{
     options.AddPolicy("StaffAccess", policy =>
-        policy.RequireRole("Staff", "Administrator")));
+        policy.RequireRole("Staff", "Administrator"));
+    options.AddPolicy("CustomerAccess", policy =>
+        policy.RequireRole("Customer"));
+});
 
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 

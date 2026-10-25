@@ -1,14 +1,16 @@
-using System.ComponentModel.DataAnnotations;
-using System.Security.Claims;
-using System.Text;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using RestaurantReservationAndOrderManagementSystem.Data;
 using RestaurantReservationAndOrderManagementSystem.Models;
+using System.ComponentModel.DataAnnotations;
+using System.Security.Claims;
+using System.Text;
 
 namespace RestaurantReservationAndOrderManagementSystem.Pages.Admin
 {
+    [Authorize(Roles = "Administrator")]
     [RequestFormLimits(MultipartBodyLengthLimit = 6 * 1024 * 1024)]
     public class MenuManagementModel : PageModel
     {
@@ -45,6 +47,27 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Admin
         public async Task OnGetAsync()
         {
             await LoadPageDataAsync();
+        }
+
+        private async Task<string> GenerateNextFoodIdAsync()
+        {
+            // Retrieve all existing FoodIDs starting with 'F'
+            var foodIds = await _dbContext.FoodItems
+                .AsNoTracking()
+                .Select(item => item.FoodID)
+                .Where(id => id.StartsWith("F"))
+                .ToListAsync();
+
+            // Extract numerical suffixes, find the max value, and increment
+            int maxNumber = foodIds
+                .Select(id => int.TryParse(id.Substring(1), out var num) ? num : 0)
+                .DefaultIfEmpty(0)
+                .Max();
+
+            int nextNumber = maxNumber + 1;
+
+            // Formats as F001, F002, ..., F010, F100, etc.
+            return $"F{nextNumber:D3}";
         }
 
         public async Task<IActionResult> OnPostSaveAsync()
@@ -137,14 +160,20 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Admin
             var oldImageUrl = existingItem?.ImageUrl;
             try
             {
+                // 1. Determine FoodID first
+                var isNewItem = existingItem is null;
+                var foodId = existingItem?.FoodID ?? await GenerateNextFoodIdAsync();
+
+                // 2. Save image using foodId
                 if (Input.Image is not null && uploadExtension is not null)
                 {
-                    newImageUrl = await SaveImageAsync(Input.Image, uploadExtension);
+                    newImageUrl = await SaveImageAsync(Input.Image, uploadExtension, foodId);
                 }
 
+                // 3. Create or update menuItem
                 var menuItem = existingItem ?? new Food_Items
                 {
-                    FoodID = Guid.NewGuid().ToString("N"),
+                    FoodID = foodId,
                     StaffID = staffId!
                 };
 
@@ -319,30 +348,31 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Admin
             return extension == ".webp" && isWebp ? ".webp" : null;
         }
 
-       private async Task<string> SaveImageAsync(IFormFile image, string extension)
+        private async Task<string> SaveImageAsync(IFormFile image, string extension, string foodId)
         {
             var imageDirectory = GetImageDirectory();
             Directory.CreateDirectory(imageDirectory);
 
-            var fileName = $"{Guid.NewGuid():N}{extension}";
-                var filePath = Path.Combine(imageDirectory, fileName);
-                var imageUrl = $"/images/{fileName}";
-                try
-                {
+            // Named after the FoodID (e.g., F001.jpg)
+            var fileName = $"{foodId}{extension}";
+            var filePath = Path.Combine(imageDirectory, fileName);
+            var imageUrl = $"/images/{fileName}";
+            try
+            {
                 await using var destination = System.IO.File.Create(filePath);
-                    await image.CopyToAsync(destination);
-                    return imageUrl;
-                }
-                catch (IOException)
-                {
-                    DeleteImageFile(imageUrl);
-                    throw;
-                }
-                catch (UnauthorizedAccessException)
-                {
-                    DeleteImageFile(imageUrl);
-                    throw;
-                }
+                await image.CopyToAsync(destination);
+                return imageUrl;
+            }
+            catch (IOException)
+            {
+                DeleteImageFile(imageUrl);
+                throw;
+            }
+            catch (UnauthorizedAccessException)
+            {
+                DeleteImageFile(imageUrl);
+                throw;
+            }
         }
 
         private string GetImageDirectory()
