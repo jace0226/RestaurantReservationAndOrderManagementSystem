@@ -18,7 +18,7 @@
         @* header right content *@
         <div class="filter-container">
             <i class="fa-solid fa-calendar-days"></i>
-            <div class="week-filter">
+            <div class="week-filter" id="weekContainer">
                 <form method="get">
                     <select id="weekFilter" name="WeekStart" class="" onchange="this.form.submit()">
                         @foreach (var week in Model.Weeks){
@@ -219,7 +219,7 @@
                         {
                             <tr>
                                 <td colspan="3" style="text-align:center;">
-                                    No transactions made this week this week.
+                                    No transactions made this week.
                                 </td>
                             </tr>
                         }
@@ -233,6 +233,27 @@
 @section Scripts{
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
+        const weekFilter = document.getElementById("weekFilter");
+        const weekContainer = document.getElementById("weekContainer");
+
+        weekFilter.addEventListener("mousedown", () => {
+            weekContainer.classList.add("is-open");
+        });
+
+        weekFilter.addEventListener("change", () => {
+            weekContainer.classList.remove("is-open");
+        });
+
+        weekFilter.addEventListener("blur", () => {
+            weekContainer.classList.remove("is-open");
+        });
+
+        weekFilter.addEventListener("keydown", (event) => {
+            if (event.key === "Escape" || event.key === "Tab") {
+                weekContainer.classList.remove("is-open");
+            }
+        });
+
         const revenueLabels = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.RevenueLabels));
         const revenueValues = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.RevenueValues));
 

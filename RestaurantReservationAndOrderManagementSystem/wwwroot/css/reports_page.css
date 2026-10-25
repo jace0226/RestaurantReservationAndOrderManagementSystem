@@ -89,6 +89,10 @@
     transition: border-color 0.2s, box-shadow 0.2s;
 }
 
+.week-filter.is-open .dropdown-arrow {
+    transform: rotate(180deg);
+}
+
 .week-filter select {
     flex: 1;
     min-width: 0;
