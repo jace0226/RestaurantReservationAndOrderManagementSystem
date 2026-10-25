@@ -28,6 +28,10 @@
                     <span>Dashboard</span>
                 </a>
                 @if (User.IsInRole("Administrator")){
+                    <a class="nav-item @(currentPath.StartsWithSegments("/Staff/Reports", StringComparison.OrdinalIgnoreCase) ? "active" : null)" href="/Staff/Reports" aria-current="@(currentPath.StartsWithSegments("/Staff/Reports", StringComparison.OrdinalIgnoreCase) ? "page" : null)">
+                        <i class="fa-solid fa-chart-column"></i>
+                        <span>Reports</span>
+                    </a>
                     <a class="nav-item @(currentPath.StartsWithSegments("/Staff/StaffManagement", StringComparison.OrdinalIgnoreCase) ? "active" : null)" href="/Staff/StaffManagement" aria-current="@(currentPath.StartsWithSegments("/Staff/StaffManagement", StringComparison.OrdinalIgnoreCase) ? "page" : null)">
                         <i class="fa-solid fa-users"></i>
                         <span>Staff Management</span>
