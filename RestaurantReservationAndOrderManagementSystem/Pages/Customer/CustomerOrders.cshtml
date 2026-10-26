@@ -149,7 +149,9 @@
                         else if (order.Status == "Payment")
                         {
                             <div class="customer-order-actions">
-                                <button type="button" class="customer-order-action" data-unavailable-feature="Payment">Make Payment</button>
+                                <a class="customer-order-action"
+                                   asp-page="/Customer/Payment"
+                                   asp-route-orderId="@order.OrderId">Make Payment</a>
                             </div>
                         }
                         else if (order.Status == "Completed")

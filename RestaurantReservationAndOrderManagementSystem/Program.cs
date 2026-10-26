@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using RestaurantReservationAndOrderManagementSystem.Data;
 using RestaurantReservationAndOrderManagementSystem.Models;
 using RestaurantReservationAndOrderManagementSystem.Services;
+using RestaurantReservationAndOrderManagementSystem.Services.Payments;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,6 +15,7 @@ builder.Services.AddRazorPages(options =>
     options.Conventions.AuthorizeFolder("/Staff", "StaffAccess");
     options.Conventions.AuthorizeFolder("/Customer", "CustomerAccess");
 });
+builder.Services.AddControllers();
 
 // 1. Register Session services
 builder.Services.AddDistributedMemoryCache(); // Stores session data in memory
@@ -49,6 +51,17 @@ builder.Services.AddAuthorization(options =>
 });
 
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
+builder.Services.AddSingleton<IStripeCheckoutService, StripeCheckoutService>();
+builder.Services.AddScoped<StripePaymentService>();
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(options =>
+{
+    options.Cookie.Name = "BetweenBites.Session";
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+    options.Cookie.SameSite = SameSiteMode.Lax;
+    options.IdleTimeout = TimeSpan.FromMinutes(20);
+});
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(
@@ -73,15 +86,13 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
-
-// 2. Enable Session middleware (MUST be placed after UseRouting and before UseAuthorization)
 app.UseSession();
-
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapStaticAssets();
 app.MapRazorPages()
    .WithStaticAssets();
+app.MapControllers();
 
 app.Run();

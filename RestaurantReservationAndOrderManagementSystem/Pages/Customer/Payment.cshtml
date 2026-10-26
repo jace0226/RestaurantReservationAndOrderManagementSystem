@@ -1,0 +1,13 @@
+@page "/Customer/Payment"
+@model RestaurantReservationAndOrderManagementSystem.Pages.Customer.PaymentModel
+@{
+    ViewData["Title"] = "Secure payment";
+}
+
+<section class="container py-5">
+    <div class="mx-auto text-center" style="max-width: 640px;">
+        <h1>Opening secure Stripe Checkout</h1>
+        <p>You are being redirected to Stripe to complete payment for order #@Model.OrderId.</p>
+        <a asp-page="/Customer/CustomerOrders" class="btn btn-outline-primary">Return to my orders</a>
+    </div>
+</section>

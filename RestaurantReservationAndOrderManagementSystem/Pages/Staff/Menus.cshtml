@@ -14,30 +14,8 @@
                 <h1>What are we serving today?</h1>
                 <p class="menu-intro">Keep the counter colorful, the menu fresh, and every bite worth coming back for.</p>
             </div>
-            <button class="add-menu-btn" id="toggle-create-form" type="button" aria-expanded="@Model.ShowCreateForm" aria-controls="create-menu-form">
-                <i class="fa-solid fa-plus" aria-hidden="true"></i> Add menu item
-            </button>
         </div>
     </header>
-
-    <form id="create-menu-form" method="post" asp-page-handler="Create" hidden="@(!Model.ShowCreateForm)">
-        <input type="hidden" name="search" value="@Model.Search" />
-        <input type="hidden" name="availabilityFilter" value="@Model.AvailabilityFilter" />
-        <div asp-validation-summary="All" class="text-danger"></div>
-        <label asp-for="NewMenuItem.Name"></label>
-        <input asp-for="NewMenuItem.Name" />
-        <span asp-validation-for="NewMenuItem.Name" class="text-danger"></span>
-
-        <label asp-for="NewMenuItem.Price"></label>
-        <input asp-for="NewMenuItem.Price" type="number" min="0.01" step="0.01" />
-        <span asp-validation-for="NewMenuItem.Price" class="text-danger"></span>
-
-        <label asp-for="NewMenuItem.Description"></label>
-        <textarea asp-for="NewMenuItem.Description"></textarea>
-        <span asp-validation-for="NewMenuItem.Description" class="text-danger"></span>
-
-        <button type="submit">Save menu item</button>
-    </form>
 
     <section class="menu-stats" aria-label="Restaurant overview">
         <article class="menu-stat menu-stat-primary">
@@ -97,7 +75,7 @@
         <div class="menu-grid" id="menuGrid">
             @if (Model.MenuItems.Count == 0)
             {
-                <p>No menu items found. Add an item to get started.</p>
+                <p>No menu items found.</p>
             }
             @foreach (var item in Model.MenuItems)
             {
@@ -138,19 +116,12 @@
 @section Scripts {
     <script>
         (() => {
-            const createForm = document.getElementById("create-menu-form");
-            const toggleButton = document.getElementById("toggle-create-form");
             const grid = document.getElementById("menuGrid");
             const count = document.getElementById("items-count");
             const searchForm = document.querySelector(".menu-search");
             const search = document.getElementById("menuSearch");
             const filters = document.querySelectorAll(".filter-nav a");
             let activeAvailability = "@Model.AvailabilityFilter";
-
-            toggleButton.addEventListener("click", () => {
-                createForm.hidden = !createForm.hidden;
-                toggleButton.setAttribute("aria-expanded", String(!createForm.hidden));
-            });
 
             function updateMenu() {
                 const query = search.value.trim().toLocaleLowerCase();
@@ -164,9 +135,9 @@
                     if (isVisible) visibleItems++;
                 });
                 count.textContent = `${visibleItems} ${visibleItems === 1 ? "item" : "items"}`;
-                document.querySelectorAll("#create-menu-form input[name='search'], .menu-card form input[name='search']")
+                document.querySelectorAll(".menu-card form input[name='search']")
                     .forEach(input => input.value = search.value);
-                document.querySelectorAll("#create-menu-form input[name='availabilityFilter'], .menu-card form input[name='availabilityFilter']")
+                document.querySelectorAll(".menu-card form input[name='availabilityFilter']")
                     .forEach(input => input.value = activeAvailability);
             }
 

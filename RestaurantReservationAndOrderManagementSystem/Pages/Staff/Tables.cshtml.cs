@@ -31,8 +31,6 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
         [BindProperty(SupportsGet = true)]
         public string Search { get; set; } = string.Empty;
 
-        public AddTableInput NewTable { get; private set; } = new();
-
         public UpdateTableInput TableUpdate { get; private set; } = new();
 
         public IReadOnlyList<TableCard> Tables { get; private set; } = [];
@@ -41,71 +39,9 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
         public int AvailableTables { get; private set; }
         public int ReservedTables { get; private set; }
         public int OccupiedTables { get; private set; }
-        public bool ShowAddDialog { get; private set; }
-
         public async Task OnGetAsync()
         {
             await LoadTablesAsync();
-        }
-
-        public async Task<IActionResult> OnPostAddAsync(
-            string? tableId,
-            int capacity,
-            string? availability)
-        {
-            ShowAddDialog = true;
-            NewTable = new AddTableInput
-            {
-                TableID = tableId ?? string.Empty,
-                Capacity = capacity,
-                Availability = availability ?? string.Empty
-            };
-            ModelState.Clear();
-
-            if (!TryValidateModel(NewTable, nameof(NewTable)))
-            {
-                await LoadTablesAsync();
-                return Page();
-            }
-
-            NewTable.TableID = NewTable.TableID.Trim();
-            if (!AvailabilityStatusesList.Contains(NewTable.Availability, StringComparer.Ordinal))
-            {
-                ModelState.AddModelError("NewTable.Availability", "Select a valid table status.");
-            }
-
-            if (await _dbContext.Tables.AnyAsync(table => table.TableID == NewTable.TableID))
-            {
-                ModelState.AddModelError("NewTable.TableID", "A table with that ID already exists.");
-            }
-
-            if (!ModelState.IsValid)
-            {
-                await LoadTablesAsync();
-                return Page();
-            }
-
-            _dbContext.Tables.Add(new Table
-            {
-                TableID = NewTable.TableID,
-                MaxPax = NewTable.Capacity,
-                TableAvailability = NewTable.Availability
-            });
-
-            try
-            {
-                await _dbContext.SaveChangesAsync();
-            }
-            catch (DbUpdateException exception)
-            {
-                _logger.LogError(exception, "Could not add table {TableId}.", NewTable.TableID);
-                ModelState.AddModelError(string.Empty, "The table could not be saved. Check the table ID and try again.");
-                await LoadTablesAsync();
-                return Page();
-            }
-
-            TempData["TableMessage"] = $"Table {NewTable.TableID} was added.";
-            return RedirectToPage(new { statusFilter = "All" });
         }
 
         public async Task<IActionResult> OnPostUpdateAsync(
@@ -260,19 +196,6 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
         private Task<int> CountStatusAsync(string status) =>
             _dbContext.Tables.CountAsync(table =>
                 table.TableAvailability.ToLower() == status.ToLower());
-
-        public sealed class AddTableInput
-        {
-            [Required(ErrorMessage = "Enter a table ID.")]
-            [StringLength(50)]
-            public string TableID { get; set; } = string.Empty;
-
-            [Range(1, 100, ErrorMessage = "Capacity must be between 1 and 100.")]
-            public int Capacity { get; set; } = 2;
-
-            [Required]
-            public string Availability { get; set; } = "Available";
-        }
 
         public sealed class UpdateTableInput
         {
