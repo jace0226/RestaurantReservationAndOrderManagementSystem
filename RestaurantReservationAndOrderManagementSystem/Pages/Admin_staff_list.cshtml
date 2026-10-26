@@ -1,0 +1,131 @@
+﻿@page "/Admin_staff_list"
+@model RestaurantReservationAndOrderManagementSystem.Pages.Admin_staff_listModel
+@{
+}
+
+<link rel="stylesheet" href="~/css/Admin_list.css" />
+
+<div>
+    <h2>User Management</h2>
+</div>
+<br>
+<div>
+    <h5>Staff List</h5>
+    <div class="container">
+        <div class="search-container">
+            <form>
+                <a>
+                    <span class="">
+                        <i class="fas fa-search"></i>
+                    </span>
+                </a>
+                <input
+                    type="text"
+                    name="search"
+                    id="search"
+                    placeholder="Enter search details...">
+            </form>
+        </div>
+        <div class="add-container">
+            <a class="add-btn">
+                + Add Staff
+            </a>
+        </div>
+    </div>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Staff ID</th>
+                <th>Full Name</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Role</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @foreach (var staff in Model.Staffs)
+            {
+                <tr>
+                    <td>@staff.StaffID</td>
+                    <td>@staff.FullName</td>
+                    <td>@staff.Email</td>
+                    <td>@staff.Phone</td>
+                    <td>@staff.Role</td>
+                    <td class="row-btn-cell">
+                        <div class="row-container">
+                            <a class="row-edit" href="#">
+                                Edit
+                            </a>
+                            <a class="row-delete" href="#">
+                                Delete
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+<br>
+<div>
+    <h5>Customer List</h5>
+    <div class="container">
+        <div class="search-container">
+            <form>
+                <a>
+                    <span class="">
+                        <i class="fas fa-search"></i>
+                    </span>
+                </a>
+                <input type="text"
+                       name="search"
+                       id="search"
+                       placeholder="Enter search details...">
+            </form>
+        </div>
+        <div class="add-container">
+            <a class="add-btn">
+                + Add Customer
+            </a>
+        </div>
+    </div>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Customer ID</th>
+                <th>Full Name</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Date of Birth</th>
+                <th>Address</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @foreach (var customer in Model.Customers)
+            {
+                <tr>
+                    <td>@customer.CustomerID</td>
+                    <td>@customer.FullName</td>
+                    <td>@customer.Email</td>
+                    <td>@customer.Phone</td>
+                    <td>@customer.DateOfBirth</td>
+                    <td>@customer.Address</td>
+                    <td class="row-btn-cell">
+                        <div class="row-container">
+                            <a class="row-edit" href="#">
+                                Edit
+                            </a>
+                            <a class="row-delete" href="#">
+                                Delete
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

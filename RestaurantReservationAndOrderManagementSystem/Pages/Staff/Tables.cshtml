@@ -1,4 +1,4 @@
-@page "/Staff/Tables"
+﻿@page "/Staff/Tables"
 @model RestaurantReservationAndOrderManagementSystem.Pages.TablesModel
 @{
     ViewData["Title"] = "Tables";
@@ -10,13 +10,22 @@
     <header class="tables-hero">
         <div>
             <p class="eyebrow">The room at a glance</p>
-            <h1>How's the floor feeling?</h1>
+            <h1>Tables at a glance</h1>
             <p class="hero-caption">Manage table capacity and availability.</p>
         </div>
-        <button class="add-table-button" type="button" id="openAddTable">
-            <i class="fa-solid fa-plus" aria-hidden="true"></i>
-            Add table
-        </button>
+        <div class="tables-hero-actions">
+            <div class="tables-hero-count" aria-live="polite">
+                <strong>@Model.Tables.Count</strong>
+                <span>@(Model.StatusFilter == "All" ? "tables" : $"{Model.StatusFilter.ToLowerInvariant()} tables")</span>
+            </div>
+            @if (User.IsInRole("Administrator"))
+            {
+                <button class="add-table-button" type="button" id="openAddTable">
+                <i class="fa-solid fa-plus" aria-hidden="true"></i>
+                Add table
+                </button>
+            }
+        </div>
     </header>
 
     @if (TempData["TableMessage"] is string tableMessage)
@@ -26,79 +35,130 @@
 
     <div asp-validation-summary="ModelOnly" class="text-danger table-validation-summary" role="alert"></div>
 
-    <section class="table-summary" aria-label="Table availability summary">
-        <div class="total-tables"><strong>@Model.TotalTables</strong><span>tables total</span></div>
-        <div class="status-legend">
-            <span class="legend-item"><i class="legend-dot legend-available"></i>Available <strong>@Model.AvailableTables</strong></span>
-            <span class="legend-item"><i class="legend-dot legend-reserved"></i>Reserved <strong>@Model.ReservedTables</strong></span>
-            <span class="legend-item"><i class="legend-dot legend-occupied"></i>On dine-in <strong>@Model.OccupiedTables</strong></span>
+    <section class="tables-list-panel" aria-label="Table overview">
+        <div class="tables-toolbar">
+            <div class="tables-toolbar-heading">
+                <p class="eyebrow">Floor overview</p>
+                <h2>Find a table</h2>
+            </div>
+            <div class="tables-toolbar-actions">
+                <div class="status-legend" aria-label="Table status counts">
+                    <span class="legend-item"><i class="legend-dot legend-available" aria-hidden="true"></i>Available <strong>@Model.AvailableTables</strong></span>
+                    <span class="legend-item"><i class="legend-dot legend-reserved" aria-hidden="true"></i>Reserved <strong>@Model.ReservedTables</strong></span>
+                    <span class="legend-item"><i class="legend-dot legend-occupied" aria-hidden="true"></i>On dine-in <strong>@Model.OccupiedTables</strong></span>
+                </div>
+                <form class="table-filters" method="get" action="/Staff/Tables">
+                    <label class="table-search">
+                        <span class="visually-hidden">Search table IDs</span>
+                        <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                        <input asp-for="Search" type="search" placeholder="Search tables..." />
+                    </label>
+                    <input type="hidden" name="StatusFilter" value="@Model.StatusFilter" />
+                    <button class="table-filter-submit" type="submit">Search</button>
+                </form>
+            </div>
         </div>
-    </section>
 
-    <form class="table-filters" method="get" action="/Staff/Tables">
-        <label class="table-search">
-            <span class="visually-hidden">Search table IDs</span>
-            <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
-            <input asp-for="Search" type="search" placeholder="Search tables..." />
-        </label>
-        <input type="hidden" name="StatusFilter" value="@Model.StatusFilter" />
-        <button class="table-filter-submit" type="submit">Search</button>
-    </form>
+        <nav class="area-filters" aria-label="Filter tables by availability">
+            <a class="filter-button @(Model.StatusFilter == "All" ? "active" : "")" aria-pressed="@(Model.StatusFilter == "All")" href="/Staff/Tables?StatusFilter=All">All tables</a>
+            <a class="filter-button @(Model.StatusFilter == "Available" ? "active" : "")" aria-pressed="@(Model.StatusFilter == "Available")" href="/Staff/Tables?StatusFilter=Available">Available</a>
+            <a class="filter-button @(Model.StatusFilter == "Reserved" ? "active" : "")" aria-pressed="@(Model.StatusFilter == "Reserved")" href="/Staff/Tables?StatusFilter=Reserved">Reserved</a>
+            <a class="filter-button @(Model.StatusFilter == "On dine-in" ? "active" : "")" aria-pressed="@(Model.StatusFilter == "On dine-in")" href="/Staff/Tables?StatusFilter=On%20dine-in">On dine-in</a>
+        </nav>
 
-    <nav class="area-filters" aria-label="Filter tables by availability">
-        <a class="filter-button @(Model.StatusFilter == "All" ? "active" : "")" href="/Staff/Tables?StatusFilter=All">All tables</a>
-        <a class="filter-button @(Model.StatusFilter == "Available" ? "active" : "")" href="/Staff/Tables?StatusFilter=Available">Available</a>
-        <a class="filter-button @(Model.StatusFilter == "Reserved" ? "active" : "")" href="/Staff/Tables?StatusFilter=Reserved">Reserved</a>
-        <a class="filter-button @(Model.StatusFilter == "On dine-in" ? "active" : "")" href="/Staff/Tables?StatusFilter=On%20dine-in">On dine-in</a>
-    </nav>
-
-    @if (Model.Tables.Count == 0)
-    {
-        <p class="no-tables">No tables match this filter. Add a table to get started.</p>
-    }
-    else
-    {
-        <section class="tables-grid" aria-label="Tables">
-            @foreach (var table in Model.Tables)
-            {
+        @if (Model.Tables.Count == 0)
+        {
+            <p class="no-tables">No tables match this filter. Add a table to get started.</p>
+        }
+        else
+        {
+            <section class="tables-grid" aria-label="Tables">
+                @foreach (var table in Model.Tables)
+                {
                 <article class="table-card @TablesModel.StatusCssClass(table.Availability)">
-                    <div class="table-card-inner">
-                        <h2>@table.TableID</h2>
-                        <span class="table-capacity"><i class="fa-regular fa-user" aria-hidden="true"></i>@table.Capacity seats</span>
+                    <div class="table-card-heading">
+                        <div>
+                            <span class="table-card-label">Dining table</span>
+                            <h2>@table.TableID</h2>
+                        </div>
+                        <span class="table-status">
+                            <i class="table-status-dot" aria-hidden="true"></i>
+                            @table.Availability
+                        </span>
                     </div>
 
-                    <form method="post" action="/Staff/Tables?handler=Update" class="table-edit-form">
-                        @Html.AntiForgeryToken()
-                        <input type="hidden" name="tableId" value="@table.TableID" />
-                        <input type="hidden" name="StatusFilter" value="@Model.StatusFilter" />
-                        <input type="hidden" name="Search" value="@Model.Search" />
-                        <label class="table-edit-field">
-                            <span>Capacity</span>
-                            <input type="number" name="capacity" value="@table.Capacity" min="1" max="100" required />
-                        </label>
-                        <label class="table-edit-field">
-                            <span>Status</span>
-                            <select name="availability" class="table-status-select">
-                                @foreach (var status in Model.AvailabilityStatuses)
-                                {
-                                    if (status.Equals(table.Availability, StringComparison.OrdinalIgnoreCase))
+                    <div class="table-layout" role="img" aria-label="@table.TableID with @table.Capacity seats">
+                        <div class="table-seating" style="--seat-radius: @(table.Capacity <= 4 ? 48 : table.Capacity <= 8 ? 56 : 64)px; --chair-size: @(table.Capacity > 24 ? 8 : table.Capacity > 12 ? 10 : 16)px;">
+                            @for (var seatIndex = 0; seatIndex < table.Capacity; seatIndex++)
+                            {
+                                <span class="table-chair" style="--seat-angle: @(seatIndex * 360.0 / table.Capacity)deg;" aria-hidden="true"></span>
+                            }
+                            <div class="table-surface @(table.Capacity <= 4 ? "table-small" : table.Capacity <= 8 ? "table-medium" : "table-large")">
+                                <i class="fa-solid fa-utensils" aria-hidden="true"></i>
+                                <span>@table.TableID</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="table-card-meta">
+                        <span class="table-capacity">
+                            <i class="fa-solid fa-user-group" aria-hidden="true"></i>
+                            <strong>@table.Capacity</strong> seats
+                        </span>
+                        <span class="table-meta-caption">Guest capacity</span>
+                    </div>
+
+                    <details class="table-edit-details" open="@(Model.TableUpdate.TableID == table.TableID && !ViewData.ModelState.IsValid ? "open" : null)">
+                        <summary>
+                            <i class="fa-solid fa-sliders" aria-hidden="true"></i>
+                            <span>Update table</span>
+                            <i class="fa-solid fa-chevron-down edit-chevron" aria-hidden="true"></i>
+                        </summary>
+                        <form method="post" action="/Staff/Tables?handler=Update" class="table-edit-form">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="tableId" value="@table.TableID" />
+                            <input type="hidden" name="StatusFilter" value="@Model.StatusFilter" />
+                            <input type="hidden" name="Search" value="@Model.Search" />
+                            <label class="table-edit-field">
+                                <span>Capacity</span>
+                                <input type="number" name="capacity" value="@table.Capacity" min="1" max="100" required />
+                            </label>
+                            <label class="table-edit-field">
+                                <span>Status</span>
+                                <select name="availability" class="table-status-select">
+                                    @foreach (var status in Model.AvailabilityStatuses)
                                     {
-                                        <option value="@status" selected>@status</option>
+                                        if (status.Equals(table.Availability, StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            <option value="@status" selected>@status</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@status">@status</option>
+                                        }
                                     }
-                                    else
-                                    {
-                                        <option value="@status">@status</option>
-                                    }
-                                }
-                            </select>
-                        </label>
-                        <button type="submit" class="save-table-button">Save changes</button>
-                        <span asp-validation-for="TableUpdate.Capacity" class="text-danger"></span>
-                    </form>
+                                </select>
+                            </label>
+                            <button type="submit" class="save-table-button">
+                                <i class="fa-solid fa-check" aria-hidden="true"></i>
+                                Save changes
+                            </button>
+                            @if (User.IsInRole("Administrator"))
+                            {
+                                <button type="submit" class="save-table-button delete-table-button" formaction="/Staff/Tables?handler=Delete" formnovalidate>
+                                        <i class="fas fa-trash-can" aria-hidden="true"></i>
+                                    Remove Table
+                                </button>
+                            }
+
+                            <span asp-validation-for="TableUpdate.Capacity" class="text-danger"></span>
+                        </form>
+                    </details>
                 </article>
-            }
-        </section>
-    }
+                }
+            </section>
+        }
+    </section>
 </section>
 
 <dialog class="table-dialog" id="addTableDialog" aria-labelledby="add-table-title">

@@ -1,0 +1,350 @@
+﻿@page "/Staff/CustomerManagement"
+@model RestaurantReservationAndOrderManagementSystem.Pages.Staff.CustomerManagementModel
+@{
+}
+
+<link rel="stylesheet" href="~/css/usermanagement_page.css" asp-append-version="true" />
+
+<section class="usermanagement-page">
+    @* Header part *@
+    <div class="header">
+        @* Left content *@
+        <div>
+            <p class="eyebrow">CUSTOMER MANAGEMENT</p>
+            <h1>Manage Your Customer</h1>
+            <p class="header-caption">View, add, and manage customer.</p>
+        </div>
+
+        @* Right content *@
+        <div>
+            <button class="add-user-button" type="button" id="openAddUser">
+                <i class="fa-solid fa-plus"></i>
+                Add customer
+            </button>
+        </div>
+    </div>
+
+    @* Main content part *@
+    <div class="user-list-panel">
+        @* Top part of the main content *@
+        <div class="user-list-header">
+            @* Left content *@
+            <div class="user-list-header-left">
+                <div class="user-list-header-icon">
+                    <i class="fas fas fa-user"></i>
+                </div>
+
+                <div class="user-list-header-text">
+                    <p>Total Customers</p>
+                    <strong>@Model.Customers.Count</strong>
+                </div>
+            </div>
+
+            @* Right content *@
+            <form method="get" id="search">
+                <div class="user-list-header-right">
+                    <div>
+                        <div class="user-search-form">
+                            <i class="fas fa-search"></i>
+
+                            <input type="text"
+                                   name="SearchTerm"
+                                   value="@Model.SearchTerm"
+                                   placeholder="Search by name, email or customer ID..." />
+
+                            <button type="submit" class="search-button">Search</button>
+                        </div>
+                    </div>
+
+                    <div class="reset-filter" id="resetFilter" title="Reset filters">
+                        <i class="fas fa-rotate-left"></i>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        @* Middle part of the main content *@
+        <div>
+            <table class="user-table">
+                <thead>
+                    <tr>
+                        <th>Customer ID</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Date Of Birth</th>
+                        <th>Address</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (var customer in Model.Customers)
+                    {
+                        <tr>
+                            <td>@customer.CustomerID</td>
+                            <td>@customer.FullName</td>
+                            <td>@customer.Email</td>
+                            <td>@customer.Phone</td>
+                            <td>@customer.DateOfBirth</td>
+                            <td>@customer.Address</td>
+                            <td class="row-btn-cell">
+                                <div class="row-container">
+                                    <a class="row-edit" href="#"
+                                       data-customer-id="@customer.CustomerID"
+                                       data-full-name="@customer.FullName"
+                                       data-email="@customer.Email"
+                                       data-phone="@customer.Phone"
+                                       data-date-of-birth="@customer.DateOfBirth.ToString("yyyy-MM-dd")"
+                                       data-address="@customer.Address"
+                                    >
+                                        <i class="fas fa-pen-to-square"></i>
+                                    </a>
+                                    <a class="row-delete" href="#"
+                                       data-customer-id="@customer.CustomerID"
+                                       data-full-name="@customer.FullName"
+                                    >
+                                        <i class="fas fa-trash-can"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+@* this is for the add user form *@
+<dialog class="user-dialog" id="addUserDialog">
+    <form method="post" asp-page-handler="AddUser" class="user-dialog-form">
+        @Html.AntiForgeryToken()
+
+        <header class="user-dialog-heading">
+            <div>
+                <p class="eyebrow">Customer Management</p>
+                <h2 id="add-staff-tittle">Add Customer</h2>
+            </div>
+
+            <button type="button" class="user-dialog-close" id="closeAddUser">&times;</button>
+        </header>
+
+        <div asp-validation-summary="All" class="" role="alert"></div>
+
+        <input type="hidden" name="Action" value="addUser" />
+
+        <label class="user-dialog-field">
+            <span>Full Name</span>
+            <input name="FullName" id="NewUser_FullName" placeholder="Enter full name..." required />
+        </label>
+
+        <label class="user-dialog-field">
+            <span>Email</span>
+            <input name="Email" id="NewUser_Email" placeholder="Enter email..." required />
+        </label>
+
+        <label class="user-dialog-field">
+            <span>Phone Number</span>
+            <input name="Phone" id="NewUser_Phone" type="tel" placeholder="Enter phone number..." required />
+        </label>
+
+        <label class="user-dialog-field">
+            <span>Date Of Birth</span>
+            <input type="date" name="DateOfBirth" id="NewUser_DateOfBirth" max="@DateTime.Today.ToString("yyyy-MM-dd")" required />
+        </label>
+
+        <label class="user-dialog-field">
+            <span>Address</span>
+            <input name="Address" id="NewUser_Address" placeholder="Enter address..."/>
+        </label>
+
+        <footer class="user-dialog-actions">
+            <button type="button" class="user-dialog-cancel" id="cancelAddUser">Cancel</button>
+            <button type="submit" class="user-dialog-submit">Add Customer</button>
+        </footer>
+    </form>
+</dialog>
+
+@* this is for the edit user part *@
+<dialog class="user-dialog" id="editUserDialog">
+    <form method="post" asp-page-handler="EditUser" class="user-dialog-form">
+        @Html.AntiForgeryToken()
+
+        <header class="user-dialog-heading">
+            <div>
+                <p class="eyebrow">Staff Management</p>
+                <h2 id="add-staff-tittle">Edit Staff</h2>
+            </div>
+
+            <button type="button" class="user-dialog-close" id="closeEditUser">&times;</button>
+        </header>
+
+        <div asp-validation-summary="All" class="" role="alert"></div>
+
+        <input type="hidden" name="Action" value="editUser" />
+        <input type="hidden" name="CustomerID" id="EditCustomerID" />
+
+        <label class="user-dialog-field">
+            <span>Full Name</span>
+            <input name="FullName" id="EditFullName" placeholder="Enter full name..." required />
+        </label>
+
+        <label class="user-dialog-field">
+            <span>Email</span>
+            <input name="Email" id="EditEmail" placeholder="Enter email..." required />
+        </label>
+
+        <label class="user-dialog-field">
+            <span>Phone Number</span>
+            <input name="Phone" id="EditPhone" type="tel" placeholder="Enter phone number..." required />
+        </label>
+
+        <label class="user-dialog-field">
+            <span>Date Of Birth</span>
+            <input type="date" name="DateOfBirth" id="EditDateOfBirth" max="@DateTime.Today.ToString("yyyy-MM-dd")" required />
+        </label>
+
+        <label class="user-dialog-field">
+            <span>Address</span>
+            <input name="Address" id="EditAddress" placeholder="Enter address..." />
+        </label>
+
+        <footer class="user-dialog-actions">
+            <button type="button" class="user-dialog-cancel" id="cancelEditUser">Cancel</button>
+            <button type="submit" class="user-dialog-submit">Edit Customer</button>
+        </footer>
+    </form>
+</dialog>
+
+@* this is for the delete user part *@
+<dialog class="user-dialog" id="deleteUserDialog">
+    <form method="post" asp-page-handler="DeleteUser" class="user-dialog-form">
+        @Html.AntiForgeryToken()
+
+        <header class="user-dialog-heading">
+            <div>
+                <p class="eyebrow">User Management</p>
+                <h2 id="add-staff-tittle">Delete User</h2>
+            </div>
+
+            <button type="button" class="user-dialog-close" id="closeDeleteUser">&times;</button>
+        </header>
+
+        <div asp-validation-summary="All" class="" role="alert"></div>
+
+        <input type="hidden" name="Action" value="editUser" />
+        <input type="hidden" name="CustomerID" id="DeleteCustomerID" />
+
+        <span>Are you sure you want to delete: </span>
+        <label>
+            <span>Customer ID:</span>
+            <span id="displayId"></span>
+        </label>
+        <label>
+            <span>Name:</span>
+            <span id="DeleteFullName"></span>
+        </label>
+
+        <footer class="user-dialog-actions">
+            <button type="button" class="user-dialog-cancel" id="cancelDeleteUser">Cancel</button>
+            <button type="submit" class="user-dialog-submit">Delete</button>
+        </footer>
+    </form>
+</dialog>
+
+@section Scripts {
+    <script>
+        const search = document.getElementById("search");
+
+        document.getElementById("resetFilter").addEventListener("click", function() {
+            const form = document.getElementById("search");
+
+            const searchBar = form.querySelector('input[name="SearchTerm"]');
+            if (searchBar) {
+                searchBar.value = "";
+            }
+
+            form.querySelectorAll("select").forEach(select => {
+                select.selectedIndex = 0;
+            });
+
+            form.submit();
+        })
+
+        // add user form control
+        const addUserDialog = document.getElementById("addUserDialog");
+
+        document.getElementById("openAddUser").addEventListener("click", () => {
+            addUserDialog.showModal();
+        });
+
+        document.getElementById("closeAddUser").addEventListener("click", () => {
+            addUserDialog.close();
+        });
+
+        document.getElementById("cancelAddUser").addEventListener("click", () => {
+            addUserDialog.close();
+        });
+
+        // edit user form control
+        const editUserDialog = document.getElementById("editUserDialog");
+
+        document.getElementById("closeEditUser").addEventListener("click", () => {
+            editUserDialog.close();
+        });
+
+        document.getElementById("cancelEditUser").addEventListener("click", () => {
+            editUserDialog.close();
+        });
+
+        document.querySelectorAll(".row-edit").forEach(button => {
+            button.addEventListener("click", event => {
+                event.preventDefault();
+
+                const customerId = button.dataset.customerId;
+                const fullName = button.dataset.fullName;
+                const email = button.dataset.email;
+                const phone = button.dataset.phone;
+                const dateofbirth = button.getAttribute("data-date-of-birth");
+                const address = button.dataset.address;
+
+                document.getElementById("EditCustomerID").value = customerId;
+                document.getElementById("EditFullName").value = fullName;
+                document.getElementById("EditEmail").value = email;
+                document.getElementById("EditPhone").value = phone;
+                document.getElementById("EditDateOfBirth").value = dateofbirth;
+                document.getElementById("EditAddress").value = address;
+
+                editUserDialog.showModal();
+            })
+        });
+
+        // delete user form control
+        const deleteUserDialog = document.getElementById("deleteUserDialog");
+
+        document.getElementById("closeDeleteUser").addEventListener("click", () => {
+            deleteUserDialog.close();
+        });
+
+        document.getElementById("cancelDeleteUser").addEventListener("click", () => {
+            deleteUserDialog.close();
+        });
+
+        // this is to pass data to the delete form
+        document.querySelectorAll(".row-delete").forEach(button => {
+            button.addEventListener("click", event => {
+                event.preventDefault();
+
+                const customerId = button.dataset.customerId;
+                const fullname = button.dataset.fullName;
+
+                document.getElementById("DeleteCustomerID").value = customerId;
+                document.getElementById("displayId").textContent = customerId;
+                document.getElementById("DeleteFullName").textContent = fullname;
+
+                deleteUserDialog.showModal();
+            })
+        });
+    </script>
+}
