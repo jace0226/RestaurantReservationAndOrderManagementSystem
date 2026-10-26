@@ -18,10 +18,13 @@
                 <strong>@Model.Tables.Count</strong>
                 <span>@(Model.StatusFilter == "All" ? "tables" : $"{Model.StatusFilter.ToLowerInvariant()} tables")</span>
             </div>
-            <button class="add-table-button" type="button" id="openAddTable">
+            @if (User.IsInRole("Administrator"))
+            {
+                <button class="add-table-button" type="button" id="openAddTable">
                 <i class="fa-solid fa-plus" aria-hidden="true"></i>
                 Add table
-            </button>
+                </button>
+            }
         </div>
     </header>
 
@@ -140,6 +143,14 @@
                                 <i class="fa-solid fa-check" aria-hidden="true"></i>
                                 Save changes
                             </button>
+                            @if (User.IsInRole("Administrator"))
+                            {
+                                <button type="submit" class="save-table-button delete-table-button" formaction="/Staff/Tables?handler=Delete" formnovalidate>
+                                        <i class="fas fa-trash-can" aria-hidden="true"></i>
+                                    Remove Table
+                                </button>
+                            }
+
                             <span asp-validation-for="TableUpdate.Capacity" class="text-danger"></span>
                         </form>
                     </details>

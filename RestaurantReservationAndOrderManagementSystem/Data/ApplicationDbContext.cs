@@ -121,6 +121,7 @@ namespace RestaurantReservationAndOrderManagementSystem.Data
                 .HasOne(b => b.Table)
                 .WithMany()
                 .HasForeignKey(b => b.TableID)
+                .IsRequired(false)
                 .OnDelete(DeleteBehavior.NoAction);
 
         }

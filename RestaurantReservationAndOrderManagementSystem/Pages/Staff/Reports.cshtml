@@ -1,0 +1,336 @@
+﻿@page "/Staff/Reports"
+@model RestaurantReservationAndOrderManagementSystem.Pages.Staff.ReportsModel
+@{
+}
+
+<link rel="stylesheet" href="~/css/reports_page.css" asp-append-version="true" />
+
+<section class="reports-page">
+    @* header *@
+    <div class="header">
+        @* header left content *@
+        <div>
+            <p class="eyebrow">REPORTS & ANALYTICS</p>
+            <h1>Restaurant Performance Reports</h1>
+            <p class="header-caption">View sales, revenue, and restaurant performance.</p>
+        </div>
+
+        @* header right content *@
+        <div class="filter-container">
+            <i class="fa-solid fa-calendar-days"></i>
+            <div class="week-filter" id="weekContainer">
+                <form method="get">
+                    <select id="weekFilter" name="WeekStart" class="" onchange="this.form.submit()">
+                        @foreach (var week in Model.Weeks){
+                            <option value="@week.Start.ToString("yyyy-MM-dd")" selected="@(week.Start == Model.SelectedWeekStart)">
+                                @week.Start.ToString("dd MMM yyyy")
+                                - @week.End.ToString("dd MMM yyyy")
+                            </option>
+                        }
+                    </select>
+                    <i class="fas fa-chevron-down dropdown-arrow" id="dropdownArrow"></i>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="middle-content">
+        <div class="revenue-container">
+            <div class="summary-header">
+                <div class="summary-header-left">
+                    <div class="summary-card-icon">
+                        <i class="fa-solid fa-arrow-trend-up"></i>
+                    </div>
+                    <p>Revenue Trend</p>
+                </div>
+                <span>
+                    @Model.SelectedWeekStart.ToString("dd MMM")
+                    -
+                    @Model.SelectedWeekEnd.ToString("dd MMM")
+                </span>
+            </div>
+            <div class="chart-container">
+                <canvas id="revenueChart"></canvas>
+            </div>
+        </div>
+
+        @* top summary cards  *@
+        <div class="summary-container">
+            @* total bookings card *@
+            <div class="summary-card">
+                <div class="summary-card-icon">
+                    <i class="fa-solid fa-money-bill-wave"></i>
+                </div>
+                <div class="summary-card-text">
+                    <p>Total Revenue</p>
+                    <strong>@Model.TotalRevenue</strong>
+                    <div class="difference-rate @(Model.RevenueChangePercentage > 0 ? "increase" : Model.RevenueChangePercentage < 0 ? "decrease" : "no change")">
+                        @if (Model.RevenueChangePercentage > 0)
+                        {
+                            <i class="fa-solid fa-arrow-up"></i>
+                            <p>@Model.RevenueChangePercentage.Value.ToString("+0.##")%</p>
+                        }
+                        else if (Model.RevenueChangePercentage < 0)
+                        {
+                            <i class="fa-solid fa-arrow-down"></i>
+                            <p>@Model.RevenueChangePercentage.Value.ToString("+0.##")%</p>
+                        }
+                        else
+                        {
+                            <p>--%</p> 
+                        }
+                        <p>vs.previous week</p>
+                    </div>
+                </div>
+            </div>
+
+            @* total orders card *@
+            <div class="summary-card">
+                <div class="summary-card-icon">
+                    <i class="fa-solid fa-receipt"></i>
+                </div>
+                <div class="summary-card-text">
+                    <p>Total Orders</p>
+                    <strong>@Model.TotalOrders</strong>
+                    <div class="difference-rate @(Model.OrdersChangePercentage > 0 ? "increase" : Model.OrdersChangePercentage < 0 ? "decrease" : "no change")">
+                        @if (Model.OrdersChangePercentage > 0)
+                        {
+                            <i class="fa-solid fa-arrow-up"></i>
+                            <p>@Model.OrdersChangePercentage.Value.ToString("+0.##")%</p>
+                        }
+                        else if (Model.OrdersChangePercentage < 0)
+                        {
+                            <i class="fa-solid fa-arrow-down"></i>
+                            <p>@Model.OrdersChangePercentage.Value.ToString("+0.##")%</p>
+                        }
+                        else
+                        {
+                            <p>--%</p>
+                        }
+                        <p>vs.previous week</p>
+                    </div>
+                </div>
+            </div>
+
+            @* total revenue card *@
+            <div class="summary-card">
+                <div class="summary-card-icon">
+                    <i class="fa-solid fa-calendar-check"></i>
+                </div>
+                <div class="summary-card-text">
+                    <p>Total Bookings</p>
+                    <strong>@Model.TotalBooking</strong>
+                    <div class="difference-rate @(Model.BookingsChangePercentage > 0 ? "increase" : Model.BookingsChangePercentage < 0 ? "decrease" : "no change")">
+                        @if (Model.BookingsChangePercentage > 0)
+                        {
+                            <i class="fa-solid fa-arrow-up"></i>
+                            <p>@Model.BookingsChangePercentage.Value.ToString("+0.##")%</p>
+                        }
+                        else if (Model.BookingsChangePercentage < 0)
+                        {
+                            <i class="fa-solid fa-arrow-down"></i>
+                            <p>@Model.BookingsChangePercentage.Value.ToString("+0.##")%</p>
+                        }
+                        else
+                        {
+                            <p>--%</p>
+                        }
+                        <p>vs.previous week</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* bottom summary card *@
+    <div class="bottom-summary-container">
+        @* popular food items *@
+        <div class="bottom-summary-card">
+            <div class="summary-header-left">
+                <div class="summary-card-icon">
+                    <i class="fa-solid fa-utensils"></i>
+                </div>
+                <p>Popular Food Items</p>
+            </div>
+
+            <div>
+                <table class="user-table">
+                    <thead>
+                        <tr>
+                            <th>Food Item</th>
+                            <th>Quantity Sold</th>
+                            <th>Total Sales</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.PopularFoodItems.Any())
+                        {
+                            @foreach (var item in Model.PopularFoodItems)
+                            {
+                                <tr>
+                                    <td>@item.FoodName</td>
+                                    <td>@item.QuantitySold</td>
+                                    <td>RM @item.TotalSales.ToString("N2")</td>
+                                </tr>
+                            }
+                        }else{
+                            <tr>
+                                <td colspan="3" style="text-align:center;">
+                                    No food items sold this week.
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        @* payment summary *@
+        <div class="bottom-summary-card">
+            <div class="summary-header-left">
+                <div class="summary-card-icon">
+                    <i class="fa-solid fa-credit-card"></i>
+                </div>
+                <p>Payment Summary</p>
+            </div>
+
+            <div>
+                <table class="user-table">
+                    <thead>
+                        <tr>
+                            <th>Payment Method</th>
+                            <th>Transactions</th>
+                            <th>Total Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.PaymentSummaries.Any())
+                        {
+                            @foreach (var payment in Model.PaymentSummaries)
+                            {
+                                <tr>
+                                    <td>@payment.PaymentMethod</td>
+                                    <td>@payment.NumberOfTransaction</td>
+                                    <td>RM @payment.TransactionAmount.ToString("N2")</td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="3" style="text-align:center;">
+                                    No transactions made this week.
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts{
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const weekFilter = document.getElementById("weekFilter");
+        const weekContainer = document.getElementById("weekContainer");
+
+        weekFilter.addEventListener("mousedown", () => {
+            weekContainer.classList.add("is-open");
+        });
+
+        weekFilter.addEventListener("change", () => {
+            weekContainer.classList.remove("is-open");
+        });
+
+        weekFilter.addEventListener("blur", () => {
+            weekContainer.classList.remove("is-open");
+        });
+
+        weekFilter.addEventListener("keydown", (event) => {
+            if (event.key === "Escape" || event.key === "Tab") {
+                weekContainer.classList.remove("is-open");
+            }
+        });
+
+        const revenueLabels = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.RevenueLabels));
+        const revenueValues = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.RevenueValues));
+
+        const chartContext = document.getElementById("revenueChart").getContext("2d");
+
+        new Chart(chartContext, {
+            type: "line",
+
+            data: {
+                labels: revenueLabels,
+
+                datasets:[{
+                    label: "Revenue",
+                    data: revenueValues,
+
+                    borderColor: '#7774E7',
+                    backgroundColor: 'rgba(119, 116, 231, 0.12)',
+
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.35,
+
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    pointBackgroundColor: '#7774E7',
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2
+                }]
+            },
+
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return 'RM ' +
+                                    Number(context.parsed.y).toLocaleString(
+                                        'en-MY',
+                                        {
+                                            minimumFractionDigits: 2,
+                                            maximumFractionDigits: 2
+                                        }
+                                    );
+                            }
+                        }
+                    }
+                },
+
+                scales: {
+                    y: {
+                        beginAtZero: true,
+
+                        ticks: {
+                            callback: function(value) {
+                                return 'RM ' + value;
+                            }
+                        },
+
+                        grid: {
+                            color: '#eeeeF5'
+                        }
+                    },
+
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+}

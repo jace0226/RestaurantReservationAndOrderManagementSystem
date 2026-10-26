@@ -1,0 +1,217 @@
+@page "/Customer/Reservations"
+@model RestaurantReservationAndOrderManagementSystem.Pages.Customer.CustomerReservationsModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Reservations";
+}
+
+<link rel="stylesheet" href="~/css/customer_reservations.css" asp-append-version="true" />
+
+<section class="customer-reservations" aria-labelledby="customer-reservations-title">
+    <header class="customer-reservations-hero">
+        <div>
+            <p class="customer-reservation-eyebrow">Your plans</p>
+            <h1 id="customer-reservations-title">Reservations</h1>
+            <p class="customer-reservations-intro">Book a table, keep track of upcoming plans, and review your dining history.</p>
+        </div>
+        <button type="button" class="customer-reservation-primary-btn" id="openReservationModalBtn">
+            <i class="fa-solid fa-calendar-plus" aria-hidden="true"></i>
+            New Reservation
+        </button>
+    </header>
+
+    @if (!string.IsNullOrWhiteSpace(Model.ReservationSuccess))
+    {
+        <div class="customer-reservation-alert success" role="status">@Model.ReservationSuccess</div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Model.ReservationError))
+    {
+        <div class="customer-reservation-alert error" role="alert">@Model.ReservationError</div>
+    }
+
+    <div class="customer-reservations-toolbar">
+        <div class="customer-reservation-category-group" role="tablist" aria-label="Reservation categories">
+            <form method="get" class="customer-reservation-inline-form">
+                <input type="hidden" name="DateFilter" value="@Model.DateFilter?.ToString("yyyy-MM-dd")" />
+                <button type="submit" name="Category" value="Upcoming" class="customer-category-btn @(Model.Category == "Upcoming" ? "active" : null)" aria-pressed="@(Model.Category == "Upcoming" ? "true" : "false")">
+                    Upcoming Reservations
+                </button>
+                <button type="submit" name="Category" value="Past" class="customer-category-btn @(Model.Category == "Past" ? "active" : null)" aria-pressed="@(Model.Category == "Past" ? "true" : "false")">
+                    Past Reservations
+                </button>
+            </form>
+        </div>
+
+        <form method="get" class="customer-reservation-date-filter" role="search">
+            <input type="hidden" name="Category" value="@Model.Category" />
+            <label class="customer-date-field" for="dateFilterInput">
+                <span class="visually-hidden">Filter reservations by date</span>
+                <input id="dateFilterInput" asp-for="DateFilter" type="date" />
+            </label>
+            <button type="submit" class="customer-filter-btn">Filter</button>
+        </form>
+    </div>
+
+    <section class="customer-reservation-list-panel" aria-live="polite">
+        @if (Model.Reservations.Count == 0)
+        {
+            <div class="customer-reservation-empty">
+                <span class="customer-empty-icon" aria-hidden="true"><i class="fa-solid fa-calendar-xmark"></i></span>
+                <h2>No reservations match this view</h2>
+                <p>Try another date or make a new reservation to get started.</p>
+            </div>
+        }
+        else
+        {
+            <div class="customer-reservation-list">
+                @foreach (var reservation in Model.Reservations)
+                {
+                    <article class="customer-reservation-card">
+                        <div class="customer-reservation-meta">
+                            <div>
+                                <p class="customer-reservation-label">Reservation ID</p>
+                                <strong>@reservation.BookingID</strong>
+                            </div>
+                            <span class="customer-reservation-status status-@reservation.BookingStatus.Replace(" ", "-").ToLowerInvariant()">@reservation.BookingStatus</span>
+                        </div>
+
+                        <div class="customer-reservation-grid">
+                            <div>
+                                <p class="customer-reservation-label">Date</p>
+                                <strong>@reservation.BookingDate.ToString("MMM d, yyyy")</strong>
+                            </div>
+                            <div>
+                                <p class="customer-reservation-label">Time</p>
+                                <strong>@reservation.BookingTime.ToString("h:mm tt")</strong>
+                            </div>
+                            <div>
+                                <p class="customer-reservation-label">People</p>
+                                <strong>@reservation.PartySize</strong>
+                            </div>
+                            <div>
+                                <p class="customer-reservation-label">Table</p>
+                                <strong>@(string.IsNullOrWhiteSpace(reservation.TableID) ? "Not yet assigned" : reservation.TableID)</strong>
+                            </div>
+                        </div>
+
+                        @if (!string.IsNullOrWhiteSpace(reservation.BookingNotes))
+                        {
+                            <div class="customer-reservation-notes">
+                                <p class="customer-reservation-label">Notes</p>
+                                <p>@reservation.BookingNotes</p>
+                            </div>
+                        }
+
+                        @if (Model.Category == "Upcoming")
+                        {
+                            <div class="customer-reservation-actions">
+                                @if (reservation.CanModify)
+                                {
+                                    <button type="button"
+                                            class="customer-reservation-action secondary open-edit-button"
+                                            data-booking-id="@reservation.BookingID"
+                                            data-booking-date="@reservation.BookingDate.ToString("yyyy-MM-dd")"
+                                            data-booking-time="@reservation.BookingTime.ToString("HH:mm")"
+                                            data-party-size="@reservation.PartySize"
+                                            data-booking-notes="@reservation.BookingNotes">
+                                        Modify
+                                    </button>
+                                }
+
+                                @if (reservation.CanCancel)
+                                {
+                                    <form method="post" asp-page-handler="Cancel" class="customer-reservation-action-form">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="BookingId" value="@reservation.BookingID" />
+                                        <input type="hidden" name="Category" value="@Model.Category" />
+                                        <input type="hidden" name="DateFilter" value="@Model.DateFilter?.ToString("yyyy-MM-dd")" />
+                                        <button type="submit" class="customer-reservation-action danger" onclick="return confirm('Cancel this reservation?');">
+                                            Cancel Reservation
+                                        </button>
+                                    </form>
+                                }
+                            </div>
+                        }
+                    </article>
+                }
+            </div>
+        }
+    </section>
+</section>
+
+<div class="customer-reservation-modal @(Model.IsModalOpen ? "is-open" : null)" id="customerReservationModal" aria-hidden="@(!Model.IsModalOpen).ToString().ToLowerInvariant()">
+    <div class="customer-reservation-modal-panel" role="dialog" aria-modal="true" aria-labelledby="reservationDialogTitle">
+        <button type="button" class="customer-reservation-close" data-close-reservation-modal aria-label="Close reservation form">
+            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        </button>
+
+        <div class="customer-reservation-modal-heading">
+            <div>
+                <p class="customer-reservation-eyebrow">Plan your visit</p>
+                <h2 id="reservationDialogTitle">@(Model.IsEditMode ? "Update reservation" : "Make a reservation")</h2>
+            </div>
+        </div>
+
+        <form method="post"
+              asp-page-handler="@(Model.IsEditMode ? "Edit" : "Create")"
+              class="customer-reservation-form"
+              id="customerReservationForm">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="Category" value="@Model.Category" />
+            <input type="hidden" name="DateFilter" value="@Model.DateFilter?.ToString("yyyy-MM-dd")" />
+            <input type="hidden" id="BookingId" name="BookingId" value="@Model.BookingId" />
+
+            <div asp-validation-summary="ModelOnly" class="customer-reservation-validation-summary" role="alert"></div>
+
+            <div class="customer-reservation-field">
+                <label asp-for="ReservationForm.BookingDate">Reservation Date</label>
+                <input asp-for="ReservationForm.BookingDate" type="date" min="@Model.MinimumReservationDate" />
+                <span asp-validation-for="ReservationForm.BookingDate" class="customer-reservation-field-error"></span>
+            </div>
+
+            <div class="customer-reservation-field">
+                <label asp-for="ReservationForm.BookingTime">Reservation Time</label>
+                <select asp-for="ReservationForm.BookingTime">
+                    <option value="">Select a time</option>
+                    @foreach (var time in Model.TimeSlots)
+                    {
+                        <option value="@time.ToString("HH:mm")">@time.ToString("h:mm tt")</option>
+                    }
+                </select>
+                <span asp-validation-for="ReservationForm.BookingTime" class="customer-reservation-field-error"></span>
+            </div>
+
+            <div class="customer-reservation-field">
+                <label asp-for="ReservationForm.PartySize">Number of People</label>
+                <input asp-for="ReservationForm.PartySize" type="number" min="1" max="50" />
+                <span asp-validation-for="ReservationForm.PartySize" class="customer-reservation-field-error"></span>
+            </div>
+
+            <div class="customer-reservation-field customer-reservation-field-wide">
+                <label asp-for="ReservationForm.BookingNotes">Notes</label>
+                <textarea asp-for="ReservationForm.BookingNotes" rows="4" placeholder="Optional notes or dietary requests"></textarea>
+                <span asp-validation-for="ReservationForm.BookingNotes" class="customer-reservation-field-error"></span>
+            </div>
+
+            <div class="customer-reservation-form-actions">
+                <button id="submitReservationButton"
+                        type="submit"
+                        class="customer-reservation-submit-btn">
+                    @(Model.IsEditMode ? "Update Reservation" : "Submit Reservation")
+                </button>
+                <button id="cancelReservationFormButton"
+                        type="button"
+                        class="customer-reservation-secondary-btn danger"
+                        data-close-reservation-modal>
+                    Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/customer_reservations.js" asp-append-version="true"></script>
+}

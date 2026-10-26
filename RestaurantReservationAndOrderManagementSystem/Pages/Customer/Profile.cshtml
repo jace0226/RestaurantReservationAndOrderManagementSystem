@@ -1,0 +1,121 @@
+@page "/Customer/Profile"
+@model RestaurantReservationAndOrderManagementSystem.Pages.Customer.ProfileModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "My Profile";
+}
+
+<link rel="stylesheet" href="~/css/customer_profile.css" asp-append-version="true" />
+
+<section class="customer-profile" aria-labelledby="profile-title">
+    <header class="customer-profile-hero">
+        <div>
+            <p class="customer-profile-eyebrow">Your account</p>
+            <h1 id="profile-title">My Profile</h1>
+            <p class="customer-profile-intro">Keep your personal details and account password up to date.</p>
+        </div>
+        <span class="customer-profile-hero-icon" aria-hidden="true">
+            <i class="fa-solid fa-user"></i>
+        </span>
+    </header>
+
+    @if (!string.IsNullOrEmpty(Model.ProfileSuccess))
+    {
+        <div class="customer-profile-alert success" role="status">@Model.ProfileSuccess</div>
+    }
+    @if (!string.IsNullOrEmpty(Model.PasswordSuccess))
+    {
+        <div class="customer-profile-alert success" role="status">@Model.PasswordSuccess</div>
+    }
+
+    <div class="customer-profile-grid">
+        <section class="customer-profile-card" aria-labelledby="personal-details-title">
+            <div class="customer-profile-card-heading">
+                <span class="customer-profile-card-icon" aria-hidden="true"><i class="fa-regular fa-id-card"></i></span>
+                <div>
+                    <p class="customer-profile-eyebrow">Account details</p>
+                    <h2 id="personal-details-title">Personal information</h2>
+                </div>
+            </div>
+
+            <form method="post" asp-page-handler="SaveProfile" class="customer-profile-form">
+                <div asp-validation-summary="ModelOnly" class="customer-profile-validation-summary" role="alert"></div>
+
+                <div class="customer-profile-fields">
+                    <div class="customer-profile-field">
+                        <label asp-for="ProfileInput.FullName"></label>
+                        <input asp-for="ProfileInput.FullName" autocomplete="name" maxlength="120" />
+                        <span asp-validation-for="ProfileInput.FullName" class="customer-profile-field-error"></span>
+                    </div>
+                    <div class="customer-profile-field">
+                        <label asp-for="ProfileInput.Email"></label>
+                        <input asp-for="ProfileInput.Email" type="email" autocomplete="email" maxlength="254" />
+                        <span asp-validation-for="ProfileInput.Email" class="customer-profile-field-error"></span>
+                    </div>
+                    <div class="customer-profile-field">
+                        <label asp-for="ProfileInput.Phone"></label>
+                        <input asp-for="ProfileInput.Phone" type="tel" autocomplete="tel" maxlength="32" />
+                        <span asp-validation-for="ProfileInput.Phone" class="customer-profile-field-error"></span>
+                    </div>
+                    <div class="customer-profile-field">
+                        <label asp-for="ProfileInput.DateOfBirth"></label>
+                        <input asp-for="ProfileInput.DateOfBirth" type="date" max="@Model.LatestDateOfBirth" />
+                        <span asp-validation-for="ProfileInput.DateOfBirth" class="customer-profile-field-error"></span>
+                    </div>
+                    <div class="customer-profile-field customer-profile-field-wide">
+                        <label asp-for="ProfileInput.Address"></label>
+                        <textarea asp-for="ProfileInput.Address" rows="3" maxlength="500" autocomplete="street-address"></textarea>
+                        <span asp-validation-for="ProfileInput.Address" class="customer-profile-field-error"></span>
+                    </div>
+                </div>
+
+                <button type="submit" class="customer-profile-submit">
+                    <i class="fa-solid fa-check" aria-hidden="true"></i>
+                    Save changes
+                </button>
+            </form>
+        </section>
+
+        <section class="customer-profile-card" aria-labelledby="change-password-title">
+            <div class="customer-profile-card-heading">
+                <span class="customer-profile-card-icon" aria-hidden="true"><i class="fa-solid fa-lock"></i></span>
+                <div>
+                    <p class="customer-profile-eyebrow">Account security</p>
+                    <h2 id="change-password-title">Change password</h2>
+                </div>
+            </div>
+
+            <form method="post" asp-page-handler="ChangePassword" class="customer-profile-form">
+                <div asp-validation-summary="ModelOnly" class="customer-profile-validation-summary" role="alert"></div>
+
+                <div class="customer-profile-fields customer-password-fields">
+                    <div class="customer-profile-field customer-profile-field-wide">
+                        <label asp-for="PasswordInput.CurrentPassword"></label>
+                        <input asp-for="PasswordInput.CurrentPassword" name="PasswordInput.CurrentPassword" autocomplete="current-password" />
+                        <span asp-validation-for="PasswordInput.CurrentPassword" class="customer-profile-field-error"></span>
+                    </div>
+                    <div class="customer-profile-field customer-profile-field-wide">
+                        <label asp-for="PasswordInput.NewPassword"></label>
+                        <input asp-for="PasswordInput.NewPassword" name="PasswordInput.NewPassword" autocomplete="new-password" aria-describedby="password-requirements" />
+                        <span asp-validation-for="PasswordInput.NewPassword" class="customer-profile-field-error"></span>
+                        <p class="customer-profile-hint" id="password-requirements">Password requirements: at least 8 characters.</p>
+                    </div>
+                    <div class="customer-profile-field customer-profile-field-wide">
+                        <label asp-for="PasswordInput.ConfirmPassword"></label>
+                        <input asp-for="PasswordInput.ConfirmPassword" name="PasswordInput.ConfirmPassword" autocomplete="new-password" />
+                        <span asp-validation-for="PasswordInput.ConfirmPassword" class="customer-profile-field-error"></span>
+                    </div>
+                </div>
+
+                <button type="submit" class="customer-profile-submit">
+                    <i class="fa-solid fa-key" aria-hidden="true"></i>
+                    Change password
+                </button>
+            </form>
+        </section>
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

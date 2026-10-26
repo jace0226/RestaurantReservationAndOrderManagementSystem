@@ -1,4 +1,5 @@
-﻿<!DOCTYPE html>
+﻿@using System.Security.Claims
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -17,43 +18,108 @@
 
     <div class="app-wrapper">
         <!-- LEFT SIDEBAR NAVIGATION -->
-        <aside class="sidebar" role="navigation" aria-label="Main Navigation">
+        <aside class="sidebar @(User.Identity?.IsAuthenticated == true && User.IsInRole("Customer") ? "customer-sidebar" : null)" role="navigation" aria-label="Main Navigation">
             <h4 class="brand">
                 Between<br/>Bites
             </h4>
 
-            <nav class="nav-menu" aria-label="Sidebar Menu">
-                <a class="nav-item @(currentPath.StartsWithSegments("/Staff/Dashboard", StringComparison.OrdinalIgnoreCase) ? "active" : null)" href="/Staff/Dashboard" aria-current="@(currentPath.StartsWithSegments("/Staff/Dashboard", StringComparison.OrdinalIgnoreCase) ? "page" : null)">
-                    <i class="fa-solid fa-house"></i>
-                    <span>Dashboard</span>
-                </a>
-                <a class="nav-item @(currentPath.StartsWithSegments("/Staff/Menus", StringComparison.OrdinalIgnoreCase) ? "active" : null)" href="/Staff/Menus" aria-current="@(currentPath.StartsWithSegments("/Staff/Menus", StringComparison.OrdinalIgnoreCase) ? "page" : null)">
-                    <i class="fa-solid fa-burger"></i>
-                    <span>Menus</span>
-                </a>
-                <a class="nav-item @(currentPath.StartsWithSegments("/Staff/Orders", StringComparison.OrdinalIgnoreCase) ? "active" : null)" href="/Staff/Orders" aria-current="@(currentPath.StartsWithSegments("/Staff/Orders", StringComparison.OrdinalIgnoreCase) ? "page" : null)">
-                    <i class="fa-solid fa-utensils"></i>
-                    <span>Orders</span>
-                </a>
-                <a class="nav-item @(currentPath.StartsWithSegments("/Staff/Reservations", StringComparison.OrdinalIgnoreCase) ? "active" : null)" href="/Staff/Reservations" aria-current="@(currentPath.StartsWithSegments("/Staff/Reservations", StringComparison.OrdinalIgnoreCase) ? "page" : null)">
-                    <i class='fas fa-calendar-check'></i>
-                    <span>Reservation</span>
-                </a>
-                <a class="nav-item @(currentPath.StartsWithSegments("/Staff/Tables", StringComparison.OrdinalIgnoreCase) ? "active" : null)" href="/Staff/Tables" aria-current="@(currentPath.StartsWithSegments("/Staff/Tables", StringComparison.OrdinalIgnoreCase) ? "page" : null)">
-                    <i class='fas fa-chair'></i>
-                    <span>Tables</span>
-                </a>
-            </nav>
+            @if (User.Identity?.IsAuthenticated == true && User.IsInRole("Customer"))
+            {
+                <button class="customer-sidebar-toggle" type="button" aria-controls="customer-sidebar-navigation" aria-expanded="false">
+                    <i class="fa-solid fa-bars" aria-hidden="true"></i>
+                    <span>Menu</span>
+                </button>
 
-            <div class="sidebar-footer">
-                <form method="post" action="/Authenticate?handler=Logout">
-                    @Html.AntiForgeryToken()
-                    <button class="nav-item logout-btn" type="submit">
-                        <i class="fa-solid fa-right-from-bracket"></i>
-                        <span>Logout</span>
-                    </button>
-                </form>
-            </div>
+                <!-- Customer Main Navigation Links -->
+                <nav class="nav-menu" id="customer-sidebar-navigation" aria-label="Sidebar Menu">
+                    <a class="nav-item @(currentPath.StartsWithSegments("/Customer/Menus", StringComparison.OrdinalIgnoreCase) ? "active" : null)" asp-page="/Customer/CustomerMenus" aria-current="@(currentPath.StartsWithSegments("/Customer/Menus", StringComparison.OrdinalIgnoreCase) ? "page" : null)">
+                        <i class="fa-solid fa-burger"></i>
+                        <span>Menus</span>
+                    </a>
+                    <a class="nav-item @(currentPath.StartsWithSegments("/Customer/Orders", StringComparison.OrdinalIgnoreCase) ? "active" : null)" asp-page="/Customer/CustomerOrders" aria-current="@(currentPath.StartsWithSegments("/Customer/Orders", StringComparison.OrdinalIgnoreCase) ? "page" : null)">
+                        <i class="fa-solid fa-utensils"></i>
+                        <span>Orders</span>
+                    </a>
+                    <a class="nav-item @(currentPath.StartsWithSegments("/Customer/Reservations", StringComparison.OrdinalIgnoreCase) ? "active" : null)" asp-page="/Customer/CustomerReservations" aria-current="@(currentPath.StartsWithSegments("/Customer/Reservations", StringComparison.OrdinalIgnoreCase) ? "page" : null)">
+                        <i class='fas fa-calendar-check'></i>
+                        <span>Reservations</span>
+                    </a>
+                    <a class="nav-item @(currentPath.StartsWithSegments("/Customer/Feedback", StringComparison.OrdinalIgnoreCase) ? "active" : null)" href="/Customer/Feedback">
+                        <i class="fa-solid fa-comments"></i>
+                        <span>Feedback</span>
+                    </a>
+                </nav>
+
+                <!-- Dedicated Profile Section -->
+                <div class="sidebar-profile">
+                    <a class="nav-item @(currentPath.StartsWithSegments("/Customer/Profile", StringComparison.OrdinalIgnoreCase) ? "active" : null)" asp-page="/Customer/Profile" aria-current="@(currentPath.StartsWithSegments("/Customer/Profile", StringComparison.OrdinalIgnoreCase) ? "page" : null)">
+                        <i class="fa-solid fa-user"></i>
+                        <span>Profile</span>
+                    </a>
+                </div>
+
+                <!-- Footer / Logout Section -->
+                <div class="sidebar-footer">
+                    <form method="post" action="/Authenticate?handler=Logout">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="nav-item logout-btn">
+                            <i class="fa-solid fa-right-from-bracket"></i>
+                            <span>Logout</span>
+                        </button>
+                    </form>
+                </div>
+            }
+            else
+            {
+                <!-- Staff / Admin Navigation -->
+                <nav class="nav-menu" aria-label="Sidebar Menu">
+                    <a class="nav-item @(currentPath.StartsWithSegments("/Staff/Dashboard", StringComparison.OrdinalIgnoreCase) ? "active" : null)" href="/Staff/Dashboard" aria-current="@(currentPath.StartsWithSegments("/Staff/Dashboard", StringComparison.OrdinalIgnoreCase) ? "page" : null)">
+                        <i class="fa-solid fa-house"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    @if (User.IsInRole("Administrator"))
+                    {
+                        <a class="nav-item @(currentPath.StartsWithSegments("/Staff/Reports", StringComparison.OrdinalIgnoreCase) ? "active" : null)" href="/Staff/Reports" aria-current="@(currentPath.StartsWithSegments("/Staff/Reports", StringComparison.OrdinalIgnoreCase) ? "page" : null)">
+                            <i class="fa-solid fa-chart-column"></i>
+                            <span>Reports</span>
+                        </a>
+                        <a class="nav-item @(currentPath.StartsWithSegments("/Staff/StaffManagement", StringComparison.OrdinalIgnoreCase) ? "active" : null)" href="/Staff/StaffManagement" aria-current="@(currentPath.StartsWithSegments("/Staff/StaffManagement", StringComparison.OrdinalIgnoreCase) ? "page" : null)">
+                            <i class="fa-solid fa-users"></i>
+                            <span>Staff Management</span>
+                        </a>
+                        <a class="nav-item @(currentPath.StartsWithSegments("/Staff/CustomerManagement", StringComparison.OrdinalIgnoreCase) ? "active" : null)" href="/Staff/CustomerManagement" aria-current="@(currentPath.StartsWithSegments("/Staff/CustomerManagement", StringComparison.OrdinalIgnoreCase) ? "page" : null)">
+                            <i class="fa-solid fa-user-group"></i>
+                            <span>Customer Management</span>
+                        </a>
+                    }
+                    <a class="nav-item @(currentPath.StartsWithSegments("/Staff/Menus", StringComparison.OrdinalIgnoreCase) ? "active" : null)" href="/Staff/Menus" aria-current="@(currentPath.StartsWithSegments("/Staff/Menus", StringComparison.OrdinalIgnoreCase) ? "page" : null)">
+                        <i class="fa-solid fa-burger"></i>
+                        <span>Menus</span>
+                    </a>
+                    <a class="nav-item @(currentPath.StartsWithSegments("/Staff/Orders", StringComparison.OrdinalIgnoreCase) ? "active" : null)" href="/Staff/Orders" aria-current="@(currentPath.StartsWithSegments("/Staff/Orders", StringComparison.OrdinalIgnoreCase) ? "page" : null)">
+                        <i class="fa-solid fa-utensils"></i>
+                        <span>Orders</span>
+                    </a>
+                    <a class="nav-item @(currentPath.StartsWithSegments("/Staff/Reservations", StringComparison.OrdinalIgnoreCase) ? "active" : null)" href="/Staff/Reservations" aria-current="@(currentPath.StartsWithSegments("/Staff/Reservations", StringComparison.OrdinalIgnoreCase) ? "page" : null)">
+                        <i class='fas fa-calendar-check'></i>
+                        <span>Reservation</span>
+                    </a>
+                    <a class="nav-item @(currentPath.StartsWithSegments("/Staff/Tables", StringComparison.OrdinalIgnoreCase) ? "active" : null)" href="/Staff/Tables" aria-current="@(currentPath.StartsWithSegments("/Staff/Tables", StringComparison.OrdinalIgnoreCase) ? "page" : null)">
+                        <i class='fas fa-chair'></i>
+                        <span>Tables</span>
+                    </a>
+                </nav>
+
+                <div class="sidebar-footer">
+                    <form method="post" action="/Authenticate?handler=Logout">
+                        @Html.AntiForgeryToken()
+                        <button class="nav-item logout-btn" type="submit">
+                            <i class="fa-solid fa-right-from-bracket"></i>
+                            <span>Logout</span>
+                        </button>
+                    </form>
+                </div>
+            }
         </aside>
 
         <!-- MAIN AREA (Top header + Content) -->
@@ -65,10 +131,22 @@
                         <i class="fa-solid fa-bell"></i>
                     </button>
                     <div class="user-profile" aria-label="User Profile">
-                        <div class="avatar" aria-hidden>JL</div>
+                        <div class="avatar" aria-hidden="true">
+                            @{
+                                var userName = User.Identity?.Name;
+                                var initials = !string.IsNullOrEmpty(userName) 
+                                    ? userName.Substring(0, Math.Min(2, userName.Length)).ToUpper() 
+                                    : "JL";
+                            }
+                            @initials
+                        </div>
                         <div class="user-meta">
-                            <div class="user-name">Joshua Lee</div>
-                            <div class="user-role">Staff</div>
+                            <div class="user-name">@(User.Identity?.IsAuthenticated == true ? User.Identity.Name : "Joshua Lee")</div>
+                            <div class="user-role">
+                                @(User.Identity?.IsAuthenticated == true 
+                                    ? (User.IsInRole("Customer") ? "Customer" : "Staff") 
+                                    : "Guest")
+                            </div>
                         </div>
                     </div>
                 </div>

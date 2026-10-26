@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using RestaurantReservationAndOrderManagementSystem.Data;
 using RestaurantReservationAndOrderManagementSystem.Models;
+using CustomerModel = RestaurantReservationAndOrderManagementSystem.Models.Customer;
 
 namespace RestaurantReservationAndOrderManagementSystem.Pages
 {
@@ -99,18 +100,25 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
             var role = claims.Single(claim => claim.Type == ClaimTypes.Role).Value;
             if (role is "Staff" or "Administrator")
             {
-                if (!string.IsNullOrWhiteSpace(returnUrl) &&
-                    Url.IsLocalUrl(returnUrl) &&
-                    Uri.TryCreate(returnUrl, UriKind.Relative, out _) &&
-                    returnUrl.StartsWith("/Staff", StringComparison.OrdinalIgnoreCase))
+                if (IsReturnUrlForArea(returnUrl, "Staff"))
                 {
-                    return Redirect(returnUrl);
+                    return Redirect(returnUrl!);
                 }
 
                 return Redirect("/Staff/Dashboard");
             }
 
-            return Redirect("/");
+            if (role == "Customer")
+            {
+                if (IsReturnUrlForArea(returnUrl, "Customer"))
+                {
+                    return Redirect(returnUrl!);
+                }
+
+                return Redirect("/Customer/Menus");
+            }
+
+            return Redirect("/Authenticate");
         }
 
         public async Task<IActionResult> OnPostRegisterAsync()
@@ -145,7 +153,7 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
             };
             user.PasswordHash = _passwordHasher.HashPassword(user, Registration.Password);
 
-            var customer = new Customer
+            var customer = new CustomerModel
             {
                 CustomerID = Guid.NewGuid().ToString("N"),
                 UserID = user.UserID,
@@ -177,7 +185,7 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
                 CookieAuthenticationDefaults.AuthenticationScheme,
                 new ClaimsPrincipal(identity));
 
-            return Redirect("/");
+            return Redirect("/Customer/Menus");
         }
 
         public async Task<IActionResult> OnPostLogoutAsync()
@@ -214,6 +222,16 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
             }
 
             return null;
+        }
+
+        private bool IsReturnUrlForArea(string? returnUrl, string area)
+        {
+            return !string.IsNullOrWhiteSpace(returnUrl) &&
+                Url.IsLocalUrl(returnUrl) &&
+                Uri.TryCreate(returnUrl, UriKind.Relative, out _) &&
+                (returnUrl.Equals($"/{area}", StringComparison.OrdinalIgnoreCase) ||
+                 returnUrl.StartsWith($"/{area}/", StringComparison.OrdinalIgnoreCase) ||
+                 returnUrl.StartsWith($"/{area}?", StringComparison.OrdinalIgnoreCase));
         }
 
         public sealed class LoginInput
