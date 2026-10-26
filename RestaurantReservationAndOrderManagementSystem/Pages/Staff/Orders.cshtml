@@ -1,0 +1,137 @@
+@page "/Staff/Orders"
+@model RestaurantReservationAndOrderManagementSystem.Pages.OrdersModel
+@{
+    ViewData["Title"] = "Orders";
+}
+
+<link rel="stylesheet" href="~/css/orders_page.css" asp-append-version="true" />
+
+<section class="orders-page" aria-label="Order management">
+    <header class="orders-hero">
+        <div>
+            <p class="eyebrow">Fresh from the kitchen</p>
+            <h1>Orders at a glance</h1>
+            <p class="hero-caption">Follow each order from the first ticket to the final handoff.</p>
+        </div>
+        <div class="orders-hero-count" aria-live="polite">
+            <strong>@Model.Orders.Count</strong>
+            <span>@(Model.StatusFilter == "All" ? "orders" : $"{Model.StatusFilter.ToLowerInvariant()} orders")</span>
+        </div>
+    </header>
+
+    <section class="orders-list-panel" aria-label="Order queue">
+        <div class="orders-toolbar">
+            <div class="list-heading">
+                <div>
+                    <p class="eyebrow">Order queue</p>
+                    <h2>Find an order</h2>
+                </div>
+            </div>
+            <nav class="filter-nav" aria-label="Order status filters">
+                <a asp-page="/Staff/Orders" asp-route-statusFilter="All"
+                   aria-pressed="@(Model.StatusFilter == "All")">All</a>
+                @foreach (var status in Model.Statuses)
+                {
+                    <a asp-page="/Staff/Orders" asp-route-statusFilter="@status"
+                       aria-pressed="@(Model.StatusFilter.Equals(status, StringComparison.OrdinalIgnoreCase))">@status</a>
+                }
+            </nav>
+        </div>
+
+        <div class="order-main">
+            <aside class="order-list" aria-label="Orders">
+                @if (Model.Orders.Count == 0)
+                {
+                    <p class="empty-orders">No orders found for this status.</p>
+                }
+                @foreach (var order in Model.Orders)
+                {
+                    var isSelected = order.OrderId == Model.SelectedOrder?.OrderId;
+                    <a class="order-card @(isSelected ? "selected" : null)"
+                       asp-page="/Staff/Orders"
+                       asp-route-orderId="@order.OrderId"
+                       asp-route-statusFilter="@Model.StatusFilter"
+                       aria-current="@(isSelected ? "true" : null)">
+                        <div class="order-card-header">
+                            <span class="order-id">Order #@order.OrderId</span>
+                            <time class="order-time" datetime="@order.CreatedAt.ToString("O")">
+                                @order.CreatedAt.ToString("h:mm tt")
+                            </time>
+                        </div>
+                        <div class="order-card-body">
+                            <span><i class="fa-solid fa-chair" aria-hidden="true"></i> Table @order.TableId</span>
+                            <span><i class="fa-solid fa-utensils" aria-hidden="true"></i> @order.ItemCount items</span>
+                        </div>
+                        <div class="order-card-footer">
+                            <span class="order-total">RM @order.Total.ToString("N2")</span>
+                            <span class="status-badge">@order.Status</span>
+                        </div>
+                    </a>
+                }
+            </aside>
+
+            @if (Model.SelectedOrder is { } selectedOrder)
+            {
+                <section class="order-detail-panel" aria-label="Selected order details">
+                    <header class="detail-header">
+                        <div class="detail-heading">
+                            <div>
+                                <p class="eyebrow">Order details</p>
+                                <h2>@selectedOrder.CustomerName</h2>
+                            </div>
+                            <span class="status-badge">@selectedOrder.Status</span>
+                        </div>
+                        <p class="detail-order-id">#@selectedOrder.OrderId</p>
+                        <div class="detail-meta">
+                            <span><i class="fa-solid fa-chair" aria-hidden="true"></i> Table @selectedOrder.TableId</span>
+                            <time datetime="@selectedOrder.CreatedAt.ToString("O")">
+                                <i class="fa-regular fa-clock" aria-hidden="true"></i>
+                                @selectedOrder.CreatedAt.ToString("h:mm tt")
+                            </time>
+                        </div>
+                    </header>
+
+                    <div class="order-items" role="list" aria-label="Items in this order">
+                        @if (selectedOrder.Items.Count == 0)
+                        {
+                            <p class="empty-orders">This order has no items.</p>
+                        }
+                        @foreach (var item in selectedOrder.Items)
+                        {
+                            <div class="order-item" role="listitem">
+                                <span class="item-icon" aria-hidden="true"><i class="fa-solid fa-utensils"></i></span>
+                                <div class="item-meta">
+                                    <span class="item-name">@item.Name</span>
+                                    <span class="item-quantity">@item.Quantity × RM @item.UnitPrice.ToString("N2")</span>
+                                </div>
+                                <strong class="item-line-total">RM @((item.UnitPrice * item.Quantity).ToString("N2"))</strong>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="cost-summary">
+                        <span>@(selectedOrder.HasRecordedTotal ? "Recorded transaction total" : "Current menu price total")</span>
+                        <strong>RM @selectedOrder.Total.ToString("N2")</strong>
+                    </div>
+
+                    <form method="post" asp-page-handler="UpdateStatus" class="order-status-form">
+                        <input type="hidden" name="orderId" value="@selectedOrder.OrderId" />
+                        <input type="hidden" name="statusFilter" value="@Model.StatusFilter" />
+                        <label for="order-status">Update order status</label>
+                        <div class="status-form-controls">
+                            <select id="order-status" name="status">
+                                @foreach (var status in Model.Statuses)
+                                {
+                                    <option value="@status" selected="@(selectedOrder.Status.Equals(status, StringComparison.OrdinalIgnoreCase))">
+                                        @status
+                                    </option>
+                                }
+                            </select>
+                            <button type="submit">Save status</button>
+                        </div>
+                    </form>
+                </section>
+            }
+        </div>
+    </section>
+</section>

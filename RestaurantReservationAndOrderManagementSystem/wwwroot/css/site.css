@@ -5,6 +5,10 @@
     font-style: normal;
 }
 
+html {
+    font-size: 17px;
+}
+
 * {
     box-sizing: border-box;
     margin: 0;
@@ -19,6 +23,20 @@
     --subbrand-color: #ebeeff;
     --brand-border: #ccd5ff;
     --gap: 1rem;
+    --staff-page-width: 1200px;
+    --staff-page-gap: 1.25rem;
+    --staff-hero-min-height: 150px;
+    --staff-hero-padding: 1.5rem 1.75rem;
+    --staff-hero-radius: 20px;
+    --staff-hero-heading-size: clamp(1.8rem, 4vw, 2.45rem);
+    --staff-eyebrow-size: 0.68rem;
+    --staff-caption-size: 0.8rem;
+    --staff-section-heading-size: 1.15rem;
+    --staff-panel-padding: 1.3rem 1.35rem;
+    --staff-panel-radius: 19px;
+    --staff-card-radius: 16px;
+    --staff-row-radius: 12px;
+    --staff-shadow: 5px 6px 0 #dce2ff;
 }
 
 .app-wrapper {

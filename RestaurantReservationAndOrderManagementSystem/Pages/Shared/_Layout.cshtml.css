@@ -37,6 +37,14 @@
     transition: 300ms ease-in-out;
   }
 
+  button.nav-item {
+    width: 100%;
+    border: 0;
+    background: transparent;
+    font: inherit;
+    text-align: left;
+  }
+
   .nav-item.active {
     background: var(--subbrand-color);
     color: var(--brand-color);
