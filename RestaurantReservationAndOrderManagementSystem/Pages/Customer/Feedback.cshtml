@@ -1,0 +1,135 @@
+﻿@page "/Customer/Feedback"
+@model RestaurantReservationAndOrderManagementSystem.Pages.Customer.FeedbackModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Customer Feedback";
+    var selectedRating = Model.Rating is >= 1 and <= 5 ? Model.Rating.Value : 0;
+    var averageStars = (int)Math.Round(Model.AverageRating, MidpointRounding.AwayFromZero);
+}
+
+<link rel="stylesheet" href="~/css/customer_feedback.css" asp-append-version="true" />
+
+<section class="customer-feedback" aria-labelledby="customer-feedback-title">
+    @if (!string.IsNullOrWhiteSpace(Model.FeedbackSuccess))
+    {
+        <div class="customer-feedback-alert success" role="status">@Model.FeedbackSuccess</div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Model.FeedbackError))
+    {
+        <div class="customer-feedback-alert error" role="alert">@Model.FeedbackError</div>
+    }
+
+    <header class="customer-feedback-summary" aria-labelledby="customer-feedback-title">
+        <div class="customer-feedback-breakdown">
+            <h1 id="customer-feedback-title">Customer Feedback</h1>
+            <p class="customer-feedback-intro">See what customers are saying and share your own experience.</p>
+            <div class="customer-feedback-rating-rows" aria-label="Rating breakdown">
+                @foreach (var rating in Model.RatingBreakdown)
+                {
+                    <div class="customer-feedback-rating-row">
+                        <span class="customer-feedback-rating-label">@rating.Label</span>
+                        <span class="customer-feedback-row-star" aria-hidden="true">★</span>
+                        <div class="customer-feedback-progress-track"
+                             role="progressbar"
+                             aria-label="@rating.Label star ratings"
+                             aria-valuemin="0"
+                             aria-valuemax="100"
+                             aria-valuenow="@rating.Percentage.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture)">
+                            <span class="customer-feedback-progress-fill" style="width: @rating.Percentage.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)%"></span>
+                        </div>
+                        <span class="customer-feedback-rating-count">@rating.FormattedCount</span>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="customer-feedback-average" role="img" aria-label="Average rating @Model.AverageRating.ToString("0.0") out of 5">
+            <span class="customer-feedback-average-number">@Model.AverageRating.ToString("0.0")</span>
+            <div class="customer-feedback-average-stars" aria-hidden="true">
+                @for (var star = 1; star <= 5; star++)
+                {
+                    <span class="@(star <= averageStars ? "filled" : null)">★</span>
+                }
+            </div>
+            <span class="customer-feedback-total">@Model.TotalRatings.ToString("N0") @(Model.TotalRatings == 1 ? "Rating" : "Ratings")</span>
+        </div>
+    </header>
+
+    <div class="customer-feedback-grid">
+        <section class="customer-feedback-recent" aria-labelledby="recent-feedback-title">
+            <h2 id="recent-feedback-title">Recent Feedbacks</h2>
+            @if (Model.RecentFeedbacks.Count == 0)
+            {
+                <p class="customer-feedback-empty">No feedbacks recorded yet. Be the first to add one!</p>
+            }
+            else
+            {
+                <div class="customer-feedback-list">
+                    @foreach (var feedback in Model.RecentFeedbacks)
+                    {
+                        <article class="customer-feedback-card">
+                            <div class="customer-feedback-card-heading">
+                                <span class="customer-feedback-avatar" aria-hidden="true">
+                                    <i class="fa-solid fa-user"></i>
+                                </span>
+                                <strong>@(string.IsNullOrWhiteSpace(feedback.CustomerID) ? "Anonymous" : feedback.CustomerID)</strong>
+                                <span class="customer-feedback-card-stars" role="img" aria-label="@feedback.Stars out of 5 stars">
+                                    @for (var star = 1; star <= 5; star++)
+                                    {
+                                        <span class="@(star <= feedback.Stars ? "filled" : null)" aria-hidden="true">★</span>
+                                    }
+                                </span>
+                            </div>
+                            <p class="customer-feedback-card-message">@(string.IsNullOrWhiteSpace(feedback.Message) ? "No message provided." : feedback.Message)</p>
+                        </article>
+                    }
+                </div>
+            }
+        </section>
+
+        <section class="customer-feedback-review" aria-labelledby="add-review-title">
+            <h2 id="add-review-title">Add a Review</h2>
+            <form method="post" class="customer-feedback-form" id="customerFeedbackForm" novalidate>
+                <div class="customer-feedback-field">
+                    <span class="customer-feedback-label" id="feedbackRatingLabel">Add Your Rating *</span>
+                    <input asp-for="Rating" type="hidden" id="feedbackRating" />
+                    <div class="customer-feedback-stars"
+                         role="group"
+                         aria-labelledby="feedbackRatingLabel"
+                         aria-describedby="ratingValidation"
+                         aria-invalid="@(ViewData.ModelState["Rating"]?.Errors.Count > 0 ? "true" : "false")">
+                        @for (var star = 1; star <= 5; star++)
+                        {
+                            <button type="button"
+                                    class="customer-feedback-star"
+                                    data-rating="@star"
+                                    aria-label="Rate @star out of 5 stars"
+                                    aria-pressed="@(selectedRating == star ? "true" : "false")">@((selectedRating >= star) ? "★" : "☆")</button>
+                        }
+                    </div>
+                    <span asp-validation-for="Rating" class="customer-feedback-field-error" id="ratingValidation" role="alert"></span>
+                </div>
+
+                <div class="customer-feedback-field">
+                    <label asp-for="Message" class="customer-feedback-label">Write Your Review *</label>
+                    <textarea asp-for="Message"
+                              id="feedbackMessage"
+                              rows="6"
+                              required
+                              placeholder="Write here..."
+                              aria-describedby="messageValidation"></textarea>
+                    <span asp-validation-for="Message" class="customer-feedback-field-error" id="messageValidation" role="alert"></span>
+                </div>
+
+                <button type="submit" class="customer-feedback-submit-btn" id="submitFeedbackButton">
+                    Submit
+                </button>
+            </form>
+        </section>
+    </div>
+</section>
+
+@section Scripts {
+    <script src="~/js/customer_feedback.js" asp-append-version="true"></script>
+}
