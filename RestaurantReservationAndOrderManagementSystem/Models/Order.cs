@@ -15,17 +15,15 @@ namespace RestaurantReservationAndOrderManagementSystem.Models
         [ForeignKey(nameof(CustomerID))]
         public Customer Customer { get; set; } = null!;
 
-        [Required(ErrorMessage = "Staff ID is required")]
-        public string StaffID { get; set; } = string.Empty;
+        public string? StaffID { get; set; }
 
         [ForeignKey(nameof(StaffID))]
-        public Staff Staff { get; set; } = null!;
+        public Staff? Staff { get; set; }
 
-        [Required(ErrorMessage = "Booking ID is required")]
-        public string BookingID { get; set; } = string.Empty;
+        public string? BookingID { get; set; }
 
         [ForeignKey(nameof(BookingID))]
-        public Booking Booking { get; set; } = null!;
+        public Booking? Booking { get; set; }
 
         [Required(ErrorMessage = "Table ID is required")]
         public string TableID { get; set; } = string.Empty;
@@ -35,10 +33,8 @@ namespace RestaurantReservationAndOrderManagementSystem.Models
 
         public DateTime CreatedAt { get; set; } = DateTime.Now;
 
-        public DateTime CompletedAt { get; set; } = DateTime.Now;
+        public DateTime? CompletedAt { get; set; }
 
         public string OrderStatus { get; set; } = string.Empty;
-
-        public string OrderNotes { get; set; } = string.Empty;
     }
 }

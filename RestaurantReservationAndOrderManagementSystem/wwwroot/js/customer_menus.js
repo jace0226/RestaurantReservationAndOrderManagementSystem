@@ -1,6 +1,7 @@
 (() => {
     const menuItems = window.menuItemsData || [];
     const availableTables = window.availableTablesData || [];
+    const activeBooking = window.activeBookingData || null;
 
     const menuGrid = document.getElementById("customerMenuGrid");
     const recommendationGrid = document.getElementById("recommendationGrid");
@@ -42,7 +43,6 @@
         return `RM${numPrice.toFixed(2)}`;
     };
 
-    // Helper to evaluate item availability safely
     function isItemAvailable(item) {
         if (typeof item.foodAvailability === "boolean") return item.foodAvailability;
         const status = (item.foodAvailability || "").toLowerCase();
@@ -53,6 +53,22 @@
         if (!tableSelect) return;
         tableSelect.innerHTML = '<option value="" selected disabled>-- Choose Table --</option>';
 
+        // SCENARIO A: ADVANCE BOOKING FOUND
+        if (activeBooking && activeBooking.tableId) {
+            const opt = document.createElement("option");
+            opt.value = activeBooking.tableId;
+            opt.textContent = `${activeBooking.tableId} (Reserved)`;
+            opt.selected = true;
+            tableSelect.appendChild(opt);
+
+            // Lock dropdown since staff assigned this table
+            tableSelect.disabled = true;
+            validateOrderButton();
+            return;
+        }
+
+        // SCENARIO B: WALK-IN (FALLBACK DROPDOWN)
+        tableSelect.disabled = false;
         if (availableTables.length === 0) {
             const noOpt = document.createElement("option");
             noOpt.value = "";
@@ -506,20 +522,76 @@
 
     cartOverlay.addEventListener("click", () => toggleCart(false));
     cartCloseButton.addEventListener("click", () => toggleCart(false));
-    confirmOrderButton.addEventListener("click", () => {
+
+    // CONFIRM ORDER SUBMISSION HANDLER
+    confirmOrderButton.addEventListener("click", async () => {
         if (cart.length === 0) {
             validateOrderButton();
             return;
         }
 
-        if (!tableSelect || !tableSelect.value) {
+        const selectedTableId = tableSelect ? tableSelect.value : "";
+        if (!selectedTableId) {
             window.alert("Please select a dine-in table before sending your order.");
             if (tableSelect) tableSelect.focus();
             return;
         }
 
-        const selectedTableId = tableSelect.value;
-        window.alert(`Demo: Placing order for Table ${selectedTableId}. Status will set to pending...`);
+        confirmOrderButton.disabled = true;
+        confirmOrderButton.textContent = "Placing Order...";
+
+        // Map cart array to match backend DTO
+        const orderItemsPayload = cart.map(item => {
+            const customText = buildSelectionText(item);
+            let combinedRemarks = customText;
+            if (item.remarks) {
+                combinedRemarks = combinedRemarks ? `${combinedRemarks} | ${item.remarks}` : item.remarks;
+            }
+
+            return {
+                foodId: item.foodId,
+                quantity: item.quantity,
+                remarks: combinedRemarks || null
+            };
+        });
+
+        const payload = {
+            tableId: selectedTableId,
+            bookingId: activeBooking ? activeBooking.bookingId : null,
+            items: orderItemsPayload
+        };
+
+        const token = document.getElementById("__RequestVerificationToken")?.value || "";
+
+        try {
+            const response = await fetch("/Customer/Menus?handler=CreateOrder", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "RequestVerificationToken": token
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const result = await response.json();
+
+            if (response.ok && result.success) {
+                window.alert(`Order successfully placed! Order ID: ${result.orderId} (Status: Pending)`);
+
+                // Clear local cart and close panel
+                cart.length = 0;
+                updateCartSummary();
+                toggleCart(false);
+            } else {
+                window.alert(`Failed to place order: ${result.message || "Unknown error"}`);
+            }
+        } catch (err) {
+            window.alert("A network error occurred while placing your order.");
+            console.error(err);
+        } finally {
+            confirmOrderButton.disabled = false;
+            confirmOrderButton.textContent = "Confirm Order";
+        }
     });
 
     cartItemsContainer.addEventListener("click", (event) => {

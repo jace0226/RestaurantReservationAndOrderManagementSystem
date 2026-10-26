@@ -22,5 +22,7 @@ namespace RestaurantReservationAndOrderManagementSystem.Models
         public Food_Items Food { get; set; } = null!;
 
         public int Quantity { get; set; } = 0;
+
+        public string? FoodRemarks { get; set; }
     }
 }

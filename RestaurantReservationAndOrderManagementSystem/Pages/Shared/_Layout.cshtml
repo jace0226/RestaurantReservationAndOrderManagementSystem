@@ -30,13 +30,13 @@
                     <span>Menu</span>
                 </button>
 
-                <!-- Main Navigation Links Only -->
+                <!-- Customer Main Navigation Links -->
                 <nav class="nav-menu" id="customer-sidebar-navigation" aria-label="Sidebar Menu">
                     <a class="nav-item @(currentPath.StartsWithSegments("/Customer/Menus", StringComparison.OrdinalIgnoreCase) ? "active" : null)" asp-page="/Customer/CustomerMenus" aria-current="@(currentPath.StartsWithSegments("/Customer/Menus", StringComparison.OrdinalIgnoreCase) ? "page" : null)">
                         <i class="fa-solid fa-burger"></i>
                         <span>Menus</span>
                     </a>
-                    <a class="nav-item @(currentPath.StartsWithSegments("/Customer/Orders", StringComparison.OrdinalIgnoreCase) ? "active" : null)" href="/Customer/Orders">
+                    <a class="nav-item @(currentPath.StartsWithSegments("/Customer/Orders", StringComparison.OrdinalIgnoreCase) ? "active" : null)" asp-page="/Customer/CustomerOrders" aria-current="@(currentPath.StartsWithSegments("/Customer/Orders", StringComparison.OrdinalIgnoreCase) ? "page" : null)">
                         <i class="fa-solid fa-utensils"></i>
                         <span>Orders</span>
                     </a>
@@ -50,7 +50,7 @@
                     </a>
                 </nav>
 
-                <!-- Dedicated Profile Section (Positioned Above Footer) -->
+                <!-- Dedicated Profile Section -->
                 <div class="sidebar-profile">
                     <a class="nav-item @(currentPath.StartsWithSegments("/Customer/Profile", StringComparison.OrdinalIgnoreCase) ? "active" : null)" asp-page="/Customer/Profile" aria-current="@(currentPath.StartsWithSegments("/Customer/Profile", StringComparison.OrdinalIgnoreCase) ? "page" : null)">
                         <i class="fa-solid fa-user"></i>
@@ -73,23 +73,38 @@
             {
                 <!-- Staff / Admin Navigation -->
                 <nav class="nav-menu" aria-label="Sidebar Menu">
-                    <a class="nav-item @(currentPath.StartsWithSegments("/Staff/Dashboard", StringComparison.OrdinalIgnoreCase) ? "active" : null)" href="/Staff/Dashboard">
+                    <a class="nav-item @(currentPath.StartsWithSegments("/Staff/Dashboard", StringComparison.OrdinalIgnoreCase) ? "active" : null)" href="/Staff/Dashboard" aria-current="@(currentPath.StartsWithSegments("/Staff/Dashboard", StringComparison.OrdinalIgnoreCase) ? "page" : null)">
                         <i class="fa-solid fa-house"></i>
                         <span>Dashboard</span>
                     </a>
-                    <a class="nav-item @(currentPath.StartsWithSegments("/Staff/Menus", StringComparison.OrdinalIgnoreCase) ? "active" : null)" href="/Staff/Menus">
+                    @if (User.IsInRole("Administrator"))
+                    {
+                        <a class="nav-item @(currentPath.StartsWithSegments("/Staff/Reports", StringComparison.OrdinalIgnoreCase) ? "active" : null)" href="/Staff/Reports" aria-current="@(currentPath.StartsWithSegments("/Staff/Reports", StringComparison.OrdinalIgnoreCase) ? "page" : null)">
+                            <i class="fa-solid fa-chart-column"></i>
+                            <span>Reports</span>
+                        </a>
+                        <a class="nav-item @(currentPath.StartsWithSegments("/Staff/StaffManagement", StringComparison.OrdinalIgnoreCase) ? "active" : null)" href="/Staff/StaffManagement" aria-current="@(currentPath.StartsWithSegments("/Staff/StaffManagement", StringComparison.OrdinalIgnoreCase) ? "page" : null)">
+                            <i class="fa-solid fa-users"></i>
+                            <span>Staff Management</span>
+                        </a>
+                        <a class="nav-item @(currentPath.StartsWithSegments("/Staff/CustomerManagement", StringComparison.OrdinalIgnoreCase) ? "active" : null)" href="/Staff/CustomerManagement" aria-current="@(currentPath.StartsWithSegments("/Staff/CustomerManagement", StringComparison.OrdinalIgnoreCase) ? "page" : null)">
+                            <i class="fa-solid fa-user-group"></i>
+                            <span>Customer Management</span>
+                        </a>
+                    }
+                    <a class="nav-item @(currentPath.StartsWithSegments("/Staff/Menus", StringComparison.OrdinalIgnoreCase) ? "active" : null)" href="/Staff/Menus" aria-current="@(currentPath.StartsWithSegments("/Staff/Menus", StringComparison.OrdinalIgnoreCase) ? "page" : null)">
                         <i class="fa-solid fa-burger"></i>
                         <span>Menus</span>
                     </a>
-                    <a class="nav-item @(currentPath.StartsWithSegments("/Staff/Orders", StringComparison.OrdinalIgnoreCase) ? "active" : null)" href="/Staff/Orders">
+                    <a class="nav-item @(currentPath.StartsWithSegments("/Staff/Orders", StringComparison.OrdinalIgnoreCase) ? "active" : null)" href="/Staff/Orders" aria-current="@(currentPath.StartsWithSegments("/Staff/Orders", StringComparison.OrdinalIgnoreCase) ? "page" : null)">
                         <i class="fa-solid fa-utensils"></i>
                         <span>Orders</span>
                     </a>
-                    <a class="nav-item @(currentPath.StartsWithSegments("/Staff/Reservations", StringComparison.OrdinalIgnoreCase) ? "active" : null)" href="/Staff/Reservations">
+                    <a class="nav-item @(currentPath.StartsWithSegments("/Staff/Reservations", StringComparison.OrdinalIgnoreCase) ? "active" : null)" href="/Staff/Reservations" aria-current="@(currentPath.StartsWithSegments("/Staff/Reservations", StringComparison.OrdinalIgnoreCase) ? "page" : null)">
                         <i class='fas fa-calendar-check'></i>
                         <span>Reservation</span>
                     </a>
-                    <a class="nav-item @(currentPath.StartsWithSegments("/Staff/Tables", StringComparison.OrdinalIgnoreCase) ? "active" : null)" href="/Staff/Tables">
+                    <a class="nav-item @(currentPath.StartsWithSegments("/Staff/Tables", StringComparison.OrdinalIgnoreCase) ? "active" : null)" href="/Staff/Tables" aria-current="@(currentPath.StartsWithSegments("/Staff/Tables", StringComparison.OrdinalIgnoreCase) ? "page" : null)">
                         <i class='fas fa-chair'></i>
                         <span>Tables</span>
                     </a>

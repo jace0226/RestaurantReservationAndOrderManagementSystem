@@ -1,10 +1,13 @@
 ﻿@page "/Customer/Menus"
 @model RestaurantReservationAndOrderManagementSystem.Pages.Customer.CustomerMenusModel
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
 @{
     Layout = "_Layout";
     ViewData["Title"] = "Our Menu";
+    var requestToken = Antiforgery.GetAndStoreTokens(HttpContext).RequestToken;
 }
 
+<input type="hidden" id="__RequestVerificationToken" value="@requestToken" />
 <link rel="stylesheet" href="~/css/customer_menus.css" asp-append-version="true" />
 
 <section class="customer-menu" aria-labelledby="customer-menu-title">
@@ -162,6 +165,8 @@
 
 @section Scripts {
     <script>
+        window.currentCustomerId = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.CurrentCustomerId));
+
         window.menuItemsData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
                     Model.MenuItems,
                     new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }
@@ -169,6 +174,11 @@
 
         window.availableTablesData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
                     Model.AvailableTables,
+                    new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }
+                    ));
+
+        window.activeBookingData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+                    Model.ActiveBooking,
                     new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }
                     ));
     </script>
