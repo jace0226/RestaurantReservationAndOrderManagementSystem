@@ -16,11 +16,13 @@ namespace RestaurantReservationAndOrderManagementSystem.Models
         public Order Order { get; set; } = null!;
 
         [Required(ErrorMessage = "Food ID is required")]
-        public string FoodID { get; set; }
+        public required string FoodID { get; set; }
 
         [ForeignKey(nameof(FoodID))]
         public Food_Items Food { get; set; } = null!;
 
         public int Quantity { get; set; } = 0;
+
+        public string? FoodRemarks { get; set; }
     }
 }

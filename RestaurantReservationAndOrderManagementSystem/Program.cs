@@ -10,7 +10,20 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorPages(options =>
-    options.Conventions.AuthorizeFolder("/Staff", "StaffAccess"));
+{
+    options.Conventions.AuthorizeFolder("/Staff", "StaffAccess");
+    options.Conventions.AuthorizeFolder("/Customer", "CustomerAccess");
+});
+
+// 1. Register Session services
+builder.Services.AddDistributedMemoryCache(); // Stores session data in memory
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30); // Session expiration duration
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true; // Makes cookie work even without strict privacy consent
+});
+
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
@@ -26,9 +39,15 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.ExpireTimeSpan = TimeSpan.FromHours(8);
         options.SlidingExpiration = true;
     });
+
 builder.Services.AddAuthorization(options =>
+{
     options.AddPolicy("StaffAccess", policy =>
-        policy.RequireRole("Staff", "Administrator")));
+        policy.RequireRole("Staff", "Administrator"));
+    options.AddPolicy("CustomerAccess", policy =>
+        policy.RequireRole("Customer"));
+});
+
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -51,7 +70,12 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseStaticFiles();
+
 app.UseRouting();
+
+// 2. Enable Session middleware (MUST be placed after UseRouting and before UseAuthorization)
+app.UseSession();
 
 app.UseAuthentication();
 app.UseAuthorization();
