@@ -28,7 +28,8 @@
         <div class="customer-profile-alert success" role="status">@Model.PasswordSuccess</div>
     }
 
-    <div class="customer-profile-grid">
+    <div class="customer-profile-stack">
+        <!-- Personal Information Card -->
         <section class="customer-profile-card" aria-labelledby="personal-details-title">
             <div class="customer-profile-card-heading">
                 <span class="customer-profile-card-icon" aria-hidden="true"><i class="fa-regular fa-id-card"></i></span>
@@ -44,8 +45,13 @@
                 <div class="customer-profile-fields">
                     <div class="customer-profile-field">
                         <label asp-for="ProfileInput.FullName"></label>
-                        <input asp-for="ProfileInput.FullName" autocomplete="name" maxlength="120" />
+                        <input asp-for="ProfileInput.FullName" autocomplete="name" maxlength="120" readonly />
                         <span asp-validation-for="ProfileInput.FullName" class="customer-profile-field-error"></span>
+                    </div>
+                    <div class="customer-profile-field">
+                        <label asp-for="ProfileInput.DateOfBirth"></label>
+                        <input asp-for="ProfileInput.DateOfBirth" type="date" max="@Model.LatestDateOfBirth" readonly />
+                        <span asp-validation-for="ProfileInput.DateOfBirth" class="customer-profile-field-error"></span>
                     </div>
                     <div class="customer-profile-field">
                         <label asp-for="ProfileInput.Email"></label>
@@ -57,25 +63,18 @@
                         <input asp-for="ProfileInput.Phone" type="tel" autocomplete="tel" maxlength="32" />
                         <span asp-validation-for="ProfileInput.Phone" class="customer-profile-field-error"></span>
                     </div>
-                    <div class="customer-profile-field">
-                        <label asp-for="ProfileInput.DateOfBirth"></label>
-                        <input asp-for="ProfileInput.DateOfBirth" type="date" max="@Model.LatestDateOfBirth" />
-                        <span asp-validation-for="ProfileInput.DateOfBirth" class="customer-profile-field-error"></span>
-                    </div>
-                    <div class="customer-profile-field customer-profile-field-wide">
-                        <label asp-for="ProfileInput.Address"></label>
-                        <textarea asp-for="ProfileInput.Address" rows="3" maxlength="500" autocomplete="street-address"></textarea>
-                        <span asp-validation-for="ProfileInput.Address" class="customer-profile-field-error"></span>
-                    </div>
                 </div>
 
-                <button type="submit" class="customer-profile-submit">
-                    <i class="fa-solid fa-check" aria-hidden="true"></i>
-                    Save changes
-                </button>
+                <div class="customer-profile-actions">
+                    <button type="submit" class="customer-profile-submit">
+                        <i class="fa-solid fa-check" aria-hidden="true"></i>
+                        Save changes
+                    </button>
+                </div>
             </form>
         </section>
 
+        <!-- Change Password Card -->
         <section class="customer-profile-card" aria-labelledby="change-password-title">
             <div class="customer-profile-card-heading">
                 <span class="customer-profile-card-icon" aria-hidden="true"><i class="fa-solid fa-lock"></i></span>
@@ -107,10 +106,12 @@
                     </div>
                 </div>
 
-                <button type="submit" class="customer-profile-submit">
-                    <i class="fa-solid fa-key" aria-hidden="true"></i>
-                    Change password
-                </button>
+                <div class="customer-profile-actions">
+                    <button type="submit" class="customer-profile-submit">
+                        <i class="fa-solid fa-key" aria-hidden="true"></i>
+                        Change password
+                    </button>
+                </div>
             </form>
         </section>
     </div>
