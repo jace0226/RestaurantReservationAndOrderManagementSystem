@@ -45,11 +45,14 @@
 
         <form method="get" class="customer-reservation-date-filter" role="search">
             <input type="hidden" name="Category" value="@Model.Category" />
-            <label class="customer-date-field" for="dateFilterInput">
-                <span class="visually-hidden">Filter reservations by date</span>
-                <input id="dateFilterInput" asp-for="DateFilter" type="date" />
-            </label>
-            <button type="submit" class="customer-filter-btn">Filter</button>
+            <input id="dateFilterInput" asp-for="DateFilter" type="date" />
+            <button type="submit" class="customer-reservation-filter-btn">Filter</button>
+            @if (Model.DateFilter.HasValue)
+            {
+                <a class="customer-reservation-clear-filter"
+                   asp-page="./CustomerReservations"
+                   asp-route-category="@Model.Category">Clear</a>
+            }
         </form>
     </div>
 

@@ -53,21 +53,17 @@
         if (!tableSelect) return;
         tableSelect.innerHTML = '<option value="" selected disabled>-- Choose Table --</option>';
 
-        // SCENARIO A: ADVANCE BOOKING FOUND
         if (activeBooking && activeBooking.tableId) {
             const opt = document.createElement("option");
             opt.value = activeBooking.tableId;
             opt.textContent = `${activeBooking.tableId} (Reserved)`;
             opt.selected = true;
             tableSelect.appendChild(opt);
-
-            // Lock dropdown since staff assigned this table
             tableSelect.disabled = true;
             validateOrderButton();
             return;
         }
 
-        // SCENARIO B: WALK-IN (FALLBACK DROPDOWN)
         tableSelect.disabled = false;
         if (availableTables.length === 0) {
             const noOpt = document.createElement("option");
@@ -212,6 +208,8 @@
             const matchesSearch = (item.foodName || "").toLocaleLowerCase().includes(query);
             return matchesCategory && matchesSearch;
         });
+
+        filteredItems.sort((a, b) => (a.foodName || "").localeCompare(b.foodName || ""));
 
         menuGrid.replaceChildren(...filteredItems.map(createMenuCard));
         resultCount.textContent = `${filteredItems.length} ${filteredItems.length === 1 ? "dish" : "dishes"}`;
@@ -385,10 +383,13 @@
 
         cart.forEach((entry, index) => {
             const row = makeElement("div", "customer-cart-item");
+
+            // Left Column: Image
             const itemImage = makeElement("img", "customer-cart-item-image");
             itemImage.src = entry.image;
             itemImage.alt = entry.name;
 
+            // Middle Column: Food Name & Options/Remarks
             const itemBody = makeElement("div", "customer-cart-item-body");
             const name = makeElement("h3", "customer-cart-item-name", entry.name);
             itemBody.appendChild(name);
@@ -401,6 +402,11 @@
             if (entry.remarks) {
                 itemBody.appendChild(makeElement("p", "customer-cart-item-remark", `Remark: ${entry.remarks}`));
             }
+
+            // Right Column: Centered Price sitting exactly above Stepper
+            const itemSide = makeElement("div", "customer-cart-item-side");
+            const itemTotalPrice = entry.price * entry.quantity;
+            const priceDisplay = makeElement("span", "customer-cart-item-price", formatPrice(itemTotalPrice));
 
             const controls = makeElement("div", "customer-cart-item-controls");
             const decreaseButton = makeElement("button", "customer-cart-qty-btn", "");
@@ -421,7 +427,10 @@
             increaseButton.setAttribute("data-cart-action", "increase");
 
             controls.append(decreaseButton, quantityDisplay, increaseButton);
-            row.append(itemImage, itemBody, controls);
+            itemSide.append(priceDisplay, controls);
+
+            // Assemble row
+            row.append(itemImage, itemBody, itemSide);
             cartItemsContainer.appendChild(row);
         });
     }
@@ -523,7 +532,6 @@
     cartOverlay.addEventListener("click", () => toggleCart(false));
     cartCloseButton.addEventListener("click", () => toggleCart(false));
 
-    // CONFIRM ORDER SUBMISSION HANDLER
     confirmOrderButton.addEventListener("click", async () => {
         if (cart.length === 0) {
             validateOrderButton();
@@ -540,7 +548,6 @@
         confirmOrderButton.disabled = true;
         confirmOrderButton.textContent = "Placing Order...";
 
-        // Map cart array to match backend DTO
         const orderItemsPayload = cart.map(item => {
             const customText = buildSelectionText(item);
             let combinedRemarks = customText;
@@ -578,7 +585,6 @@
             if (response.ok && result.success) {
                 window.alert(`Order successfully placed! Order ID: ${result.orderId} (Status: Pending)`);
 
-                // Clear local cart and close panel
                 cart.length = 0;
                 updateCartSummary();
                 toggleCart(false);

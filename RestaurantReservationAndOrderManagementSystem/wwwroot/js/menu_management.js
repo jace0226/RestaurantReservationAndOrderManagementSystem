@@ -1,7 +1,7 @@
 (() => {
     const items = window.staffMenuItemsData || [];
     const modal = document.getElementById("menuItemModal");
-    const panel = modal.querySelector(".staff-menu-form-panel");
+    const panel = modal?.querySelector(".staff-menu-form-panel");
     const form = document.getElementById("menuItemForm");
     const openAddButton = document.getElementById("open-add-menu");
     const title = document.getElementById("menuFormTitle");
@@ -14,11 +14,13 @@
     const imagePlaceholder = document.getElementById("menuImagePlaceholder");
     const searchInput = document.getElementById("staffMenuSearch");
     const categoryFilters = document.getElementById("staffCategoryFilters");
+    const availabilityFilters = document.getElementById("staffAvailabilityFilters");
     const resultCount = document.getElementById("staffMenuResultCount");
     const emptyState = document.getElementById("staffMenuEmpty");
     const menuGrid = document.getElementById("staffMenuGrid");
 
     let selectedCategory = "All";
+    let selectedAvailability = window.staffMenuAvailabilityFilter || "All";
     let previousFocus = null;
     let previewObjectUrl = null;
 
@@ -120,8 +122,10 @@
         menuGrid.querySelectorAll(".staff-food-card").forEach((card) => {
             const matchesCategory = selectedCategory === "All" ||
                 card.dataset.category === selectedCategory;
+            const matchesAvailability = selectedAvailability === "All" ||
+                card.dataset.availability === selectedAvailability;
             const matchesSearch = card.textContent.toLocaleLowerCase().includes(query);
-            const isVisible = matchesCategory && matchesSearch;
+            const isVisible = matchesCategory && matchesAvailability && matchesSearch;
             card.hidden = !isVisible;
             if (isVisible) {
                 visibleCount += 1;
@@ -131,25 +135,43 @@
         resultCount.textContent = `${visibleCount} ${visibleCount === 1 ? "dish" : "dishes"}`;
         emptyState.hidden = visibleCount > 0;
         menuGrid.hidden = visibleCount === 0;
+        document.querySelectorAll("input[name='search']").forEach((input) => {
+            input.value = searchInput.value;
+        });
+        document.querySelectorAll("input[name='availabilityFilter']").forEach((input) => {
+            input.value = selectedAvailability;
+        });
     }
 
-    openAddButton.addEventListener("click", startNewItem);
-    document.querySelectorAll("[data-close-menu-modal]").forEach((button) => {
-        button.addEventListener("click", closeModal);
-    });
+    if (modal) {
+        openAddButton.addEventListener("click", startNewItem);
+        document.querySelectorAll("[data-close-menu-modal]").forEach((button) => {
+            button.addEventListener("click", closeModal);
+        });
 
-    document.querySelectorAll("[data-edit-food]").forEach((button) => {
-        button.addEventListener("click", () => startEditItem(button.dataset.editFood));
-    });
+        document.querySelectorAll("[data-edit-food]").forEach((button) => {
+            button.addEventListener("click", () => startEditItem(button.dataset.editFood));
+        });
 
-    imageInput.addEventListener("change", () => {
-        const image = imageInput.files && imageInput.files[0];
-        if (!image) {
-            return;
+        imageInput.addEventListener("change", () => {
+            const image = imageInput.files && imageInput.files[0];
+            if (!image) {
+                return;
+            }
+
+            setPreview(URL.createObjectURL(image), image.name, true);
+        });
+
+        deleteForm.addEventListener("submit", (event) => {
+            if (!window.confirm("Delete this menu item? This action cannot be undone.")) {
+                event.preventDefault();
+            }
+        });
+
+        if (window.staffMenuFormOpen) {
+            openModal();
         }
-
-        setPreview(URL.createObjectURL(image), image.name, true);
-    });
+    }
 
     categoryFilters.querySelectorAll("button").forEach((button) => {
         button.addEventListener("click", () => {
@@ -163,14 +185,33 @@
         });
     });
 
+    availabilityFilters.querySelectorAll("a").forEach((filter) => {
+        filter.addEventListener("click", (event) => {
+            event.preventDefault();
+            selectedAvailability = new URL(filter.href).searchParams.get("availabilityFilter") || "All";
+            availabilityFilters.querySelectorAll("a").forEach((candidate) => {
+                const active = candidate === filter;
+                candidate.classList.toggle("active", active);
+                candidate.setAttribute("aria-pressed", String(active));
+            });
+            updateMenu();
+        });
+    });
+
     searchInput.addEventListener("input", updateMenu);
     document.getElementById("staffMenuReset").addEventListener("click", () => {
         searchInput.value = "";
         selectedCategory = "All";
+        selectedAvailability = "All";
         categoryFilters.querySelectorAll("button").forEach((button) => {
             const active = button.dataset.category === "All";
             button.classList.toggle("active", active);
             button.setAttribute("aria-pressed", String(active));
+        });
+        availabilityFilters.querySelectorAll("a").forEach((filter) => {
+            const active = new URL(filter.href).searchParams.get("availabilityFilter") === "All";
+            filter.classList.toggle("active", active);
+            filter.setAttribute("aria-pressed", String(active));
         });
         updateMenu();
         searchInput.focus();
@@ -180,20 +221,11 @@
         document.getElementById("staffMenuReset").click();
     });
 
-    deleteForm.addEventListener("submit", (event) => {
-        if (!window.confirm("Delete this menu item? This action cannot be undone.")) {
-            event.preventDefault();
-        }
-    });
-
     document.addEventListener("keydown", (event) => {
-        if (event.key === "Escape" && !modal.hidden) {
+        if (event.key === "Escape" && modal && !modal.hidden) {
             closeModal();
         }
     });
 
     updateMenu();
-    if (window.staffMenuFormOpen) {
-        openModal();
-    }
 })();

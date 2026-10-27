@@ -15,7 +15,7 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
     public class CustomerReservationsModel : PageModel
     {
         private const string DefaultCategory = "Upcoming";
-        private static readonly IReadOnlyList<TimeOnly> ReservationSlots = BuildTimeSlots();
+        private static readonly IReadOnlyList<TimeOnly> AllReservationSlots = BuildTimeSlots();
         private readonly ApplicationDbContext _dbContext;
         private readonly ILogger<CustomerReservationsModel> _logger;
 
@@ -47,7 +47,7 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
 
         public IReadOnlyList<ReservationItem> Reservations { get; private set; } = [];
 
-        public IReadOnlyList<TimeOnly> TimeSlots => ReservationSlots;
+        public List<TimeOnly> TimeSlots { get; private set; } = new();
 
         public string MinimumReservationDate => DateOnly.FromDateTime(DateTime.Today).AddDays(1).ToString("yyyy-MM-dd");
 
@@ -68,35 +68,37 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
             }
 
             await LoadReservationsAsync();
+            await PopulateAvailableTimeSlotsAsync();
             return Page();
         }
 
-        private async Task<string> GenerateNextBookingIdAsync()
+        /// <summary>
+        /// AJAX Endpoint: Returns available time slots as JSON when user changes the date picker on front-end
+        /// </summary>
+        public async Task<JsonResult> OnGetAvailableTimeSlotsAsync(DateOnly selectedDate, string? bookingId)
         {
-            // Fetch all existing BookingIDs starting with 'RES-'
-            var existingIds = await _dbContext.Bookings
-                .AsNoTracking()
-                .Where(b => b.BookingID != null && b.BookingID.StartsWith("RES-"))
-                .Select(b => b.BookingID!)
-                .ToListAsync();
+            var customer = await GetCurrentCustomerAsync();
+            var allSlots = BuildTimeSlots();
 
-            int maxNumber = 0;
-
-            foreach (var id in existingIds)
+            if (customer is null)
             {
-                // Extract the numeric portion after "RES-"
-                if (id.Length > 4 && int.TryParse(id.Substring(4), out int parsedNumber))
-                {
-                    if (parsedNumber > maxNumber)
-                    {
-                        maxNumber = parsedNumber;
-                    }
-                }
+                return new JsonResult(allSlots.Select(s => new { value = s.ToString("HH:mm"), text = s.ToString("h:mm tt") }));
             }
 
-            // Increment and format to "RES-" followed by at least 3 digits (e.g., RES-001, RES-002, RES-010, RES-100)
-            int nextNumber = maxNumber + 1;
-            return $"RES-{nextNumber:D3}";
+            var bookedTimes = await _dbContext.Bookings
+                .AsNoTracking()
+                .Where(b => b.CustomerID == customer.CustomerID
+                         && b.BookingDate == selectedDate
+                         && b.BookingStatus != "Cancelled"
+                         && (string.IsNullOrEmpty(bookingId) || b.BookingID != bookingId))
+                .Select(b => b.BookingTime)
+                .ToListAsync();
+
+            var availableSlots = allSlots
+                .Where(slot => !bookedTimes.Contains(slot))
+                .Select(slot => new { value = slot.ToString("HH:mm"), text = slot.ToString("h:mm tt") });
+
+            return new JsonResult(availableSlots);
         }
 
         public async Task<IActionResult> OnPostCreateAsync()
@@ -113,6 +115,7 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
             if (!TryValidateModel(ReservationForm, nameof(ReservationForm)))
             {
                 await LoadReservationsAsync();
+                await PopulateAvailableTimeSlotsAsync();
                 return Page();
             }
 
@@ -123,6 +126,7 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
             }
 
             await LoadReservationsAsync();
+            await PopulateAvailableTimeSlotsAsync();
             return Page();
         }
 
@@ -140,6 +144,7 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
             if (!TryValidateModel(ReservationForm, nameof(ReservationForm)))
             {
                 await LoadReservationsAsync();
+                await PopulateAvailableTimeSlotsAsync();
                 return Page();
             }
 
@@ -150,6 +155,7 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
             {
                 ReservationError = "That reservation could not be found.";
                 await LoadReservationsAsync();
+                await PopulateAvailableTimeSlotsAsync();
                 return Page();
             }
 
@@ -157,6 +163,7 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
             {
                 ModelState.AddModelError(string.Empty, "Only waiting reservations can be modified.");
                 await LoadReservationsAsync();
+                await PopulateAvailableTimeSlotsAsync();
                 return Page();
             }
 
@@ -167,6 +174,15 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
             {
                 ModelState.AddModelError(string.Empty, validationMessage);
                 await LoadReservationsAsync();
+                await PopulateAvailableTimeSlotsAsync();
+                return Page();
+            }
+
+            if (await IsTimeSlotBookedByUserAsync(customer.CustomerID, reservationDate, reservationTime, BookingId))
+            {
+                ModelState.AddModelError(string.Empty, "You already have an active reservation for this date and time.");
+                await LoadReservationsAsync();
+                await PopulateAvailableTimeSlotsAsync();
                 return Page();
             }
 
@@ -184,6 +200,7 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
                 _logger.LogError(exception, "Could not update the reservation for customer {CustomerId}", customer.CustomerID);
                 ModelState.AddModelError(string.Empty, "We could not save your reservation changes. Please try again.");
                 await LoadReservationsAsync();
+                await PopulateAvailableTimeSlotsAsync();
                 return Page();
             }
 
@@ -203,6 +220,7 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
             {
                 ReservationError = "A reservation ID is required to cancel this booking.";
                 await LoadReservationsAsync();
+                await PopulateAvailableTimeSlotsAsync();
                 return Page();
             }
 
@@ -213,6 +231,7 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
             {
                 ReservationError = "That reservation could not be found.";
                 await LoadReservationsAsync();
+                await PopulateAvailableTimeSlotsAsync();
                 return Page();
             }
 
@@ -224,6 +243,7 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
             {
                 ReservationError = "This reservation can no longer be cancelled.";
                 await LoadReservationsAsync();
+                await PopulateAvailableTimeSlotsAsync();
                 return Page();
             }
 
@@ -238,6 +258,7 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
                 _logger.LogError(exception, "Could not cancel the reservation {BookingId}", booking.BookingID);
                 ReservationError = "We could not cancel this reservation. Please try again.";
                 await LoadReservationsAsync();
+                await PopulateAvailableTimeSlotsAsync();
                 return Page();
             }
 
@@ -254,6 +275,15 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
             {
                 ModelState.AddModelError(string.Empty, validationMessage);
                 await LoadReservationsAsync();
+                await PopulateAvailableTimeSlotsAsync();
+                return Page();
+            }
+
+            if (await IsTimeSlotBookedByUserAsync(customer.CustomerID, reservationDate, reservationTime, BookingId))
+            {
+                ModelState.AddModelError(string.Empty, "You already have an active reservation for this date and time.");
+                await LoadReservationsAsync();
+                await PopulateAvailableTimeSlotsAsync();
                 return Page();
             }
 
@@ -286,11 +316,50 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
                 _logger.LogError(exception, "Could not save the new reservation for customer {CustomerId}", customer.CustomerID);
                 ModelState.AddModelError(string.Empty, "We could not save your reservation. Please try again.");
                 await LoadReservationsAsync();
+                await PopulateAvailableTimeSlotsAsync();
                 return Page();
             }
 
             ReservationSuccess = "Your reservation has been submitted.";
             return RedirectToPage(new { category = Category, dateFilter = DateFilter?.ToString("yyyy-MM-dd") });
+        }
+
+        /// <summary>
+        /// Server-side helper to populate TimeSlots property during initial page render
+        /// </summary>
+        private async Task PopulateAvailableTimeSlotsAsync()
+        {
+            var customer = await GetCurrentCustomerAsync();
+
+            if (customer is null || !ReservationForm.BookingDate.HasValue)
+            {
+                TimeSlots = AllReservationSlots.ToList();
+                return;
+            }
+
+            var selectedDate = ReservationForm.BookingDate.Value;
+
+            var bookedTimes = await _dbContext.Bookings
+                .AsNoTracking()
+                .Where(b => b.CustomerID == customer.CustomerID
+                         && b.BookingDate == selectedDate
+                         && b.BookingStatus != "Cancelled"
+                         && (string.IsNullOrEmpty(BookingId) || b.BookingID != BookingId))
+                .Select(b => b.BookingTime)
+                .ToListAsync();
+
+            TimeSlots = AllReservationSlots.Where(slot => !bookedTimes.Contains(slot)).ToList();
+        }
+
+        private async Task<bool> IsTimeSlotBookedByUserAsync(string customerId, DateOnly bookingDate, TimeOnly bookingTime, string? currentBookingId = null)
+        {
+            return await _dbContext.Bookings
+                .AsNoTracking()
+                .AnyAsync(b => b.CustomerID == customerId
+                            && b.BookingDate == bookingDate
+                            && b.BookingTime == bookingTime
+                            && b.BookingStatus != "Cancelled"
+                            && (currentBookingId == null || b.BookingID != currentBookingId));
         }
 
         private async Task LoadReservationsAsync()
@@ -310,14 +379,12 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
 
             if (Category == "Upcoming")
             {
-                // Exclude Cancelled and Completed statuses, and ensure date is today or in the future
                 query = query.Where(booking => booking.BookingDate >= today
                                             && booking.BookingStatus != "Completed"
                                             && booking.BookingStatus != "Cancelled");
             }
             else
             {
-                // Include Cancelled, Completed, or any reservation prior to today
                 query = query.Where(booking => booking.BookingStatus == "Completed"
                                             || booking.BookingStatus == "Cancelled"
                                             || booking.BookingDate < today);
@@ -353,7 +420,7 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
                 return false;
             }
 
-            if (!ReservationSlots.Contains(reservationTime))
+            if (!AllReservationSlots.Contains(reservationTime))
             {
                 message = "Please select a valid reservation time between 9:00 AM and 5:00 PM.";
                 return false;
@@ -380,6 +447,31 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
             return await _dbContext.Customers
                 .Include(customer => customer.User)
                 .SingleOrDefaultAsync(customer => customer.UserID == userId);
+        }
+
+        private async Task<string> GenerateNextBookingIdAsync()
+        {
+            var existingIds = await _dbContext.Bookings
+                .AsNoTracking()
+                .Where(b => b.BookingID != null && b.BookingID.StartsWith("RES-"))
+                .Select(b => b.BookingID!)
+                .ToListAsync();
+
+            int maxNumber = 0;
+
+            foreach (var id in existingIds)
+            {
+                if (id.Length > 4 && int.TryParse(id.Substring(4), out int parsedNumber))
+                {
+                    if (parsedNumber > maxNumber)
+                    {
+                        maxNumber = parsedNumber;
+                    }
+                }
+            }
+
+            int nextNumber = maxNumber + 1;
+            return $"RES-{nextNumber:D3}";
         }
 
         public static bool IsValidCategory(string? category) =>

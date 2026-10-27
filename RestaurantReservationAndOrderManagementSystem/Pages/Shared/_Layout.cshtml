@@ -44,7 +44,7 @@
                         <i class='fas fa-calendar-check'></i>
                         <span>Reservations</span>
                     </a>
-                    <a class="nav-item @(currentPath.StartsWithSegments("/Customer/Feedback", StringComparison.OrdinalIgnoreCase) ? "active" : null)" href="/Customer/Feedback">
+                    <a class="nav-item @(currentPath.StartsWithSegments("/Customer/Feedback", StringComparison.OrdinalIgnoreCase) ? "active" : null)" asp-page="/Customer/Feedback" aria-current="@(currentPath.StartsWithSegments("/Customer/Feedback", StringComparison.OrdinalIgnoreCase) ? "page" : null)">
                         <i class="fa-solid fa-comments"></i>
                         <span>Feedback</span>
                     </a>
