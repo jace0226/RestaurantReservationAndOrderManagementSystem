@@ -164,6 +164,93 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
             return RedirectToPage(new { dateFilter = DateFilter?.ToString("yyyy-MM-dd"), search = Search });
         }
 
+        public async Task<IActionResult> OnPostReassignTableAsync(string? bookingId, string? tableId)
+        {
+            if (string.IsNullOrWhiteSpace(bookingId) || string.IsNullOrWhiteSpace(tableId))
+            {
+                return BadRequest();
+            }
+
+            var booking = await _dbContext.Bookings
+                .SingleOrDefaultAsync(item => item.BookingID == bookingId);
+            if (booking is null)
+            {
+                return NotFound();
+            }
+
+            if (booking.TableID == tableId)
+            {
+                return RedirectToPage(new
+                {
+                    dateFilter = DateFilter?.ToString("yyyy-MM-dd"),
+                    search = Search
+                });
+            }
+
+            var table = await _dbContext.Tables
+                .SingleOrDefaultAsync(item => item.TableID == tableId);
+            if (table is null ||
+                !table.TableAvailability.Equals("Available", StringComparison.OrdinalIgnoreCase) ||
+                table.MaxPax < booking.PartySize)
+            {
+                TempData["ReservationTableError"] =
+                    table is null
+                        ? "The selected table does not exist."
+                        : !table.TableAvailability.Equals("Available", StringComparison.OrdinalIgnoreCase)
+                            ? "The selected table is not available."
+                            : $"The selected table seats up to {table.MaxPax} guests.";
+                return RedirectToPage(new
+                {
+                    dateFilter = DateFilter?.ToString("yyyy-MM-dd"),
+                    search = Search
+                });
+            }
+
+            var tableAlreadyBooked = await _dbContext.Bookings.AnyAsync(item =>
+                item.BookingID != booking.BookingID &&
+                item.TableID == tableId &&
+                item.BookingDate == booking.BookingDate &&
+                item.BookingTime == booking.BookingTime &&
+                item.BookingStatus != "Cancelled" &&
+                item.BookingStatus != "Completed");
+            if (tableAlreadyBooked)
+            {
+                TempData["ReservationTableError"] =
+                    "The selected table already has an active reservation at that date and time.";
+                return RedirectToPage(new
+                {
+                    dateFilter = DateFilter?.ToString("yyyy-MM-dd"),
+                    search = Search
+                });
+            }
+
+            booking.TableID = table.TableID;
+            try
+            {
+                await _dbContext.SaveChangesAsync();
+            }
+            catch (DbUpdateException exception)
+            {
+                _logger.LogError(
+                    exception,
+                    "Could not reassign table for booking {BookingId}.",
+                    booking.BookingID);
+                TempData["ReservationTableError"] = "The table could not be reassigned. Please try again.";
+                return RedirectToPage(new
+                {
+                    dateFilter = DateFilter?.ToString("yyyy-MM-dd"),
+                    search = Search
+                });
+            }
+
+            TempData["ReservationTableMessage"] = "Reservation table reassigned.";
+            return RedirectToPage(new
+            {
+                dateFilter = DateFilter?.ToString("yyyy-MM-dd"),
+                search = Search
+            });
+        }
+
         public static string StatusCssClass(string status) => status switch
         {
             "Waiting" => "status-waiting",

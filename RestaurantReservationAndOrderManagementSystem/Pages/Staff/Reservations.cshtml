@@ -56,6 +56,14 @@
             </div>
             <span class="booking-count">@Model.Reservations.Count booking@(Model.Reservations.Count == 1 ? "" : "s")</span>
         </div>
+        @if (TempData["ReservationTableMessage"] is string tableMessage)
+        {
+            <p class="reservation-feedback" role="status">@tableMessage</p>
+        }
+        @if (TempData["ReservationTableError"] is string tableError)
+        {
+            <p class="reservation-feedback reservation-feedback-error" role="alert">@tableError</p>
+        }
 
         <div class="reservation-table-wrap">
             <table class="reservation-table" aria-label="Reservations">
@@ -94,7 +102,41 @@
                                 </span>
                             </td>
                             <td data-label="Guests">@reservation.PartySize @(reservation.PartySize == 1 ? "guest" : "guests")</td>
-                            <td data-label="Table">@reservation.TableID</td>
+                            <td data-label="Table">
+                                <form method="post" asp-page-handler="ReassignTable" class="table-reassign-form">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="bookingId" value="@reservation.BookingID" />
+                                    <input type="hidden" name="DateFilter" value="@Model.DateFilter?.ToString("yyyy-MM-dd")" />
+                                    <input type="hidden" name="Search" value="@Model.Search" />
+                                    <label class="visually-hidden" for="table-@reservation.BookingID">Table for @reservation.GuestName</label>
+                                    <select id="table-@reservation.BookingID" name="tableId" required>
+                                        @if (string.IsNullOrEmpty(reservation.TableID))
+                                        {
+                                            <option value="" selected>Select a table</option>
+                                        }
+                                        @foreach (var table in Model.Tables)
+                                        {
+                                            var isCurrentTable = table.TableID == reservation.TableID;
+                                            var canSeatParty = table.Capacity >= reservation.PartySize;
+                                            var isAvailable = table.Availability.Equals("Available", StringComparison.OrdinalIgnoreCase);
+                                            <option value="@table.TableID"
+                                                    selected="@(isCurrentTable ? "selected" : null)"
+                                                    disabled="@(!isCurrentTable && (!canSeatParty || !isAvailable))">
+                                                @table.TableID · @table.Capacity seats
+                                                @if (!isAvailable)
+                                                {
+                                                    @: (@table.Availability)
+                                                }
+                                                else if (!canSeatParty)
+                                                {
+                                                    @: (too small)
+                                                }
+                                            </option>
+                                        }
+                                    </select>
+                                    <button class="save-status-button" type="submit">Save table</button>
+                                </form>
+                            </td>
                             <td>
                                 <form method="post" action="/Staff/Reservations?handler=UpdateStatus" class="status-edit-form">
                                     @Html.AntiForgeryToken()
