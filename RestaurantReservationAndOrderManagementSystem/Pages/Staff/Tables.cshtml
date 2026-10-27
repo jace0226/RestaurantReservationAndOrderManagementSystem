@@ -68,7 +68,7 @@
 
         @if (Model.Tables.Count == 0)
         {
-            <p class="no-tables">No tables match this filter. Add a table to get started.</p>
+            <p class="no-tables">No tables match this filter.</p>
         }
         else
         {
@@ -161,64 +161,6 @@
     </section>
 </section>
 
-<dialog class="table-dialog" id="addTableDialog" aria-labelledby="add-table-title">
-    <form method="post" action="/Staff/Tables?handler=Add" class="table-dialog-form">
-        @Html.AntiForgeryToken()
-        <input type="hidden" name="StatusFilter" value="@Model.StatusFilter" />
-        <input type="hidden" name="Search" value="@Model.Search" />
-        <header class="table-dialog-heading">
-            <div>
-                <p class="eyebrow">Set another place</p>
-                <h2 id="add-table-title">Add table</h2>
-            </div>
-            <button type="button" class="table-dialog-close" id="closeAddTable" aria-label="Close">&times;</button>
-        </header>
-        <div asp-validation-summary="All" class="text-danger" role="alert"></div>
-
-        <label class="table-dialog-field">
-            <span>Table ID</span>
-            <input name="tableId" id="NewTable_TableID" value="@Model.NewTable.TableID" placeholder="e.g. Table 13" />
-            <span asp-validation-for="NewTable.TableID" class="text-danger"></span>
-        </label>
-        <label class="table-dialog-field">
-            <span>Capacity (seats)</span>
-            <input name="capacity" id="NewTable_Capacity" type="number" min="1" max="100" value="@Model.NewTable.Capacity" />
-            <span asp-validation-for="NewTable.Capacity" class="text-danger"></span>
-        </label>
-        <label class="table-dialog-field">
-            <span>Availability</span>
-            <select name="availability" id="NewTable_Availability">
-                @foreach (var status in Model.AvailabilityStatuses)
-                {
-                    if (status == Model.NewTable.Availability)
-                    {
-                        <option value="@status" selected>@status</option>
-                    }
-                    else
-                    {
-                        <option value="@status">@status</option>
-                    }
-                }
-            </select>
-            <span asp-validation-for="NewTable.Availability" class="text-danger"></span>
-        </label>
-        <footer class="table-dialog-actions">
-            <button type="button" class="table-dialog-cancel" id="cancelAddTable">Cancel</button>
-            <button type="submit" class="table-dialog-submit">Add table</button>
-        </footer>
-    </form>
-</dialog>
-
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
-    <script>
-        const addTableDialog = document.getElementById("addTableDialog");
-        document.getElementById("openAddTable").addEventListener("click", () => addTableDialog.showModal());
-        document.getElementById("closeAddTable").addEventListener("click", () => addTableDialog.close());
-        document.getElementById("cancelAddTable").addEventListener("click", () => addTableDialog.close());
-        addTableDialog.addEventListener("click", event => {
-            if (event.target === addTableDialog) addTableDialog.close();
-        });
-        if (@Model.ShowAddDialog.ToString().ToLowerInvariant()) addTableDialog.showModal();
-    </script>
 }

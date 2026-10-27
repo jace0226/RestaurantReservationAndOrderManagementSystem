@@ -16,8 +16,7 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
             "Served",
             "Payment",
             "Completed",
-            "Cancelled",
-            "Cancel"
+            "Cancelled"
         ];
 
         private readonly ApplicationDbContext _dbContext;
@@ -92,10 +91,7 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
                 .ToListAsync();
 
             var orderIds = sourceOrders.Select(order => order.OrderID).ToArray();
-            Statuses = OrderStatuses
-                .Concat(sourceOrders.Select(order => order.OrderStatus))
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .ToList();
+            Statuses = OrderStatuses;
             if (StatusFilter != "All" &&
                 !Statuses.Contains(StatusFilter, StringComparer.OrdinalIgnoreCase))
             {

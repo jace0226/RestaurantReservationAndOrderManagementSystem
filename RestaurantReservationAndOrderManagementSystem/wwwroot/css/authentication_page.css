@@ -9,22 +9,10 @@
   flex-direction: column;
   overflow-x: hidden;
   overflow-y: auto;
-
-  .brand {
-    bottom: 0;
-    left: 0;
-    right: 0;
-    white-space: nowrap;
-    position: absolute;
-    color: var(--subbrand-color);
-    font-size: clamp(2rem, 16vw, 20rem);
-    font-family: "Brand Font", sans-serif;
-    text-transform: uppercase;
-    line-height: 0.75;
-    margin-top: 30px;
-    text-align: center;
-    z-index: -1;
-  }
+  background-image: url(../images/login-bg.jpg);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
 
   form {
     background: var(--subbrand-color);
@@ -127,6 +115,72 @@
         background: none;
         color: var(--brand-color);
         font-weight: 500;
+      }
+    }
+
+    .captcha-group {
+      margin-top: 1rem;
+    }
+
+    .captcha-header {
+      align-items: center;
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.45rem;
+
+      label {
+        color: var(--brand-color);
+        font-size: 0.8rem;
+        font-weight: 700;
+      }
+    }
+
+    .captcha-refresh {
+      align-items: center;
+      background: var(--subbrand-color);
+      border: 0;
+      border-radius: 50%;
+      color: var(--brand-color);
+      cursor: pointer;
+      display: inline-flex;
+      height: 32px;
+      justify-content: center;
+      transition: background-color 150ms ease, transform 150ms ease;
+      width: 32px;
+
+      &:hover {
+        background: var(--brand-border);
+        transform: rotate(25deg);
+      }
+
+      &:disabled {
+        cursor: wait;
+        opacity: 0.55;
+      }
+    }
+
+    .captcha-image-row {
+      background: #eef4f8;
+      border: 1px solid var(--brand-border);
+      border-radius: 10px;
+      display: flex;
+      justify-content: center;
+      margin-bottom: 0.65rem;
+      overflow: hidden;
+
+      img {
+        display: block;
+        height: 76px;
+        max-width: 100%;
+        width: 250px;
+      }
+    }
+
+    .captcha-input {
+      margin-bottom: 0.25rem;
+
+      input {
+        letter-spacing: 0.16em;
       }
     }
   }
