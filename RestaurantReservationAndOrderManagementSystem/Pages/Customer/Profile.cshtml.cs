@@ -57,22 +57,21 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
 
         public async Task<IActionResult> OnPostSaveProfileAsync()
         {
-            ModelState.Clear();
-            NormalizeProfileInput();
-            TryValidateModel(ProfileInput, nameof(ProfileInput));
-
-            if (ProfileInput.DateOfBirth > DateOnly.FromDateTime(DateTime.UtcNow))
-            {
-                ModelState.AddModelError(
-                    "ProfileInput.DateOfBirth",
-                    "Date of birth cannot be in the future.");
-            }
-
+            // 1. Fetch current customer details first
             var customer = await GetCurrentCustomerAsync();
             if (customer is null)
             {
                 return NotFound();
             }
+
+            // 2. Re-assign disabled fields from DB so validation passes and values aren't lost
+            ProfileInput.FullName = customer.User.FullName;
+            ProfileInput.DateOfBirth = customer.DateOfBirth;
+
+            // 3. Clear and validate model
+            ModelState.Clear();
+            NormalizeProfileInput();
+            TryValidateModel(ProfileInput, nameof(ProfileInput));
 
             if (!ModelState.IsValid)
             {
@@ -80,6 +79,8 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
             }
 
             var user = customer.User;
+
+            // Check unique constraints for Email & Phone
             if (await _dbContext.Users.AnyAsync(candidate =>
                     candidate.UserID != user.UserID &&
                     candidate.Email == ProfileInput.Email))
@@ -96,10 +97,9 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
                 return Page();
             }
 
-            user.FullName = ProfileInput.FullName;
+            // 4. Update ONLY allowed fields
             user.Email = ProfileInput.Email;
             user.Phone = ProfileInput.Phone;
-            customer.DateOfBirth = ProfileInput.DateOfBirth!.Value;
             customer.Address = ProfileInput.Address;
 
             try

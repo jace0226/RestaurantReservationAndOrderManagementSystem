@@ -86,15 +86,25 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
                 .OrderBy(booking => booking.BookingTime)
                 .ToListAsync();
             UpcomingReservations = reservations
-                .Where(booking => booking.BookingTime >= now)
-                .Take(3)
-                .Select(booking => new ReservationRow(
-                    booking.BookingTime,
-                    booking.Customer.User.FullName,
-                    booking.PartySize,
-                    booking.Table.TableID,
-                    booking.BookingStatus))
-                .ToList();
+            .Where(booking => booking.BookingTime >= now)
+            .Take(3)
+            .Select(booking => new ReservationRow(
+                booking.BookingTime,
+                booking.Customer?.User?.FullName ?? "Guest",
+                booking.PartySize,
+                booking.Table?.TableID ?? "Unassigned",
+                booking.BookingStatus ?? ""))
+            .ToList();
+            //UpcomingReservations = reservations
+            //    .Where(booking => booking.BookingTime >= now)
+            //    .Take(3)
+            //    .Select(booking => new ReservationRow(
+            //        booking.BookingTime,
+            //        booking.Customer.User.FullName,
+            //        booking.PartySize,
+            //        booking.Table.TableID,
+            //        booking.BookingStatus))
+            //    .ToList();
 
             var tables = await _dbContext.Tables
                 .AsNoTracking()

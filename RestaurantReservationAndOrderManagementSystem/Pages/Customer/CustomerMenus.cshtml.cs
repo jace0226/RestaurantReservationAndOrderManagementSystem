@@ -60,49 +60,55 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
             // 1. Fetch all food items directly from DB
             MenuItems = await _context.FoodItems.ToListAsync();
 
-            // 2. Compute dynamic recommendations
-            bool hasAnyOrderData = await _context.OrderItems.AnyAsync();
+            // 2. Compute dynamic recommendations (Top 3 Priority Fallback)
             List<string> recommendedFoodIds = new();
             string dynamicLabel = "Chef's Pick";
 
-            if (!hasAnyOrderData)
+            // --- Priority 1: Check if the current user has ordered 3 or more distinct food items ---
+            var userTopFoodIds = await _context.OrderItems
+                .Where(oi => oi.Order.CustomerID == CurrentCustomerId && oi.FoodID != null)
+                .GroupBy(oi => oi.FoodID!)
+                .OrderByDescending(g => g.Sum(oi => oi.Quantity))
+                .Select(g => g.Key)
+                .Take(3)
+                .ToListAsync();
+
+            if (userTopFoodIds.Count >= 3)
             {
-                recommendedFoodIds = MenuItems
-                    .OrderBy(_ => Guid.NewGuid())
-                    .Take(3)
-                    .Select(f => f.FoodID)
-                    .Where(id => !string.IsNullOrEmpty(id))
-                    .ToList()!;
+                recommendedFoodIds = userTopFoodIds;
+                dynamicLabel = "Your Favorite";
             }
             else
             {
-                bool hasUserOrders = await _context.Orders.AnyAsync(o => o.CustomerID == CurrentCustomerId);
-                if (hasUserOrders)
-                {
-                    string topFoodId = await _context.OrderItems
-                        .Where(oi => oi.Order.CustomerID == CurrentCustomerId)
-                        .GroupBy(oi => oi.FoodID)
-                        .OrderByDescending(g => g.Sum(oi => oi.Quantity))
-                        .Select(g => g.Key)
-                        .FirstOrDefaultAsync() ?? string.Empty;
+                // --- Priority 2: Check if global database order items have 3 or more distinct food items ---
+                var globalTopFoodIds = await _context.OrderItems
+                    .Where(oi => oi.FoodID != null)
+                    .GroupBy(oi => oi.FoodID!)
+                    .OrderByDescending(g => g.Sum(oi => oi.Quantity))
+                    .Select(g => g.Key)
+                    .Take(3)
+                    .ToListAsync();
 
-                    if (!string.IsNullOrEmpty(topFoodId)) recommendedFoodIds.Add(topFoodId);
-                    dynamicLabel = "Your Favorite";
+                if (globalTopFoodIds.Count >= 3)
+                {
+                    recommendedFoodIds = globalTopFoodIds;
+                    dynamicLabel = "Popular Choice";
                 }
                 else
                 {
-                    string topFoodId = await _context.OrderItems
-                        .GroupBy(oi => oi.FoodID)
-                        .OrderByDescending(g => g.Sum(oi => oi.Quantity))
-                        .Select(g => g.Key)
-                        .FirstOrDefaultAsync() ?? string.Empty;
+                    // --- Priority 3: Fallback to selecting 3 random items from the menu ---
+                    recommendedFoodIds = MenuItems
+                        .Where(f => !string.IsNullOrEmpty(f.FoodID))
+                        .OrderBy(_ => Guid.NewGuid())
+                        .Take(3)
+                        .Select(f => f.FoodID!)
+                        .ToList();
 
-                    if (!string.IsNullOrEmpty(topFoodId)) recommendedFoodIds.Add(topFoodId);
-                    dynamicLabel = "Popular Choice";
+                    dynamicLabel = "Chef's Pick";
                 }
             }
 
-            // 3. Assign recommendation label
+            // Assign recommendation label to selected items
             foreach (var item in MenuItems)
             {
                 if (!string.IsNullOrEmpty(item.FoodID) && recommendedFoodIds.Contains(item.FoodID))
