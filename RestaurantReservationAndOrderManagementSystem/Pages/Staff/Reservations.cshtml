@@ -34,7 +34,7 @@
         </article>
     </section>
 
-    <form class="reservation-filters" method="get" action="/Staff/Reservations" role="search">
+    <form class="reservation-filters" method="get" asp-page="/Staff/Reservations" role="search">
         <label class="search-control">
             <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
             <span class="visually-hidden">Search guests or tables</span>
@@ -140,7 +140,7 @@
             </div>
             <button type="button" class="dialog-close" id="closeReservationDialog" aria-label="Close">&times;</button>
         </header>
-        <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+        <div asp-validation-summary="All" class="text-danger" role="alert"></div>
 
         <label class="dialog-field">
             <span>Customer</span>

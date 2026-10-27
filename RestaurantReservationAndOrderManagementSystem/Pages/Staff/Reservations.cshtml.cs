@@ -30,11 +30,11 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
             _logger = logger;
         }
 
-        [BindProperty(SupportsGet = true)]
+        [BindProperty]
         public DateOnly? DateFilter { get; set; }
 
-        [BindProperty(SupportsGet = true)]
-        public string Search { get; set; } = string.Empty;
+        [BindProperty]
+        public string? Search { get; set; }
 
         [BindProperty]
         public CreateReservationInput NewReservation { get; set; } = new();
@@ -51,9 +51,10 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
         public int AvailableTables { get; private set; }
         public bool ShowCreateModal { get; private set; }
 
-        public async Task OnGetAsync()
+        public async Task OnGetAsync(DateOnly? dateFilter, string? search)
         {
-            DateFilter ??= DateOnly.FromDateTime(DateTime.Today);
+            DateFilter = dateFilter;
+            Search = search;
             NewReservation.BookingDate ??= DateOnly.FromDateTime(DateTime.Today);
             NewReservation.BookingTime ??= TimeOnly.FromDateTime(DateTime.Now).AddMinutes(30);
             await LoadPageDataAsync();
@@ -66,7 +67,7 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
             RemoveModelStateFor(nameof(DateFilter));
             RemoveModelStateFor(nameof(Search));
 
-            if (!TryValidateModel(NewReservation, nameof(NewReservation)))
+            if (!ModelState.IsValid)
             {
                 await LoadPageDataAsync();
                 return Page();
@@ -273,11 +274,9 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
 
         public sealed class UpdateStatusInput
         {
-            [Required]
             public string BookingID { get; set; } = string.Empty;
 
-            [Required]
-            public string Status { get; set; } = string.Empty;
+            public string Status { get; set; } = "Confirmed";
         }
 
         public sealed record ReservationRow(
