@@ -143,7 +143,7 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Staff
                 TotalSales = g.Sum(oi => oi.Quantity * oi.Food.Price)
             }).OrderByDescending(item => item.QuantitySold).Take(5).ToListAsync();
 
-            PaymentSummaries = await _context.Transactions.Where(t => t.TransactionDate >= previousWeekStart && t.TransactionDate <= previousWeekEnd).GroupBy(t =>
+            PaymentSummaries = await _context.Transactions.Where(t => t.TransactionDate >= SelectedWeekStart && t.TransactionDate <= SelectedWeekEnd).GroupBy(t =>
                 t.TransactionType
             ).Select(g => new PaymentSummary
             {

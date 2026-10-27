@@ -215,7 +215,7 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Staff
                 TemporaryPassword);
 
             // 7. Create the customer record linked to the user.
-            var customer = new Customer
+            var customer = new RestaurantReservationAndOrderManagementSystem.Models.Customer
             {
                 CustomerID = newCustomerID,
                 UserID = newUserID,
