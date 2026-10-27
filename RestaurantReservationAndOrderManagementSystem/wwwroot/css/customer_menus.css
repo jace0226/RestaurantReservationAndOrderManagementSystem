@@ -52,6 +52,21 @@
     font-size: 0.86rem;
 }
 
+.customer-table-session-status {
+    margin: 0;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--customer-line);
+    border-radius: 12px;
+    background: #fff;
+    color: var(--customer-muted);
+    font-size: 0.85rem;
+}
+
+.customer-table-session-status strong,
+.customer-cart-table-label strong {
+    color: var(--customer-ink);
+}
+
 
 .customer-menu-hero-icon {
     display: grid;
@@ -968,40 +983,12 @@ body.customer-modal-open {
         letter-spacing: -0.04em;
     }
 
-/* Table selection styling in cart header */
-.customer-cart-table-select-wrap {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-    margin-top: 0.6rem;
-}
-
-.customer-table-select-label {
+.customer-cart-table-label {
+    margin: 0.35rem 0 0;
     color: var(--customer-muted);
     font-size: 0.7rem;
     font-weight: 700;
 }
-
-.customer-table-select {
-    width: 100%;
-    min-height: 36px;
-    padding: 0.35rem 0.65rem;
-    border: 1px solid var(--brand-border);
-    border-radius: 10px;
-    background-color: #f8f9ff;
-    color: var(--customer-ink);
-    font: inherit;
-    font-size: 0.76rem;
-    font-weight: 600;
-    outline: none;
-    cursor: pointer;
-    transition: border-color 150ms ease, box-shadow 150ms ease;
-}
-
-    .customer-table-select:focus {
-        border-color: var(--brand-color);
-        box-shadow: 0 0 0 3px rgb(1 27 216 / 12%);
-    }
 
 .customer-cart-close {
     display: grid;
@@ -1170,11 +1157,16 @@ body.customer-modal-open {
         font-size: 0.75rem;
     }
 
+/* Update .customer-cart-summary to anchor to the bottom */
 .customer-cart-summary {
     flex: 0 0 auto;
+    margin-top: auto; /* Pushes the summary to the bottom of the flex container */
     padding: 1rem 1rem 1.35rem;
     border-top: 1px solid var(--customer-line);
     background: #fff;
+    position: sticky; /* Keeps it locked at the bottom edge if container scrolls */
+    bottom: 0;
+    z-index: 2;
 }
 
 .customer-confirm-order-btn {

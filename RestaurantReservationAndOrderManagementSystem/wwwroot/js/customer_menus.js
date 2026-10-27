@@ -1,7 +1,6 @@
 (() => {
     const menuItems = window.menuItemsData || [];
-    const availableTables = window.availableTablesData || [];
-    const activeBooking = window.activeBookingData || null;
+    const canPlaceOrder = window.canPlaceOrder === true;
 
     const menuGrid = document.getElementById("customerMenuGrid");
     const recommendationGrid = document.getElementById("recommendationGrid");
@@ -21,7 +20,6 @@
     const cartTax = document.getElementById("customerCartTax");
     const cartTotal = document.getElementById("customerCartTotal");
     const confirmOrderButton = document.getElementById("customerConfirmOrder");
-    const tableSelect = document.getElementById("customerTableSelect");
     const quantityValue = document.getElementById("customerQtyValue");
     const quantityPlus = document.getElementById("customerQtyPlus");
     const quantityMinus = document.getElementById("customerQtyMinus");
@@ -49,44 +47,9 @@
         return status === "available" || status === "true";
     }
 
-    function populateTableOptions() {
-        if (!tableSelect) return;
-        tableSelect.innerHTML = '<option value="" selected disabled>-- Choose Table --</option>';
-
-        if (activeBooking && activeBooking.tableId) {
-            const opt = document.createElement("option");
-            opt.value = activeBooking.tableId;
-            opt.textContent = `${activeBooking.tableId} (Reserved)`;
-            opt.selected = true;
-            tableSelect.appendChild(opt);
-            tableSelect.disabled = true;
-            validateOrderButton();
-            return;
-        }
-
-        tableSelect.disabled = false;
-        if (availableTables.length === 0) {
-            const noOpt = document.createElement("option");
-            noOpt.value = "";
-            noOpt.textContent = "No dine-in tables available";
-            noOpt.disabled = true;
-            tableSelect.appendChild(noOpt);
-            return;
-        }
-
-        availableTables.forEach((t) => {
-            const opt = document.createElement("option");
-            const id = t.tableID || t.tableId;
-            opt.value = id;
-            opt.textContent = id;
-            tableSelect.appendChild(opt);
-        });
-    }
-
     function validateOrderButton() {
-        const isTableSelected = tableSelect && tableSelect.value !== "";
         const hasItems = cart.length > 0;
-        confirmOrderButton.disabled = !hasItems || !isTableSelected;
+        confirmOrderButton.disabled = !hasItems || !canPlaceOrder;
     }
 
     function makeElement(tagName, className, text) {
@@ -470,10 +433,6 @@
         searchInput.focus();
     }
 
-    if (tableSelect) {
-        tableSelect.addEventListener("change", validateOrderButton);
-    }
-
     quantityMinus.addEventListener("click", () => {
         if (currentQuantity > 1) {
             currentQuantity -= 1;
@@ -538,10 +497,8 @@
             return;
         }
 
-        const selectedTableId = tableSelect ? tableSelect.value : "";
-        if (!selectedTableId) {
-            window.alert("Please select a dine-in table before sending your order.");
-            if (tableSelect) tableSelect.focus();
+        if (!canPlaceOrder) {
+            window.alert("Please scan the QR code at your table or open your active booking before placing an order.");
             return;
         }
 
@@ -562,11 +519,7 @@
             };
         });
 
-        const payload = {
-            tableId: selectedTableId,
-            bookingId: activeBooking ? activeBooking.bookingId : null,
-            items: orderItemsPayload
-        };
+        const payload = { items: orderItemsPayload };
 
         const token = document.getElementById("__RequestVerificationToken")?.value || "";
 
@@ -579,6 +532,12 @@
                 },
                 body: JSON.stringify(payload)
             });
+
+            const contentType = response.headers.get("content-type") || "";
+            if (!contentType.includes("application/json")) {
+                window.alert("Your sign-in may have expired. Please sign in and scan the table QR code again.");
+                return;
+            }
 
             const result = await response.json();
 
@@ -609,13 +568,25 @@
         updateAdjustment(action, index);
     });
 
+
+    let animFrameId = null;
+    let currentX = 0;
+    let currentY = 0;
+
     cartButton.addEventListener("pointerdown", (event) => {
+        // Capture pointer events so fast movement stays locked to this button
+        cartButton.setPointerCapture(event.pointerId);
+
+        const rect = cartButton.getBoundingClientRect();
         cartButtonDragState = {
+            pointerId: event.pointerId,
             startX: event.clientX,
             startY: event.clientY,
-            startLeft: cartButton.offsetLeft || 0,
-            startTop: cartButton.offsetTop || 0
+            startLeft: rect.left,
+            startTop: rect.top
         };
+        currentX = rect.left;
+        currentY = rect.top;
     });
 
     cartButton.addEventListener("pointermove", (event) => {
@@ -623,26 +594,46 @@
 
         const deltaX = event.clientX - cartButtonDragState.startX;
         const deltaY = event.clientY - cartButtonDragState.startY;
+
+        // Register drag if moved more than 8 pixels
         if (Math.abs(deltaX) > 8 || Math.abs(deltaY) > 8) {
             cartButtonWasDragged = true;
         }
 
-        const boundX = Math.min(Math.max(cartButtonDragState.startLeft + deltaX, 16), window.innerWidth - cartButton.offsetWidth - 20);
-        const boundY = Math.min(Math.max(cartButtonDragState.startTop + deltaY, 16), window.innerHeight - cartButton.offsetHeight - 20);
+        // Clamp bounds within viewport padding (16px)
+        const boundX = Math.min(Math.max(cartButtonDragState.startLeft + deltaX, 16), window.innerWidth - cartButton.offsetWidth - 16);
+        const boundY = Math.min(Math.max(cartButtonDragState.startTop + deltaY, 16), window.innerHeight - cartButton.offsetHeight - 16);
 
-        cartButton.style.left = `${boundX}px`;
-        cartButton.style.top = `${boundY}px`;
-        cartButton.style.right = "auto";
-        cartButton.style.bottom = "auto";
+        currentX = boundX;
+        currentY = boundY;
+
+        // Use RequestAnimationFrame for smooth 60fps rendering without lag
+        if (!animFrameId) {
+            animFrameId = requestAnimationFrame(() => {
+                cartButton.style.left = `${currentX}px`;
+                cartButton.style.top = `${currentY}px`;
+                cartButton.style.right = "auto";
+                cartButton.style.bottom = "auto";
+                animFrameId = null;
+            });
+        }
     });
 
-    cartButton.addEventListener("pointerup", () => {
+    function handlePointerEnd(event) {
+        if (!cartButtonDragState) return;
+
+        if (cartButton.hasPointerCapture(event.pointerId)) {
+            cartButton.releasePointerCapture(event.pointerId);
+        }
         cartButtonDragState = null;
-    });
+        if (animFrameId) {
+            cancelAnimationFrame(animFrameId);
+            animFrameId = null;
+        }
+    }
 
-    cartButton.addEventListener("pointercancel", () => {
-        cartButtonDragState = null;
-    });
+    cartButton.addEventListener("pointerup", handlePointerEnd);
+    cartButton.addEventListener("pointercancel", handlePointerEnd);
 
     document.addEventListener("keydown", (event) => {
         if (event.key === "Escape") {
@@ -658,7 +649,45 @@
         }
     });
 
-    populateTableOptions();
+
+    let statusCheckInterval = null;
+
+    async function checkTableSessionStatus() {
+        try {
+            const response = await fetch("/Customer/Menus?handler=CheckTableSessionStatus", {
+                headers: { "X-Requested-With": "XMLHttpRequest" }
+            });
+            if (!response.ok) return;
+
+            const data = await response.json();
+            if (!data.valid) {
+                window.canPlaceOrder = false;
+                validateOrderButton();
+
+                const statusElement = document.querySelector(".customer-table-session-status");
+                if (statusElement) {
+                    statusElement.innerHTML = `<span>${data.message || "Please scan the QR code at your table to start an order."}</span>`;
+                }
+
+                const cartLabelElement = document.querySelector(".customer-cart-table-label");
+                if (cartLabelElement) {
+                    cartLabelElement.innerHTML = `<span>Scan the QR code at your table to order.</span>`;
+                }
+            }
+        } catch (err) {
+            console.warn("Table session status check failed:", err);
+        }
+    }
+
+    // Check status on page load, tab visibility change, and every 10 seconds
+    document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") {
+            checkTableSessionStatus();
+        }
+    });
+
+    statusCheckInterval = setInterval(checkTableSessionStatus, 10000);
+
     updateCartSummary();
     renderRecommendations();
     renderMenu();

@@ -190,6 +190,7 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
 
         public async Task<IActionResult> OnPostLogoutAsync()
         {
+            HttpContext.Session.Clear();
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             return Redirect("/Authenticate");
         }
