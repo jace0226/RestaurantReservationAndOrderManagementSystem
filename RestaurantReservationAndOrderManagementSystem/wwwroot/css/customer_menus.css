@@ -360,7 +360,13 @@
     height: 185px;
     overflow: hidden;
     background: #edf1f4;
+    cursor: pointer;
 }
+
+    .customer-food-image-wrap:focus-visible {
+        outline: 3px solid var(--brand-color);
+        outline-offset: -3px;
+    }
 
 
 .customer-food-image {
@@ -813,7 +819,7 @@ body.customer-modal-open {
 .customer-cart-toggle {
     position: fixed;
     right: 1rem;
-    bottom: 1rem;
+    bottom: 6rem;
     z-index: 1001;
     display: grid;
     width: 54px;
