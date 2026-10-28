@@ -271,48 +271,6 @@
 
 @section Scripts {
     <script>
-        (() => {
-            const grid = document.getElementById("menuGrid");
-            const count = document.getElementById("items-count");
-            const searchForm = document.querySelector(".menu-search");
-            const search = document.getElementById("menuSearch");
-            const filters = document.querySelectorAll(".filter-nav a");
-            let activeAvailability = "@Model.AvailabilityFilter";
-
-            function updateMenu() {
-                const query = search.value.trim().toLocaleLowerCase();
-                let visibleItems = 0;
-                grid.querySelectorAll(".menu-card").forEach(card => {
-                    const matchesAvailability = activeAvailability === "All" ||
-                        card.dataset.category === activeAvailability;
-                    const matchesSearch = card.textContent.toLocaleLowerCase().includes(query);
-                    const isVisible = matchesAvailability && matchesSearch;
-                    card.hidden = !isVisible;
-                    if (isVisible) visibleItems++;
-                });
-                count.textContent = `${visibleItems} ${visibleItems === 1 ? "item" : "items"}`;
-                document.querySelectorAll(".menu-card form input[name='search']")
-                    .forEach(input => input.value = search.value);
-                document.querySelectorAll(".menu-card form input[name='availabilityFilter']")
-                    .forEach(input => input.value = activeAvailability);
-            }
-
-            search.addEventListener("input", updateMenu);
-            searchForm.addEventListener("submit", event => event.preventDefault());
-            filters.forEach(filter => {
-                filter.addEventListener("click", event => {
-                    event.preventDefault();
-                    activeAvailability = new URL(filter.href).searchParams.get("availabilityFilter") || "All";
-                    filters.forEach(candidate => {
-                        const isActive = candidate === filter;
-                        candidate.classList.toggle("active", isActive);
-                        candidate.setAttribute("aria-pressed", String(isActive));
-                    });
-                    updateMenu();
-                });
-            });
-            updateMenu();
-        })();
         window.staffMenuAvailabilityFilter = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.AvailabilityFilter));
         @if (User.IsInRole("Administrator"))
             {

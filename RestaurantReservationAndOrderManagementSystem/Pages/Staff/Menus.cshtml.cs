@@ -41,10 +41,6 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
         [BindProperty(SupportsGet = true)]
         public string AvailabilityFilter { get; set; } = "All";
 
-        public IReadOnlyList<MenuItemRow> MenuItems { get; private set; } = [];
-        public int TodayOrderCount { get; private set; }
-        public int AvailableItemCount { get; private set; }
-        public int TodayReservationCount { get; private set; }
         public List<MenuItemRow> MenuItems { get; private set; } = [];
         public List<string> Categories { get; private set; } = [];
         public int TodayOrderCount { get; private set; }
