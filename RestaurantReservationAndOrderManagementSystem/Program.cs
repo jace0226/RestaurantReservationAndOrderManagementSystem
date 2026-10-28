@@ -25,6 +25,8 @@ builder.Services.AddSession(options =>
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true; // Makes cookie work even without strict privacy consent
 });
+builder.Services.AddMemoryCache();
+builder.Services.AddSingleton<TableSessionStore>();
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>

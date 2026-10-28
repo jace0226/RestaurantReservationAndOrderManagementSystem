@@ -20,6 +20,21 @@
         <span class="customer-menu-hero-icon" aria-hidden="true"><i class="fa-solid fa-bowl-food"></i></span>
     </header>
 
+    <p class="customer-table-session-status" role="status">
+        @if (Model.ActiveBooking is not null)
+        {
+            <span>Ordering for your booking at table <strong>@Model.SelectedTableId</strong>.</span>
+        }
+        else if (Model.CanPlaceOrder)
+        {
+            <span>Ordering for table <strong>@Model.SelectedTableId</strong>.</span>
+        }
+        else
+        {
+            @Model.TableSessionMessage
+        }
+    </p>
+
     <section class="customer-recommendations" aria-labelledby="customer-recommendations-title">
         <div class="customer-section-heading">
             <div>
@@ -121,12 +136,20 @@
         <div>
             <p class="customer-menu-eyebrow">Your selection</p>
             <h2>My Cart</h2>
-            <div class="customer-cart-table-select-wrap">
-                <label for="customerTableSelect" class="customer-table-select-label">Select Table:</label>
-                <select id="customerTableSelect" class="customer-table-select" required>
-                    <option value="" selected disabled>-- Choose Table --</option>
-                </select>
-            </div>
+            <p class="customer-cart-table-label">
+                @if (Model.ActiveBooking is not null)
+                {
+                    <span>Booking Table: <strong>@Model.SelectedTableId</strong></span>
+                }
+                else if (Model.CanPlaceOrder)
+                {
+                    <span>Table: <strong>@Model.SelectedTableId</strong></span>
+                }
+                else
+                {
+                    <span>Scan the QR code at your table to order.</span>
+                }
+            </p>
         </div>
         <button type="button" class="customer-cart-close" id="customerCartClose" aria-label="Close cart">
             <i class="fa-solid fa-xmark" aria-hidden="true"></i>
@@ -172,15 +195,7 @@
                     new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }
                     ));
 
-        window.availableTablesData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
-                    Model.AvailableTables,
-                    new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }
-                    ));
-
-        window.activeBookingData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
-                    Model.ActiveBooking,
-                    new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }
-                    ));
+        window.canPlaceOrder = @Model.CanPlaceOrder.ToString().ToLowerInvariant();
     </script>
     <script src="~/js/customer_menus.js" asp-append-version="true"></script>
 }
