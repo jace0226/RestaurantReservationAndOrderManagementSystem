@@ -9,11 +9,10 @@ namespace RestaurantReservationAndOrderManagementSystem.Models
         [Required(ErrorMessage = "Booking ID is required")]
         public string BookingID { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Customer ID is required")]
-        public string CustomerID { get; set; } = string.Empty;
+        public string? CustomerID { get; set; }
 
         [ForeignKey(nameof(CustomerID))]
-        public Customer Customer { get; set; } = null!;
+        public Customer? Customer { get; set; }
 
         public string? TableID { get; set; }
 

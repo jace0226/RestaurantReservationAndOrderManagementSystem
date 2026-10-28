@@ -321,6 +321,11 @@
     color: #8b6200;
 }
 
+.status-pending {
+    background: #fff0c2;
+    color: #8a5a00;
+}
+
 .status-completed {
     background: #e8f5f0;
     color: #398268;

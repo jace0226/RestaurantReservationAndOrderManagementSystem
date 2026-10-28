@@ -540,7 +540,6 @@
 
 .staff-image-preview-wrap {
     display: grid;
-    height: 190px;
     overflow: hidden;
     place-items: center;
     border: 1px dashed var(--brand-border);
@@ -550,7 +549,6 @@
 
     .staff-image-preview-wrap img {
         width: 100%;
-        height: 100%;
         object-fit: cover;
     }
 

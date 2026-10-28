@@ -40,11 +40,14 @@
             <span class="visually-hidden">Search guests or tables</span>
             <input asp-for="Search" type="search" placeholder="Search guests or tables..." />
         </label>
-        <label class="date-control">
+        <div class="date-control">
             <i class="fa-regular fa-calendar-days" aria-hidden="true"></i>
-            <span class="visually-hidden">Filter by reservation date</span>
-            <input asp-for="DateFilter" type="date" />
-        </label>
+            <label for="selectedDate" class="visually-hidden">Select date</label>
+            <input type="date"
+                   id="selectedDate"
+                   name="selectedDate"
+                   value="@Model.SelectedDate?.ToString("yyyy-MM-dd")" />
+        </div>
         <button class="filter-submit" type="submit">Filter</button>
     </form>
 
@@ -52,10 +55,18 @@
         <div class="list-heading">
             <div>
                 <p class="eyebrow">Reservation schedule</p>
-                <h2 id="reservation-list-title">Reservation list</h2>
+                <h2 id="reservation-list-title">Reservation List (@Model.SelectedDate?.ToString("dd/MM/yyyy"))</h2>
             </div>
             <span class="booking-count">@Model.Reservations.Count booking@(Model.Reservations.Count == 1 ? "" : "s")</span>
         </div>
+        @if (TempData["ReservationStatusMessage"] is string statusMessage)
+        {
+            <p class="reservation-feedback" role="status">@statusMessage</p>
+        }
+        @if (TempData["ReservationStatusError"] is string statusError)
+        {
+            <p class="reservation-feedback reservation-feedback-error" role="alert">@statusError</p>
+        }
         @if (TempData["ReservationTableMessage"] is string tableMessage)
         {
             <p class="reservation-feedback" role="status">@tableMessage</p>
@@ -106,7 +117,7 @@
                                 <form method="post" asp-page-handler="ReassignTable" class="table-reassign-form">
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="bookingId" value="@reservation.BookingID" />
-                                    <input type="hidden" name="DateFilter" value="@Model.DateFilter?.ToString("yyyy-MM-dd")" />
+                                    <input type="hidden" name="selectedDate" value="@Model.SelectedDate?.ToString("yyyy-MM-dd")" />
                                     <input type="hidden" name="Search" value="@Model.Search" />
                                     <label class="visually-hidden" for="table-@reservation.BookingID">Table for @reservation.GuestName</label>
                                     <select id="table-@reservation.BookingID" name="tableId" required>
@@ -138,14 +149,14 @@
                                 </form>
                             </td>
                             <td>
-                                <form method="post" action="/Staff/Reservations?handler=UpdateStatus" class="status-edit-form">
+                                <form method="post" asp-page-handler="UpdateStatus" class="status-edit-form">
                                     @Html.AntiForgeryToken()
-                                    <input type="hidden" name="StatusUpdate.BookingID" value="@reservation.BookingID" />
-                                    <input type="hidden" name="DateFilter" value="@Model.DateFilter?.ToString("yyyy-MM-dd")" />
+                                    <input type="hidden" name="bookingId" value="@reservation.BookingID" />
+                                    <input type="hidden" name="selectedDate" value="@Model.SelectedDate?.ToString("yyyy-MM-dd")" />
                                     <input type="hidden" name="Search" value="@Model.Search" />
                                     <label class="visually-hidden" for="status-@reservation.BookingID">Status for @reservation.GuestName</label>
                                     <select id="status-@reservation.BookingID"
-                                            name="StatusUpdate.Status"
+                                            name="newStatus"
                                             class="status-select @ReservationsModel.StatusCssClass(reservation.Status)">
                                         @foreach (var status in Model.Statuses)
                                         {
@@ -159,6 +170,28 @@
                                             }
                                         }
                                     </select>
+                                    @if (reservation.Status is "Pending" or "Waiting")
+                                    {
+                                        <label class="visually-hidden" for="confirm-table-@reservation.BookingID">
+                                            Table for confirming @reservation.GuestName
+                                        </label>
+                                        <select id="confirm-table-@reservation.BookingID"
+                                                class="confirm-table-select"
+                                                name="tableId"
+                                                aria-label="Select an available table to confirm this reservation"
+                                                hidden>
+                                            <option value="">Select available table</option>
+                                            @foreach (var table in Model.Tables)
+                                            {
+                                                var canSeatParty = table.Capacity >= reservation.PartySize;
+                                                var isAvailable = table.Availability.Equals("Available", StringComparison.OrdinalIgnoreCase);
+                                                if (canSeatParty && isAvailable)
+                                                {
+                                                    <option value="@table.TableID">@table.TableID · @table.Capacity seats</option>
+                                                }
+                                            }
+                                        </select>
+                                    }
                                     <button class="save-status-button" type="submit">Save</button>
                                 </form>
                             </td>
@@ -171,9 +204,9 @@
 </section>
 
 <dialog class="reservation-dialog" id="reservationDialog" aria-labelledby="reservation-dialog-title">
-    <form method="post" action="/Staff/Reservations?handler=Create" class="reservation-dialog-form">
+    <form method="post" asp-page-handler="Create" class="reservation-dialog-form">
         @Html.AntiForgeryToken()
-        <input type="hidden" name="DateFilter" value="@Model.DateFilter?.ToString("yyyy-MM-dd")" />
+        <input type="hidden" name="selectedDate" value="@Model.SelectedDate?.ToString("yyyy-MM-dd")" />
         <input type="hidden" name="Search" value="@Model.Search" />
         <header class="dialog-heading">
             <div>
@@ -183,18 +216,6 @@
             <button type="button" class="dialog-close" id="closeReservationDialog" aria-label="Close">&times;</button>
         </header>
         <div asp-validation-summary="All" class="text-danger" role="alert"></div>
-
-        <label class="dialog-field">
-            <span>Customer</span>
-            <select asp-for="NewReservation.CustomerID">
-                <option value="">Select a customer</option>
-                @foreach (var customer in Model.Customers)
-                {
-                    <option value="@customer.CustomerID">@customer.FullName · @customer.Phone</option>
-                }
-            </select>
-            <span asp-validation-for="NewReservation.CustomerID" class="text-danger"></span>
-        </label>
 
         <div class="dialog-field-row">
             <label class="dialog-field">
@@ -257,14 +278,33 @@
         document.getElementById("openReservationDialog").addEventListener("click", () => reservationDialog.showModal());
         document.getElementById("closeReservationDialog").addEventListener("click", () => reservationDialog.close());
         document.getElementById("cancelReservationDialog").addEventListener("click", () => reservationDialog.close());
+        document.querySelector(".reservation-dialog-form").addEventListener("submit", event => {
+            if (!event.currentTarget.checkValidity()) return;
+
+            const submitButton = event.currentTarget.querySelector(".dialog-submit");
+            submitButton.disabled = true;
+            submitButton.textContent = "Creating reservation...";
+        });
         reservationDialog.addEventListener("click", event => {
             if (event.target === reservationDialog) reservationDialog.close();
         });
         if (@Model.ShowCreateModal.ToString().ToLowerInvariant()) reservationDialog.showModal();
 
         document.querySelectorAll(".status-select").forEach(select => {
+            const tableSelect = select.form.querySelector(".confirm-table-select");
+            const updateConfirmationTable = () => {
+                if (!tableSelect) return;
+
+                const requiresTable = select.value === "Confirmed";
+                tableSelect.hidden = !requiresTable;
+                tableSelect.required = requiresTable;
+            };
+            select.addEventListener("change", updateConfirmationTable);
+            updateConfirmationTable();
+
             select.addEventListener("change", () => {
                 select.className = `status-select ${{
+                    "Pending": "status-pending",
                     "Waiting": "status-waiting",
                     "Confirmed": "status-confirmed",
                     "Arriving": "status-arriving",

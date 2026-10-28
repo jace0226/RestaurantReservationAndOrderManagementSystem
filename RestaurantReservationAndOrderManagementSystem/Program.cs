@@ -68,10 +68,12 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
         builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddTransient<IEmailService, EmailService>();
+builder.Services.AddHostedService<ReservationArrivalBackgroundService>();
 
 var app = builder.Build();
 
 await AccountSeeder.SeedConfiguredAccountsAsync(app.Services);
+await TableSeeder.SeedDefaultTablesAsync(app.Services);
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
