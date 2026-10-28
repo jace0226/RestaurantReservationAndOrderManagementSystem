@@ -73,7 +73,7 @@ builder.Services.AddHostedService<ReservationArrivalBackgroundService>();
 var app = builder.Build();
 
 await AccountSeeder.SeedConfiguredAccountsAsync(app.Services);
-await TableSeeder.SeedDefaultTablesAsync(app.Services);
+// await TableSeeder.SeedDefaultTablesAsync(app.Services);
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
