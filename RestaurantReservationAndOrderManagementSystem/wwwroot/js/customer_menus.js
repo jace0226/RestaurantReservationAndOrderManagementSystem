@@ -87,6 +87,24 @@
         const categoryTag = makeElement("span", "customer-category-tag", item.category || "Main Course");
         imageWrap.append(makeImage(item, "customer-food-image"), categoryTag);
 
+        // Make the image container interactive
+        imageWrap.setAttribute("role", "button");
+        imageWrap.setAttribute("tabindex", "0");
+        imageWrap.setAttribute("aria-label", `View details for ${item.foodName || "dish"}`);
+    
+        const openModalHandler = (e) => {
+            e.stopPropagation();
+            openOrderModal(item, addOrderButtonCard);
+        };
+
+        imageWrap.addEventListener("click", openModalHandler);
+        imageWrap.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                openModalHandler(e);
+            }
+        });
+
         const content = makeElement("div", "customer-food-content");
         const titleRow = makeElement("div", "customer-food-title-row");
         titleRow.append(
