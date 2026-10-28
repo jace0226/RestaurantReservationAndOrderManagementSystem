@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
@@ -8,6 +9,7 @@ using RestaurantReservationAndOrderManagementSystem.Models;
 
 namespace RestaurantReservationAndOrderManagementSystem.Pages
 {
+    [Authorize(Roles = "Administrator,Staff")]
     [RequestFormLimits(MultipartBodyLengthLimit = 6 * 1024 * 1024)]
     public class MenusModel : PageModel
     {
@@ -541,3 +543,4 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
             string ImageAlt);
     }
 }
+
