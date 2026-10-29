@@ -34,7 +34,6 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Staff
             public string Email { get; set; } = string.Empty;
             public string Phone { get; set; } = string.Empty;
             public DateOnly DateOfBirth { get; set; } = DateOnly.MinValue;
-            public string Address { get; set; } = string.Empty;
         }
 
         [BindProperty(SupportsGet = true)]
@@ -57,9 +56,6 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Staff
 
         [BindProperty]
         public DateOnly DateOfBirth { get; set; } = DateOnly.MinValue;
-
-        [BindProperty]
-        public string Address { get; set; } = string.Empty;
 
         public async Task OnGetAsync()
         {
@@ -105,7 +101,6 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Staff
                     Email = user.Email,
                     Phone = user.Phone,
                     DateOfBirth = customer.DateOfBirth,
-                    Address = customer.Address
                 };
 
             if (!string.IsNullOrWhiteSpace(SearchTerm))
@@ -116,8 +111,7 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Staff
                     c.CustomerID.Contains(term) ||
                     c.FullName.Contains(term) ||
                     c.Email.Contains(term) ||
-                    c.Phone.Contains(term) ||
-                    c.Address.Contains(term));
+                    c.Phone.Contains(term));
             }
 
             Customers = await query
@@ -220,7 +214,6 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Staff
                 CustomerID = newCustomerID,
                 UserID = newUserID,
                 DateOfBirth = DateOfBirth,
-                Address = Address?.Trim() ?? string.Empty,
                 User = user
             };
 
@@ -322,7 +315,6 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Staff
             customer.User.Phone = Phone.Trim();
 
             customer.DateOfBirth = DateOfBirth;
-            customer.Address = Address?.Trim() ?? string.Empty;
 
             // 8. Save changes.
             await _context.SaveChangesAsync();

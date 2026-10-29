@@ -5,6 +5,10 @@ using Microsoft.EntityFrameworkCore;
 using RestaurantReservationAndOrderManagementSystem.Data;
 using RestaurantReservationAndOrderManagementSystem.Models;
 using RestaurantReservationAndOrderManagementSystem.Services;
+using System.Text;
+using QuestPDF.Fluent;
+using QuestPDF.Helpers;
+using QuestPDF.Infrastructure;
 
 namespace RestaurantReservationAndOrderManagementSystem.Pages.Staff
 {
@@ -93,8 +97,9 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Staff
 
                 RevenueChangePercentage = change == 0m ? null : change;
             }
-            else 
+            else
             {
+                PreviousWeekRevenue = 0m;
                 RevenueChangePercentage = null;
             }
 
@@ -143,7 +148,7 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Staff
                 TotalSales = g.Sum(oi => oi.Quantity * oi.Food.Price)
             }).OrderByDescending(item => item.QuantitySold).Take(5).ToListAsync();
 
-            PaymentSummaries = await _context.Transactions.Where(t => t.TransactionDate >= previousWeekStart && t.TransactionDate <= previousWeekEnd).GroupBy(t =>
+            PaymentSummaries = await _context.Transactions.Where(t => t.TransactionDate >= SelectedWeekStart && t.TransactionDate <= SelectedWeekEnd).GroupBy(t =>
                 t.TransactionType
             ).Select(g => new PaymentSummary
             {
@@ -151,6 +156,257 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Staff
                 NumberOfTransaction = g.Count(),
                 TransactionAmount = g.Sum(t => t.TransactionAmount)
             }).OrderByDescending(p => p.TransactionAmount).ToListAsync();
+        }
+
+        public async Task<IActionResult> OnGetExportCsvAsync()
+        {
+            // Load the report data for the selected week.
+            await OnGet();
+
+            var csv = new StringBuilder();
+
+            // UTF-8 BOM helps Microsoft Excel display text correctly.
+            csv.Append('\uFEFF');
+
+            // Report title
+            csv.AppendLine("Between Bites - Weekly Report");
+            csv.AppendLine($"Week,{SelectedWeekStart:dd/MM/yyyy} - {SelectedWeekEnd:dd/MM/yyyy}");
+            csv.AppendLine();
+
+            // Summary section
+            csv.AppendLine("Summary");
+            csv.AppendLine("Metric,Value");
+
+            csv.AppendLine($"Total Revenue,{TotalRevenue:F2}");
+            csv.AppendLine($"Previous Week Revenue,{PreviousWeekRevenue:F2}");
+            csv.AppendLine($"Revenue Change (%),{RevenueChangePercentage:F2}");
+
+            csv.AppendLine($"Total Orders,{TotalOrders}");
+            csv.AppendLine($"Previous Week Orders,{PreviousWeekOrders}");
+            csv.AppendLine($"Orders Change (%),{OrdersChangePercentage:F2}");
+
+            csv.AppendLine($"Total Bookings,{TotalBooking}");
+            csv.AppendLine($"Previous Week Bookings,{PreviousWeekBookings}");
+            csv.AppendLine($"Bookings Change (%),{BookingsChangePercentage:F2}");
+
+            csv.AppendLine();
+
+            // Daily revenue section
+            csv.AppendLine("Daily Revenue");
+            csv.AppendLine("Date,Revenue");
+
+            for (int i = 0; i < RevenueLabels.Count; i++)
+            {
+                csv.AppendLine(
+                    $"{EscapeCsv(RevenueLabels[i])}," +
+                    $"{RevenueValues[i]:F2}");
+            }
+
+            // Return the CSV file
+            byte[] bytes = Encoding.UTF8.GetBytes(csv.ToString());
+
+            return File(
+                bytes,
+                "text/csv; charset=utf-8",
+                $"WeeklyReport_{DateTime.Now:yyyyMMdd_HHmmss}.csv");
+        }
+
+        private static string EscapeCsv(string? value)
+        {
+            value ??= "";
+
+            return "\"" + value.Replace("\"", "\"\"") + "\"";
+        }
+
+        public async Task<IActionResult> OnGetExportPdfAsync()
+        {
+            // Load report data for the selected week.
+            await OnGet();
+
+            byte[] pdf = Document.Create(document =>
+            {
+                document.Page(page =>
+                {
+                    page.Size(PageSizes.A4);
+                    page.Margin(30);
+
+                    page.DefaultTextStyle(x => x.FontSize(10));
+
+                    // Header
+                    page.Header().Column(column =>
+                    {
+                        column.Item()
+                            .Text("Between Bites")
+                            .FontSize(22)
+                            .Bold();
+
+                        column.Item()
+                            .Text("Weekly Business Report")
+                            .FontSize(15);
+
+                        column.Item()
+                            .Text($"Week: {SelectedWeekStart:dd MMM yyyy} - {SelectedWeekEnd:dd MMM yyyy}");
+
+                        column.Item()
+                            .Text($"Generated: {DateTime.Now:dd MMM yyyy HH:mm}");
+                    });
+
+                    // Report content
+                    page.Content()
+                        .PaddingVertical(20)
+                        .Column(column =>
+                        {
+                            column.Spacing(15);
+
+                            // Revenue summary
+                            column.Item().Text("Revenue Summary")
+                                .FontSize(14).Bold();
+
+                            column.Item().Table(table =>
+                            {
+                                table.ColumnsDefinition(columns =>
+                                {
+                                    columns.RelativeColumn(3);
+                                    columns.RelativeColumn(2);
+                                });
+
+                                void AddRow(string label, string value)
+                                {
+                                    table.Cell()
+                                        .BorderBottom(1)
+                                        .BorderColor(Colors.Grey.Lighten2)
+                                        .Padding(5)
+                                        .Text(label);
+
+                                    table.Cell()
+                                        .BorderBottom(1)
+                                        .BorderColor(Colors.Grey.Lighten2)
+                                        .Padding(5)
+                                        .Text(value);
+                                }
+
+                                AddRow("Total Revenue", $"RM {TotalRevenue:N2}");
+                                AddRow("Previous Week Revenue", $"RM {PreviousWeekRevenue:N2}");
+                                AddRow("Revenue Change", $"{RevenueChangePercentage:N2}%");
+                            });
+
+                            // Orders summary
+                            column.Item().Text("Order Summary")
+                                .FontSize(14).Bold();
+
+                            column.Item().Table(table =>
+                            {
+                                table.ColumnsDefinition(columns =>
+                                {
+                                    columns.RelativeColumn(3);
+                                    columns.RelativeColumn(2);
+                                });
+
+                                void AddRow(string label, string value)
+                                {
+                                    table.Cell()
+                                        .BorderBottom(1)
+                                        .BorderColor(Colors.Grey.Lighten2)
+                                        .Padding(5)
+                                        .Text(label);
+
+                                    table.Cell()
+                                        .BorderBottom(1)
+                                        .BorderColor(Colors.Grey.Lighten2)
+                                        .Padding(5)
+                                        .Text(value);
+                                }
+
+                                AddRow("Total Orders", TotalOrders.ToString());
+                                AddRow("Previous Week Orders", PreviousWeekOrders.ToString());
+                                AddRow("Orders Change", $"{OrdersChangePercentage:N2}%");
+                            });
+
+                            // Bookings summary
+                            column.Item().Text("Booking Summary")
+                                .FontSize(14).Bold();
+
+                            column.Item().Table(table =>
+                            {
+                                table.ColumnsDefinition(columns =>
+                                {
+                                    columns.RelativeColumn(3);
+                                    columns.RelativeColumn(2);
+                                });
+
+                                void AddRow(string label, string value)
+                                {
+                                    table.Cell()
+                                        .BorderBottom(1)
+                                        .BorderColor(Colors.Grey.Lighten2)
+                                        .Padding(5)
+                                        .Text(label);
+
+                                    table.Cell()
+                                        .BorderBottom(1)
+                                        .BorderColor(Colors.Grey.Lighten2)
+                                        .Padding(5)
+                                        .Text(value);
+                                }
+
+                                AddRow("Total Bookings", TotalBooking.ToString());
+                                AddRow("Previous Week Bookings", PreviousWeekBookings.ToString());
+                                AddRow("Bookings Change", $"{BookingsChangePercentage:N2}%");
+                            });
+
+                            // Daily revenue table
+                            column.Item().Text("Daily Revenue Breakdown")
+                                .FontSize(14).Bold();
+
+                            column.Item().Table(table =>
+                            {
+                                table.ColumnsDefinition(columns =>
+                                {
+                                    columns.RelativeColumn(3);
+                                    columns.RelativeColumn(2);
+                                });
+
+                                table.Header(header =>
+                                {
+                                    header.Cell()
+                                        .Background(Colors.Grey.Lighten2)
+                                        .Padding(5)
+                                        .Text("Date").Bold();
+
+                                    header.Cell()
+                                        .Background(Colors.Grey.Lighten2)
+                                        .Padding(5)
+                                        .Text("Revenue (RM)").Bold();
+                                });
+
+                                for (int i = 0; i < RevenueLabels.Count; i++)
+                                {
+                                    table.Cell().Padding(5)
+                                        .Text(RevenueLabels[i]);
+
+                                    table.Cell().Padding(5)
+                                        .Text(RevenueValues[i].ToString("N2"));
+                                }
+                            });
+                        });
+
+                    // Footer
+                    page.Footer()
+                        .AlignCenter()
+                        .Text(text =>
+                        {
+                            text.Span("Page ");
+                            text.CurrentPageNumber();
+                            text.Span(" of ");
+                            text.TotalPages();
+                        });
+                });
+            }).GeneratePdf();
+
+            return File(
+                pdf,
+                "application/pdf",
+                $"WeeklyReport_{DateTime.Now:yyyyMMdd_HHmmss}.pdf");
         }
     }
 }

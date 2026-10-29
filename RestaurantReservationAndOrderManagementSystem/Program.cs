@@ -73,6 +73,8 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddTransient<IEmailService, EmailService>();
 builder.Services.AddHostedService<ReservationArrivalBackgroundService>();
 
+QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
+
 var app = builder.Build();
 
 await AccountSeeder.SeedConfiguredAccountsAsync(app.Services);
