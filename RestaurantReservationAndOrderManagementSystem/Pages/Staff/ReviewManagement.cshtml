@@ -1,0 +1,157 @@
+﻿@page "/Admin/ReviewManagement"
+@model RestaurantReservationAndOrderManagementSystem.Pages.Staff.ReviewManagementModel
+@{
+}
+
+<link rel="stylesheet" href="~/css/reviewmanagement_page.css" asp-append-version="true" />
+
+<sectiom class="reviewmanagement-page">
+    <div class="header">
+        <div>
+            <p class="eyebrow">REVIEW MANAGEMENT</p>
+            <h1>Manage Your Reviews</h1>
+            <p class="header-caption">View and manage customer reviews for your restaurant.</p>
+        </div>
+    </div>
+
+    <div class="summary-container">
+
+        <div class="summary-card">
+            <div class="summary-card-icon">
+                <i class="fa-solid fa-star"></i>
+            </div>
+            <div class="summary-card-text">
+                <p>Average Rating</p>
+                <strong>@Model.AverageRating.ToString("0.0") / 5</strong>
+            </div>
+        </div>
+
+        <div class="summary-card">
+            <div class="summary-card-icon">
+                <i class="fa-solid fa-comments"></i>
+            </div>
+            <div class="summary-card-text">
+                <p>Total Reviews</p>
+                <strong>@Model.TotalReviews</strong>
+            </div>
+        </div>
+
+        <div class="summary-card">
+            <div class="summary-card-icon">
+                <i class="fa-solid fa-thumbs-up"></i>
+            </div>
+            <div class="summary-card-text">
+                <p>Positive Reviews</p>
+                <strong>@Model.PositiveReviews</strong>
+            </div>
+        </div>
+
+        <div class="summary-card">
+            <div class="summary-card-icon">
+                <i class="fa-solid fa-thumbs-down"></i>
+            </div>
+            <div class="summary-card-text">
+                <p>Negative Reviews</p>
+                <strong>@Model.NegativeReviews</strong>
+            </div>
+        </div>
+
+    </div>
+
+
+    <div>
+        <form method="get" id="searchForm">
+            <div class="filter-container">
+                <div class="user-search-form">
+                    <i class="fas fa-search"></i>
+
+                    <input type="text"
+                           name="SearchTerm"
+                           value=""
+                           placeholder="Search by customer name, food item or comment..." />
+
+                    <button type="submit" class="search-button">Search</button>
+                </div>
+
+                <div class="user-filter" id="userFilter">
+                    <i class="fas fa-filter"></i>
+
+                    <select id="ratingFilter" name="Filter">
+                        <option value="" selected="">All Ratings</option>
+                        <option value="5" selected="">5 stars</option>
+                        <option value="4" selected="">4 stars</option>
+                        <option value="3" selected="">3 stars</option>
+                        <option value="2" selected="">2 stars</option>
+                        <option value="1" selected="">1 star</option>
+                    </select>
+                    <i class="fas fa-chevron-down dropdown-arrow" id="dropdownArrow"></i>
+                </div>
+            </div>
+        </form>
+    </div>
+
+
+    <div class="review-section">
+        <table class="user-table">
+            <thead>
+                <tr>
+                    <th>Customer</th>
+                    <th>Rating</th>
+                    <th>Review</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var review in Model.Reviews)
+                {
+                <tr>
+                    <td>@review.FullName</td>
+                    <td>@review.Stars</td>
+                    <td>@review.Message</td>
+                </tr>    
+                }
+            </tbody>
+        </table>
+    </div>
+</sectiom>
+
+@section Scripts{
+    <script>
+        const search = document.getElementById("search");
+        const roleFilter = document.getElementById("roleFilter");
+        const userFilter = document.getElementById("ratingFilter");
+
+        roleFilter.addEventListener("mousedown", () => {
+            userFilter.classList.add("is-open");
+        });
+
+        roleFilter.addEventListener("change", () => {
+            userFilter.classList.remove("is-open");
+            search.submit();
+        });
+
+        roleFilter.addEventListener("blur", () => {
+            userFilter.classList.remove("is-open");
+        });
+
+        roleFilter.addEventListener("keydown", (event) => {
+            if (event.key === "Escape" || event.key === "Tab") {
+                userFilter.classList.remove("is-open");
+            }
+        });
+
+        document.getElementById("resetFilter").addEventListener("click", function() {
+            const form = document.getElementById("search");
+
+            const searchBar = form.querySelector('input[name="SearchTerm"]');
+            if (searchBar) {
+                searchBar.value = "";
+            }
+
+            form.querySelectorAll("select").forEach(select => {
+                select.selectedIndex = 0;
+            });
+
+            form.submit();
+        })
+    </script>
+}

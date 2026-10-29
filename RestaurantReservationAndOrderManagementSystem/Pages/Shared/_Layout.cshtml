@@ -28,15 +28,19 @@
                     <span>Dashboard</span>
                 </a>
                 @if (User.IsInRole("Administrator")){
-                    <a class="nav-item @(currentPath.StartsWithSegments("/Staff/Reports", StringComparison.OrdinalIgnoreCase) ? "active" : null)" href="/Staff/Reports" aria-current="@(currentPath.StartsWithSegments("/Staff/Reports", StringComparison.OrdinalIgnoreCase) ? "page" : null)">
+                    <a class="nav-item @(currentPath.StartsWithSegments("/Admin/Reports", StringComparison.OrdinalIgnoreCase) ? "active" : null)" href="/Admin/Reports" aria-current="@(currentPath.StartsWithSegments("/Admin/Reports", StringComparison.OrdinalIgnoreCase) ? "page" : null)">
                         <i class="fa-solid fa-chart-column"></i>
                         <span>Reports</span>
                     </a>
-                    <a class="nav-item @(currentPath.StartsWithSegments("/Staff/StaffManagement", StringComparison.OrdinalIgnoreCase) ? "active" : null)" href="/Staff/StaffManagement" aria-current="@(currentPath.StartsWithSegments("/Staff/StaffManagement", StringComparison.OrdinalIgnoreCase) ? "page" : null)">
+                    <a class="nav-item @(currentPath.StartsWithSegments("/Admin/ReviewManagement", StringComparison.OrdinalIgnoreCase) ? "active" : null)" href="/Admin/ReviewManagement" aria-current="@(currentPath.StartsWithSegments("/Admin/ReviewManagement", StringComparison.OrdinalIgnoreCase) ? "page" : null)">
+                        <i class="fa-solid fa-star"></i>
+                        <span>Review Management</span>
+                    </a>
+                    <a class="nav-item @(currentPath.StartsWithSegments("/Admin/StaffManagement", StringComparison.OrdinalIgnoreCase) ? "active" : null)" href="/Admin/StaffManagement" aria-current="@(currentPath.StartsWithSegments("/Admin/StaffManagement", StringComparison.OrdinalIgnoreCase) ? "page" : null)">
                         <i class="fa-solid fa-users"></i>
                         <span>Staff Management</span>
                     </a>
-                    <a class="nav-item @(currentPath.StartsWithSegments("/Staff/CustomerManagement", StringComparison.OrdinalIgnoreCase) ? "active" : null)" href="/Staff/CustomerManagement" aria-current="@(currentPath.StartsWithSegments("/Staff/CustomerManagement", StringComparison.OrdinalIgnoreCase) ? "page" : null)">
+                    <a class="nav-item @(currentPath.StartsWithSegments("/Admin/CustomerManagement", StringComparison.OrdinalIgnoreCase) ? "active" : null)" href="/Admin/CustomerManagement" aria-current="@(currentPath.StartsWithSegments("/Admin/CustomerManagement", StringComparison.OrdinalIgnoreCase) ? "page" : null)">
                         <i class="fa-solid fa-user-group"></i>
                         <span>Customer Management</span>
                     </a>

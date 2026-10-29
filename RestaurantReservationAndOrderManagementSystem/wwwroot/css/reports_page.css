@@ -56,6 +56,23 @@
     gap: 10px;
 }*/
 
+.right-container {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    align-items: center;
+    justify-content: center;
+}
+
+.export-container {
+    display: flex;
+}
+
+.report-export-buttons > a{
+    flex: 1;
+    font-size: 0.7rem;
+}
+
 .filter-container {
     position: relative;
     display: flex;
@@ -282,3 +299,5 @@
     .user-table tbody tr {
         border-bottom: 1px solid var(--subbrand-color);
     }
+
+

@@ -1,4 +1,4 @@
-﻿@page "/Staff/Reports"
+﻿@page "/Admin/Reports"
 @model RestaurantReservationAndOrderManagementSystem.Pages.Staff.ReportsModel
 @{
 }
@@ -16,20 +16,39 @@
         </div>
 
         @* header right content *@
-        <div class="filter-container">
-            <i class="fa-solid fa-calendar-days"></i>
-            <div class="week-filter" id="weekContainer">
-                <form method="get">
-                    <select id="weekFilter" name="WeekStart" class="" onchange="this.form.submit()">
-                        @foreach (var week in Model.Weeks){
-                            <option value="@week.Start.ToString("yyyy-MM-dd")" selected="@(week.Start == Model.SelectedWeekStart)">
-                                @week.Start.ToString("dd MMM yyyy")
-                                - @week.End.ToString("dd MMM yyyy")
-                            </option>
-                        }
-                    </select>
-                    <i class="fas fa-chevron-down dropdown-arrow" id="dropdownArrow"></i>
-                </form>
+        <div class="right-container">
+            <div class="filter-container">
+                <i class="fa-solid fa-calendar-days"></i>
+                <div class="week-filter" id="weekContainer">
+                    <form method="get">
+                        <select id="weekFilter" name="WeekStart" class="" onchange="this.form.submit()">
+                            @foreach (var week in Model.Weeks){
+                                <option value="@week.Start.ToString("yyyy-MM-dd")" selected="@(week.Start == Model.SelectedWeekStart)">
+                                    @week.Start.ToString("dd MMM yyyy")
+                                    - @week.End.ToString("dd MMM yyyy")
+                                </option>
+                            }
+                        </select>
+                        <i class="fas fa-chevron-down dropdown-arrow" id="dropdownArrow"></i>
+                    </form>
+                </div>
+            </div>
+            <div class="export-container">
+                <div class="report-export-buttons">
+                    <a asp-page-handler="ExportCsv"
+                       asp-route-WeekStart="@Model.WeekStart"
+                       class="btn btn-success">
+                        <i class="fa-solid fa-file-csv"></i>
+                        Export CSV
+                    </a>
+
+                    <a asp-page-handler="ExportPdf"
+                       asp-route-WeekStart="@Model.WeekStart"
+                       class="btn btn-danger">
+                        <i class="fa-solid fa-file-pdf"></i>
+                        Export PDF
+                    </a>
+                </div>
             </div>
         </div>
     </div>
