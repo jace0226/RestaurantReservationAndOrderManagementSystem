@@ -16,8 +16,10 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
     {
         private const string SelectedTableSessionKey = "SelectedTableID";
         private const string TableOwnerUserIdSessionKey = "SelectedTableOwnerUserID";
+        private const string WrongTableMessage = "This QR code is for a different table. Please scan the QR code for your assigned table.";
         private const string TableSessionExpiredMessage =
             "Your table session has expired or this table has been claimed by another customer. Please scan the QR code on your table again before placing an order.";
+        private static readonly string[] EligibleCustomerCheckInBookingStatuses = ["Confirmed", "Arriving", "On dine-in"];
 
         private readonly ApplicationDbContext _context;
         private readonly TableSessionStore _tableSessions;
@@ -67,18 +69,31 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
             var activeBooking = await FindActiveBookingAsync(customer.CustomerID);
             if (activeBooking is not null)
             {
-                HttpContext.Session.Remove(SelectedTableSessionKey);
-                HttpContext.Session.Remove(TableOwnerUserIdSessionKey);
-                ActiveBooking = new
+                if (!string.IsNullOrWhiteSpace(tableID) &&
+                    !string.Equals(activeBooking.TableID, tableID, StringComparison.OrdinalIgnoreCase))
                 {
-                    bookingId = activeBooking.BookingID,
-                    tableId = activeBooking.TableID
-                };
-                SelectedTableId = activeBooking.TableID;
-                CanPlaceOrder = activeBooking.Table is not null;
-                if (!CanPlaceOrder)
+                    HttpContext.Session.Remove(SelectedTableSessionKey);
+                    HttpContext.Session.Remove(TableOwnerUserIdSessionKey);
+                    ActiveBooking = null;
+                    SelectedTableId = null;
+                    CanPlaceOrder = false;
+                    TableSessionMessage = WrongTableMessage;
+                }
+                else
                 {
-                    TableSessionMessage = "Your active booking's table could not be found. Please contact restaurant staff.";
+                    HttpContext.Session.Remove(SelectedTableSessionKey);
+                    HttpContext.Session.Remove(TableOwnerUserIdSessionKey);
+                    ActiveBooking = new
+                    {
+                        bookingId = activeBooking.BookingID,
+                        tableId = activeBooking.TableID
+                    };
+                    SelectedTableId = activeBooking.TableID;
+                    CanPlaceOrder = activeBooking.Table is not null;
+                    if (!CanPlaceOrder)
+                    {
+                        TableSessionMessage = "Your active booking's table could not be found. Please contact restaurant staff.";
+                    }
                 }
             }
             else
@@ -367,7 +382,6 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
             {
                 var candidateTable = await GetOrderableTableAsync(requestedTableId);
 
-                // 1. Table does not exist in the database at all
                 if (candidateTable is null)
                 {
                     HttpContext.Session.Remove(SelectedTableSessionKey);
@@ -376,7 +390,6 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
                     return;
                 }
 
-                // 2. Table exists, but status is "Available" (or anything other than "On dine-in")
                 if (!IsWalkInOrderableTable(candidateTable))
                 {
                     HttpContext.Session.Remove(SelectedTableSessionKey);
@@ -390,7 +403,53 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
                     return;
                 }
 
-                // 3. Table is "On dine-in" -> Proceed to claim session
+                var customerBooking = await FindCustomerBookingForTodayAsync(customer.CustomerID, DateTime.Now);
+                if (customerBooking is not null)
+                {
+                    if (!string.Equals(customerBooking.TableID, requestedTableId, StringComparison.OrdinalIgnoreCase))
+                    {
+                        TableSessionMessage = WrongTableMessage;
+                        return;
+                    }
+
+                    if (!IsBookingStatusEligibleForCheckIn(customerBooking.BookingStatus))
+                    {
+                        TableSessionMessage = "The booking has already been claimed or is no longer eligible.";
+                        return;
+                    }
+
+                    if (!IsBookingWithinCheckInWindow(customerBooking, DateTime.Now))
+                    {
+                        TableSessionMessage = "The booking is not within the permitted scanning time.";
+                        return;
+                    }
+                }
+
+                var guestBooking = await FindGuestBookingForTableAsync(requestedTableId, DateTime.Now);
+                if (guestBooking is not null)
+                {
+                    var guestBookingFailureReason = GetGuestBookingClaimFailureReason(guestBooking, DateTime.Now);
+                    if (guestBookingFailureReason is not null)
+                    {
+                        TableSessionMessage = guestBookingFailureReason;
+                        return;
+                    }
+
+                    var claimed = await ClaimGuestBookingAsync(guestBooking, customer.CustomerID, DateTime.Now);
+                    if (!claimed)
+                    {
+                        TableSessionMessage = "The booking has already been claimed or is no longer eligible.";
+                        return;
+                    }
+
+                    _tableSessions.Claim(requestedTableId, currentUserId!);
+                    HttpContext.Session.SetString(SelectedTableSessionKey, requestedTableId);
+                    HttpContext.Session.SetString(TableOwnerUserIdSessionKey, currentUserId!);
+                    SelectedTableId = requestedTableId;
+                    CanPlaceOrder = true;
+                    return;
+                }
+
                 var tableLock = _tableSessions.GetLock(requestedTableId);
                 await tableLock.WaitAsync();
                 try
@@ -426,7 +485,6 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
                 return;
             }
 
-            // Default session fallback
             var selectedTableId = HttpContext.Session.GetString(SelectedTableSessionKey);
             var sessionOwner = HttpContext.Session.GetString(TableOwnerUserIdSessionKey);
 
@@ -480,10 +538,11 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
                 .SingleOrDefaultAsync(item => item.TableID == tableId);
         }
 
-        private Task<Booking?> FindActiveBookingAsync(string customerId)
+        private async Task<Booking?> FindActiveBookingAsync(string customerId)
         {
-            var today = DateOnly.FromDateTime(DateTime.Now);
-            return _context.Bookings
+            var now = DateTime.Now;
+            var today = DateOnly.FromDateTime(now);
+            var booking = await _context.Bookings
                 .Include(booking => booking.Table)
                 .AsNoTracking()
                 .FirstOrDefaultAsync(booking =>
@@ -493,6 +552,133 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
                      booking.BookingStatus == "Arriving" ||
                      booking.BookingStatus == "On dine-in") &&
                     !string.IsNullOrEmpty(booking.TableID));
+
+            if (booking is null)
+            {
+                return null;
+            }
+
+            if (!IsBookingWithinCheckInWindow(booking, now))
+            {
+                await CancelExpiredBookingIfNeededAsync(booking, now);
+                return null;
+            }
+
+            return booking;
+        }
+
+        private async Task<Booking?> FindCustomerBookingForTodayAsync(string customerId, DateTime now)
+        {
+            var today = DateOnly.FromDateTime(now);
+            return await _context.Bookings
+                .Include(booking => booking.Table)
+                .AsNoTracking()
+                .OrderBy(booking => booking.BookingTime)
+                .FirstOrDefaultAsync(booking =>
+                    booking.CustomerID == customerId &&
+                    booking.BookingDate == today &&
+                    !string.IsNullOrEmpty(booking.TableID));
+        }
+
+        private async Task<Booking?> FindGuestBookingForTableAsync(string tableId, DateTime now)
+        {
+            var today = DateOnly.FromDateTime(now);
+            return await _context.Bookings
+                .Include(booking => booking.Table)
+                .AsNoTracking()
+                .OrderBy(booking => booking.BookingTime)
+                .FirstOrDefaultAsync(booking =>
+                    booking.CustomerID == null &&
+                    booking.TableID == tableId &&
+                    booking.BookingDate == today &&
+                    (booking.BookingStatus == "Confirmed" ||
+                     booking.BookingStatus == "Arriving" ||
+                     booking.BookingStatus == "On dine-in"));
+        }
+
+        private async Task<bool> ClaimGuestBookingAsync(Booking guestBooking, string customerId, DateTime now)
+        {
+            if (!IsBookingWithinCheckInWindow(guestBooking, now))
+            {
+                return false;
+            }
+
+            var affectedRows = await _context.Bookings
+                .Where(booking =>
+                    booking.BookingID == guestBooking.BookingID &&
+                    booking.CustomerID == null &&
+                    booking.TableID == guestBooking.TableID &&
+                    booking.BookingDate == guestBooking.BookingDate &&
+                    booking.BookingTime == guestBooking.BookingTime &&
+                    (booking.BookingStatus == "Confirmed" ||
+                     booking.BookingStatus == "Arriving" ||
+                     booking.BookingStatus == "On dine-in"))
+                .ExecuteUpdateAsync(update => update.SetProperty(booking => booking.CustomerID, customerId));
+
+            return affectedRows == 1;
+        }
+
+        private async Task CancelExpiredBookingIfNeededAsync(Booking booking, DateTime now)
+        {
+            if (booking.BookingDate > DateOnly.FromDateTime(now)) return;
+
+            // Do not auto-cancel if customer is already dining
+            if (booking.BookingStatus == "On dine-in") return;
+
+            if (!IsBookingStatusEligibleForCheckIn(booking.BookingStatus)) return;
+
+            var bookingDateTime = booking.BookingDate.ToDateTime(booking.BookingTime, DateTimeKind.Local);
+            if (now < bookingDateTime.AddMinutes(30)) return;
+
+            // Direct database update or re-attach entity
+            var dbBooking = await _context.Bookings.FindAsync(booking.BookingID);
+            if (dbBooking != null && dbBooking.BookingStatus != "Cancelled")
+            {
+                dbBooking.BookingStatus = "Cancelled";
+                await ReservationStatusWorkflow.ApplyAsync(_context, dbBooking, "Cancelled");
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        private static string? GetGuestBookingClaimFailureReason(Booking booking, DateTime now)
+        {
+            if (booking.CustomerID != null)
+            {
+                return "The booking has already been claimed or is no longer eligible.";
+            }
+
+            if (!IsBookingWithinCheckInWindow(booking, now))
+            {
+                return "The booking is not within the permitted scanning time.";
+            }
+
+            if (!IsBookingStatusEligibleForCheckIn(booking.BookingStatus))
+            {
+                return "The booking has already been claimed or is no longer eligible.";
+            }
+
+            if (booking.Table is null || !IsWalkInOrderableTable(booking.Table))
+            {
+                return "The assigned table is not eligible for ordering at the moment.";
+            }
+
+            return null;
+        }
+
+        private static bool IsBookingStatusEligibleForCheckIn(string? bookingStatus) =>
+            bookingStatus is "Confirmed" or "Arriving" or "On dine-in";
+
+        private static bool IsBookingWithinCheckInWindow(Booking booking, DateTime now)
+        {
+            if (booking.BookingDate == default || booking.BookingTime == default)
+            {
+                return false;
+            }
+
+            var bookingDateTime = booking.BookingDate.ToDateTime(booking.BookingTime, DateTimeKind.Local);
+            var earliestAllowed = bookingDateTime.AddMinutes(-30);
+            var latestAllowed = bookingDateTime.AddMinutes(30);
+            return now >= earliestAllowed && now <= latestAllowed;
         }
 
         private static bool IsWalkInOrderableTable(Table table) =>
