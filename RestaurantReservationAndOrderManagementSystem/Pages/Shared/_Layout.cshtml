@@ -1,4 +1,4 @@
-﻿@using System.Security.Claims
+@using System.Security.Claims
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -139,6 +139,10 @@
                             <i class="fa-solid fa-user-group"></i>
                             <span>Customer Management</span>
                         </a>
+                        <a class="nav-item @(currentPath.StartsWithSegments("/Staff/Promotions", StringComparison.OrdinalIgnoreCase) ? "active" : null)" href="/Staff/Promotions" aria-current="@(currentPath.StartsWithSegments("/Staff/Promotions", StringComparison.OrdinalIgnoreCase) ? "page" : null)">
+                            <i class="fa-solid fa-tags"></i>
+                            <span>Promotions</span>
+                        </a>
                     }
                     <a class="nav-item @(currentPath.StartsWithSegments("/Staff/Menus", StringComparison.OrdinalIgnoreCase) ? "active" : null)" href="/Staff/Menus" aria-current="@(currentPath.StartsWithSegments("/Staff/Menus", StringComparison.OrdinalIgnoreCase) ? "page" : null)">
                         <i class="fa-solid fa-burger"></i>
@@ -227,6 +231,8 @@
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     <script src="https://kit.fontawesome.com/f3ce044c74.js" crossorigin="anonymous"></script>
+
+    <script src='https://www.noupe.com/embed/01a15483f6e870008f533d28b55becc6e41a.js'></script>
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>

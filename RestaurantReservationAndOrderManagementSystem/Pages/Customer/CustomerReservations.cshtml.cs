@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using RestaurantReservationAndOrderManagementSystem.Data;
 using RestaurantReservationAndOrderManagementSystem.Models;
+using RestaurantReservationAndOrderManagementSystem.Services;
 using BookingEntity = RestaurantReservationAndOrderManagementSystem.Models.Booking;
 using CustomerEntity = RestaurantReservationAndOrderManagementSystem.Models.Customer;
 
@@ -159,9 +160,10 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
                 return Page();
             }
 
-            if (!string.Equals(booking.BookingStatus, "Waiting", StringComparison.OrdinalIgnoreCase))
+            if (!string.Equals(booking.BookingStatus, "Pending", StringComparison.OrdinalIgnoreCase) &&
+                !string.Equals(booking.BookingStatus, "Waiting", StringComparison.OrdinalIgnoreCase))
             {
-                ModelState.AddModelError(string.Empty, "Only waiting reservations can be modified.");
+                ModelState.AddModelError(string.Empty, "Only pending reservations can be modified.");
                 await LoadReservationsAsync();
                 await PopulateAvailableTimeSlotsAsync();
                 return Page();
@@ -236,7 +238,9 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
             }
 
             var today = DateOnly.FromDateTime(DateTime.Today);
-            var canCancel = (booking.BookingStatus == "Waiting" || booking.BookingStatus == "Confirmed") &&
+            var canCancel = (booking.BookingStatus == "Pending" ||
+                             booking.BookingStatus == "Waiting" ||
+                             booking.BookingStatus == "Confirmed") &&
                 booking.BookingDate > today;
 
             if (!canCancel)
@@ -247,11 +251,12 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
                 return Page();
             }
 
-            booking.BookingStatus = "Cancelled";
-
+            await using var transaction = await _dbContext.Database.BeginTransactionAsync();
             try
             {
+                await ReservationStatusWorkflow.ApplyAsync(_dbContext, booking, "Cancelled");
                 await _dbContext.SaveChangesAsync();
+                await transaction.CommitAsync();
             }
             catch (DbUpdateException exception)
             {
@@ -300,7 +305,7 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
                 BookingDate = reservationDate,
                 BookingTime = reservationTime,
                 PartySize = ReservationForm.PartySize,
-                BookingStatus = "Waiting",
+                BookingStatus = "Pending",
                 BookingNotes = ReservationForm.BookingNotes?.Trim() ?? string.Empty,
                 TableID = null
             };
@@ -406,8 +411,10 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
                     booking.TableID,
                     booking.BookingStatus,
                     booking.BookingNotes,
-                    booking.BookingStatus == "Waiting",
-                    (booking.BookingStatus == "Waiting" || booking.BookingStatus == "Confirmed") && booking.BookingDate > today))
+                    booking.BookingStatus == "Pending" || booking.BookingStatus == "Waiting",
+                    (booking.BookingStatus == "Pending" ||
+                     booking.BookingStatus == "Waiting" ||
+                     booking.BookingStatus == "Confirmed") && booking.BookingDate > today))
                 .ToListAsync();
         }
 

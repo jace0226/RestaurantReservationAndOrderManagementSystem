@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using RestaurantReservationAndOrderManagementSystem.Data;
 using RestaurantReservationAndOrderManagementSystem.Models;
+using RestaurantReservationAndOrderManagementSystem.Services;
 
 namespace RestaurantReservationAndOrderManagementSystem.Pages
 {
@@ -11,7 +12,7 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
     {
         private static readonly string[] BookingStatuses =
         [
-            "Waiting",
+            "Pending",
             "Confirmed",
             "Arriving",
             "On dine-in",
@@ -30,20 +31,16 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
             _logger = logger;
         }
 
-        [BindProperty(SupportsGet = true)]
-        public DateOnly? DateFilter { get; set; }
+        [BindProperty(Name = "selectedDate", SupportsGet = true)]
+        public DateOnly? SelectedDate { get; set; }
 
         [BindProperty(SupportsGet = true)]
-        public string Search { get; set; } = string.Empty;
+        public string? Search { get; set; }
 
         [BindProperty]
         public CreateReservationInput NewReservation { get; set; } = new();
 
-        [BindProperty]
-        public UpdateStatusInput StatusUpdate { get; set; } = new();
-
         public IReadOnlyList<ReservationRow> Reservations { get; private set; } = [];
-        public IReadOnlyList<CustomerOption> Customers { get; private set; } = [];
         public IReadOnlyList<TableOption> Tables { get; private set; } = [];
         public IReadOnlyList<string> Statuses => BookingStatuses;
         public int BookingsToday { get; private set; }
@@ -53,7 +50,7 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
 
         public async Task OnGetAsync()
         {
-            DateFilter ??= DateOnly.FromDateTime(DateTime.Today);
+            SelectedDate ??= DateOnly.FromDateTime(DateTime.Today);
             NewReservation.BookingDate ??= DateOnly.FromDateTime(DateTime.Today);
             NewReservation.BookingTime ??= TimeOnly.FromDateTime(DateTime.Now).AddMinutes(30);
             await LoadPageDataAsync();
@@ -62,25 +59,17 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
         public async Task<IActionResult> OnPostCreateAsync()
         {
             ShowCreateModal = true;
-            RemoveModelStateFor(nameof(StatusUpdate));
-            RemoveModelStateFor(nameof(DateFilter));
+            RemoveModelStateFor(nameof(SelectedDate));
             RemoveModelStateFor(nameof(Search));
 
-            if (!TryValidateModel(NewReservation, nameof(NewReservation)))
+            if (!ModelState.IsValid)
             {
                 await LoadPageDataAsync();
                 return Page();
             }
 
-            var customer = await _dbContext.Customers
-                .SingleOrDefaultAsync(item => item.CustomerID == NewReservation.CustomerID);
             var table = await _dbContext.Tables
                 .SingleOrDefaultAsync(item => item.TableID == NewReservation.TableID);
-
-            if (customer is null)
-            {
-                ModelState.AddModelError("NewReservation.CustomerID", "Select a valid customer.");
-            }
 
             if (table is null)
             {
@@ -102,7 +91,7 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
             var booking = new Booking
             {
                 BookingID = Guid.NewGuid().ToString("N"),
-                CustomerID = customer!.CustomerID,
+                CustomerID = null,
                 TableID = table!.TableID,
                 BookingDate = NewReservation.BookingDate!.Value,
                 BookingTime = NewReservation.BookingTime!.Value,
@@ -124,48 +113,216 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
                 return Page();
             }
 
+            TempData["SuccessMessage"] = "Reservation created successfully.";
             return RedirectToPage(new
             {
-                dateFilter = NewReservation.BookingDate.Value.ToString("yyyy-MM-dd"),
+                selectedDate = NewReservation.BookingDate.Value.ToString("yyyy-MM-dd"),
                 search = Search
             });
         }
 
-        public async Task<IActionResult> OnPostUpdateStatusAsync()
+        public async Task<IActionResult> OnPostUpdateStatusAsync(
+            string? bookingId,
+            string? newStatus,
+            string? tableId)
         {
-            if (string.IsNullOrWhiteSpace(StatusUpdate.BookingID) ||
-                !BookingStatuses.Contains(StatusUpdate.Status, StringComparer.Ordinal))
+            if (string.IsNullOrWhiteSpace(bookingId) ||
+                string.IsNullOrWhiteSpace(newStatus) ||
+                !BookingStatuses.Contains(newStatus, StringComparer.Ordinal))
             {
                 return BadRequest();
             }
 
+            await using var transaction = await _dbContext.Database.BeginTransactionAsync();
             var booking = await _dbContext.Bookings
-                .SingleOrDefaultAsync(item => item.BookingID == StatusUpdate.BookingID);
+                .SingleOrDefaultAsync(item => item.BookingID == bookingId);
             if (booking is null)
             {
                 return NotFound();
             }
 
-            booking.BookingStatus = StatusUpdate.Status;
             try
             {
+                if ((booking.BookingStatus is "Pending" or "Waiting") && newStatus == "Confirmed")
+                {
+                    if (string.IsNullOrWhiteSpace(tableId))
+                    {
+                        TempData["ReservationStatusError"] =
+                            "Select an available table before confirming this reservation.";
+                        return RedirectToPage(new
+                        {
+                            selectedDate = SelectedDate?.ToString("yyyy-MM-dd"),
+                            search = Search
+                        });
+                    }
+
+                    var table = await _dbContext.Tables
+                        .SingleOrDefaultAsync(item => item.TableID == tableId);
+                    if (table is null ||
+                        !table.TableAvailability.Equals("Available", StringComparison.OrdinalIgnoreCase) ||
+                        table.MaxPax < booking.PartySize)
+                    {
+                        TempData["ReservationStatusError"] = table is null
+                            ? "The selected table does not exist."
+                            : !table.TableAvailability.Equals("Available", StringComparison.OrdinalIgnoreCase)
+                                ? "The selected table is not available."
+                                : $"The selected table seats up to {table.MaxPax} guests.";
+                        return RedirectToPage(new
+                        {
+                            selectedDate = SelectedDate?.ToString("yyyy-MM-dd"),
+                            search = Search
+                        });
+                    }
+
+                    var tableAlreadyBooked = await _dbContext.Bookings.AnyAsync(item =>
+                        item.BookingID != booking.BookingID &&
+                        item.TableID == table.TableID &&
+                        item.BookingDate == booking.BookingDate &&
+                        item.BookingTime == booking.BookingTime &&
+                        item.BookingStatus != "Cancelled" &&
+                        item.BookingStatus != "Completed");
+                    if (tableAlreadyBooked)
+                    {
+                        TempData["ReservationStatusError"] =
+                            "The selected table already has an active reservation at that date and time.";
+                        return RedirectToPage(new
+                        {
+                            selectedDate = SelectedDate?.ToString("yyyy-MM-dd"),
+                            search = Search
+                        });
+                    }
+
+                    booking.TableID = table.TableID;
+                }
+
+                await ReservationStatusWorkflow.ApplyAsync(_dbContext, booking, newStatus);
                 await _dbContext.SaveChangesAsync();
+                await transaction.CommitAsync();
             }
             catch (DbUpdateException exception)
             {
                 _logger.LogError(
                     exception,
                     "Could not update reservation status for booking {BookingId}.",
-                    StatusUpdate.BookingID);
-                return StatusCode(StatusCodes.Status500InternalServerError);
+                    bookingId);
+                TempData["ReservationStatusError"] = "The reservation status could not be updated. Please try again.";
+                return RedirectToPage(new { selectedDate = SelectedDate?.ToString("yyyy-MM-dd"), search = Search });
             }
 
-            return RedirectToPage(new { dateFilter = DateFilter?.ToString("yyyy-MM-dd"), search = Search });
+            TempData["ReservationStatusMessage"] = $"Reservation status changed to {newStatus}.";
+            return RedirectToPage(new { selectedDate = SelectedDate?.ToString("yyyy-MM-dd"), search = Search });
+        }
+
+        public async Task<IActionResult> OnPostReassignTableAsync(string? bookingId, string? tableId)
+        {
+            if (string.IsNullOrWhiteSpace(bookingId) || string.IsNullOrWhiteSpace(tableId))
+            {
+                return BadRequest();
+            }
+
+            var booking = await _dbContext.Bookings
+                .SingleOrDefaultAsync(item => item.BookingID == bookingId);
+            if (booking is null)
+            {
+                return NotFound();
+            }
+
+            if (booking.TableID == tableId)
+            {
+                return RedirectToPage(new
+                {
+                    selectedDate = SelectedDate?.ToString("yyyy-MM-dd"),
+                    search = Search
+                });
+            }
+
+            var table = await _dbContext.Tables
+                .SingleOrDefaultAsync(item => item.TableID == tableId);
+            if (table is null ||
+                !table.TableAvailability.Equals("Available", StringComparison.OrdinalIgnoreCase) ||
+                table.MaxPax < booking.PartySize)
+            {
+                TempData["ReservationTableError"] =
+                    table is null
+                        ? "The selected table does not exist."
+                        : !table.TableAvailability.Equals("Available", StringComparison.OrdinalIgnoreCase)
+                            ? "The selected table is not available."
+                            : $"The selected table seats up to {table.MaxPax} guests.";
+                return RedirectToPage(new
+                {
+                    selectedDate = SelectedDate?.ToString("yyyy-MM-dd"),
+                    search = Search
+                });
+            }
+
+            var tableAlreadyBooked = await _dbContext.Bookings.AnyAsync(item =>
+                item.BookingID != booking.BookingID &&
+                item.TableID == tableId &&
+                item.BookingDate == booking.BookingDate &&
+                item.BookingTime == booking.BookingTime &&
+                item.BookingStatus != "Cancelled" &&
+                item.BookingStatus != "Completed");
+            if (tableAlreadyBooked)
+            {
+                TempData["ReservationTableError"] =
+                    "The selected table already has an active reservation at that date and time.";
+                return RedirectToPage(new
+                {
+                    selectedDate = SelectedDate?.ToString("yyyy-MM-dd"),
+                    search = Search
+                });
+            }
+
+            await using var transaction = await _dbContext.Database.BeginTransactionAsync();
+            try
+            {
+                var previousTable = await _dbContext.Tables
+                    .SingleOrDefaultAsync(item => item.TableID == booking.TableID);
+                if (previousTable is not null &&
+                    (previousTable.TableAvailability.Equals("Reserved", StringComparison.OrdinalIgnoreCase) ||
+                     previousTable.TableAvailability.Equals("On dine-in", StringComparison.OrdinalIgnoreCase) ||
+                     previousTable.TableAvailability.Equals("Occupied", StringComparison.OrdinalIgnoreCase)))
+                {
+                    previousTable.TableAvailability = "Available";
+                }
+
+                booking.TableID = table.TableID;
+                if (booking.BookingStatus is "Arriving" or "On dine-in")
+                {
+                    await ReservationStatusWorkflow.ApplyAsync(
+                        _dbContext,
+                        booking,
+                        booking.BookingStatus);
+                }
+
+                await _dbContext.SaveChangesAsync();
+                await transaction.CommitAsync();
+            }
+            catch (DbUpdateException exception)
+            {
+                _logger.LogError(
+                    exception,
+                    "Could not reassign table for booking {BookingId}.",
+                    booking.BookingID);
+                TempData["ReservationTableError"] = "The table could not be reassigned. Please try again.";
+                return RedirectToPage(new
+                {
+                    selectedDate = SelectedDate?.ToString("yyyy-MM-dd"),
+                    search = Search
+                });
+            }
+
+            TempData["ReservationTableMessage"] = "Reservation table reassigned.";
+            return RedirectToPage(new
+            {
+                selectedDate = SelectedDate?.ToString("yyyy-MM-dd"),
+                search = Search
+            });
         }
 
         public static string StatusCssClass(string status) => status switch
         {
-            "Waiting" => "status-waiting",
+            "Pending" or "Waiting" => "status-pending",
             "Confirmed" => "status-confirmed",
             "Arriving" => "status-arriving",
             "On dine-in" => "status-dining",
@@ -187,22 +344,24 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
             var bookingQuery = _dbContext.Bookings
                 .AsNoTracking()
                 .Include(booking => booking.Customer)
-                    .ThenInclude(customer => customer.User)
+                    .ThenInclude(customer => customer!.User)
                 .Include(booking => booking.Table)
                 .AsQueryable();
 
-            if (DateFilter.HasValue)
+            if (SelectedDate.HasValue)
             {
-                bookingQuery = bookingQuery.Where(booking => booking.BookingDate == DateFilter.Value);
+                bookingQuery = bookingQuery.Where(booking => booking.BookingDate == SelectedDate.Value);
             }
 
             if (!string.IsNullOrWhiteSpace(Search))
             {
                 var searchTerm = Search.Trim();
                 bookingQuery = bookingQuery.Where(booking =>
-                    booking.Customer.User.FullName.Contains(searchTerm) ||
-                    booking.Customer.User.Phone.Contains(searchTerm) ||
-                    booking.Table.TableID.Contains(searchTerm));
+                    (booking.Customer != null &&
+                     (booking.Customer.User.FullName.Contains(searchTerm) ||
+                      booking.Customer.User.Phone.Contains(searchTerm))) ||
+                    (booking.Customer == null && "Walk-in".Contains(searchTerm)) ||
+                    (booking.Table != null && booking.Table.TableID.Contains(searchTerm)));
             }
 
             Reservations = await bookingQuery
@@ -212,21 +371,11 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
                     booking.BookingID,
                     booking.BookingDate,
                     booking.BookingTime,
-                    booking.Customer.User.FullName,
-                    booking.Customer.User.Phone,
+                    booking.Customer == null ? "Walk-in" : booking.Customer.User.FullName,
+                    booking.Customer == null ? string.Empty : booking.Customer.User.Phone,
                     booking.PartySize,
-                    booking.Table.TableID,
+                    booking.Table!.TableID,
                     booking.BookingStatus))
-                .ToListAsync();
-
-            Customers = await _dbContext.Customers
-                .AsNoTracking()
-                .Include(customer => customer.User)
-                .OrderBy(customer => customer.User.FullName)
-                .Select(customer => new CustomerOption(
-                    customer.CustomerID,
-                    customer.User.FullName,
-                    customer.User.Phone))
                 .ToListAsync();
 
             Tables = await _dbContext.Tables
@@ -252,9 +401,6 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
 
         public sealed class CreateReservationInput
         {
-            [Required(ErrorMessage = "Select a customer.")]
-            public string CustomerID { get; set; } = string.Empty;
-
             [Required(ErrorMessage = "Select a table.")]
             public string TableID { get; set; } = string.Empty;
 
@@ -271,15 +417,6 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
             public string? BookingNotes { get; set; }
         }
 
-        public sealed class UpdateStatusInput
-        {
-            [Required]
-            public string BookingID { get; set; } = string.Empty;
-
-            [Required]
-            public string Status { get; set; } = string.Empty;
-        }
-
         public sealed record ReservationRow(
             string BookingID,
             DateOnly BookingDate,
@@ -289,8 +426,6 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
             int PartySize,
             string TableID,
             string Status);
-
-        public sealed record CustomerOption(string CustomerID, string FullName, string Phone);
 
         public sealed record TableOption(string TableID, int Capacity, string Availability);
     }

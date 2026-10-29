@@ -15,7 +15,7 @@
 <body class="payment-success-page">
     <main class="payment-success-main">
         <article class="receipt-card" aria-labelledby="payment-success-title">
-            <a class="receipt-close" href="/" aria-label="Close and return to the main menu">
+            <a class="receipt-close" href="/Customer/Orders?Category=History" aria-label="Close and return to the main menu">
                 <svg viewBox="0 0 24 24" aria-hidden="true">
                     <path d="m6 6 12 12M18 6 6 18" />
                 </svg>
@@ -49,6 +49,10 @@
                         <dd>@Model.Payment.PaymentMethod</dd>
                     </div>
                     <div class="receipt-row">
+                        <dt>Transaction Reference</dt>
+                        <dd>@Model.Payment.TransactionReference</dd>
+                    </div>
+                    <div class="receipt-row">
                         <dt>Payment Status</dt>
                         <dd><span class="status-badge">Successful</span></dd>
                     </div>
@@ -56,6 +60,17 @@
                         <dt>Amount</dt>
                         <dd>RM @Model.Payment.Amount.ToString("N2")</dd>
                     </div>
+                    @if (Model.Payment.TenderedAmount.HasValue)
+                    {
+                        <div class="receipt-row">
+                            <dt>Amount Tendered</dt>
+                            <dd>RM @Model.Payment.TenderedAmount.Value.ToString("N2")</dd>
+                        </div>
+                        <div class="receipt-row">
+                            <dt>Change Given</dt>
+                            <dd>RM @Model.Payment.ChangeGiven.Value.ToString("N2")</dd>
+                        </div>
+                    }
                 </dl>
             </section>
 
@@ -63,15 +78,56 @@
                 <dl class="receipt-details">
                     @foreach (var item in Model.Items)
                     {
-                        <div class="receipt-row">
-                            <dt>@item.Name × @item.Quantity</dt>
-                            <dd>RM @item.LineTotal.ToString("N2")</dd>
+                        <div class="receipt-row receipt-item-row">
+                            <dt>
+                                <div class="receipt-item-title">
+                                    <span>@item.Name × @item.Quantity</span>
+                                    @if (item.HasPromotion)
+                                    {
+                                        <span class="receipt-promo-tag">PROMO</span>
+                                    }
+                                </div>
+                                @if (item.HasPromotion)
+                                {
+                                    <div class="receipt-item-subtext">
+                                        <span class="receipt-del">RM @item.OriginalUnitPrice.ToString("N2")</span>
+                                        <span class="receipt-deal">RM @item.EffectiveUnitPrice.ToString("N2") each</span>
+                                    </div>
+                                }
+                            </dt>
+                            <dd class="receipt-item-price">
+                                @if (item.HasPromotion)
+                                {
+                                    <span class="receipt-line-discount">-RM @item.LineDiscount.ToString("N2")</span>
+                                }
+                                <span class="receipt-line-total">RM @item.LineTotal.ToString("N2")</span>
+                            </dd>
                         </div>
                     }
-                    <div class="receipt-row">
-                        <dt>Subtotal</dt>
-                        <dd>RM @Model.Subtotal.ToString("N2")</dd>
-                    </div>
+
+                    @if (Model.HasPromotionDiscount)
+                    {
+                        <div class="receipt-row">
+                            <dt>Original Subtotal</dt>
+                            <dd>RM @Model.OriginalSubtotal.ToString("N2")</dd>
+                        </div>
+                        <div class="receipt-row receipt-discount-row">
+                            <dt>Promotion Discount</dt>
+                            <dd>- RM @Model.TotalDiscount.ToString("N2")</dd>
+                        </div>
+                        <div class="receipt-row">
+                            <dt>Subtotal (After Promo)</dt>
+                            <dd>RM @Model.Subtotal.ToString("N2")</dd>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="receipt-row">
+                            <dt>Subtotal</dt>
+                            <dd>RM @Model.Subtotal.ToString("N2")</dd>
+                        </div>
+                    }
+
                     <div class="receipt-row">
                         <dt>Tax (10%)</dt>
                         <dd>RM @Model.Tax.ToString("N2")</dd>
@@ -81,6 +137,16 @@
                         <dd>RM @Model.Total.ToString("N2")</dd>
                     </div>
                 </dl>
+
+                @if (Model.HasPromotionDiscount)
+                {
+                    <div class="receipt-savings-callout" role="note">
+                        <svg viewBox="0 0 24 24" aria-hidden="true" class="savings-callout-icon">
+                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                        </svg>
+                        <span>You saved <strong>RM @Model.TotalDiscount.ToString("N2")</strong> on this order!</span>
+                    </div>
+                }
             </section>
 
             <div class="receipt-actions">
@@ -120,6 +186,10 @@
                     <dd>@Model.Payment.PaymentMethod</dd>
                 </div>
                 <div class="receipt-row">
+                    <dt>Transaction Reference</dt>
+                    <dd>@Model.Payment.TransactionReference</dd>
+                </div>
+                <div class="receipt-row">
                     <dt>Payment Status</dt>
                     <dd>Successful</dd>
                 </div>
@@ -127,17 +197,70 @@
                     <dt>Amount</dt>
                     <dd>RM @Model.Payment.Amount.ToString("N2")</dd>
                 </div>
-                @foreach (var item in Model.Items)
+                @if (Model.Payment.TenderedAmount.HasValue)
                 {
                     <div class="receipt-row">
-                        <dt>@item.Name × @item.Quantity</dt>
-                        <dd>RM @item.LineTotal.ToString("N2")</dd>
+                        <dt>Amount Tendered</dt>
+                        <dd>RM @Model.Payment.TenderedAmount.Value.ToString("N2")</dd>
+                    </div>
+                    <div class="receipt-row">
+                        <dt>Change Given</dt>
+                        <dd>RM @Model.Payment.ChangeGiven.Value.ToString("N2")</dd>
                     </div>
                 }
-                <div class="receipt-row">
-                    <dt>Subtotal</dt>
-                    <dd>RM @Model.Subtotal.ToString("N2")</dd>
-                </div>
+
+                @foreach (var item in Model.Items)
+                {
+                    <div class="receipt-row receipt-item-row">
+                        <dt>
+                            <div class="receipt-item-title">
+                                <span>@item.Name × @item.Quantity</span>
+                                @if (item.HasPromotion)
+                                {
+                                    <span class="receipt-promo-tag">PROMO</span>
+                                }
+                            </div>
+                            @if (item.HasPromotion)
+                            {
+                                <div class="receipt-item-subtext">
+                                    <span class="receipt-del">RM @item.OriginalUnitPrice.ToString("N2")</span>
+                                    <span class="receipt-deal">RM @item.EffectiveUnitPrice.ToString("N2") each</span>
+                                </div>
+                            }
+                        </dt>
+                        <dd class="receipt-item-price">
+                            @if (item.HasPromotion)
+                            {
+                                <span class="receipt-line-discount">-RM @item.LineDiscount.ToString("N2")</span>
+                            }
+                            <span class="receipt-line-total">RM @item.LineTotal.ToString("N2")</span>
+                        </dd>
+                    </div>
+                }
+
+                @if (Model.HasPromotionDiscount)
+                {
+                    <div class="receipt-row">
+                        <dt>Original Subtotal</dt>
+                        <dd>RM @Model.OriginalSubtotal.ToString("N2")</dd>
+                    </div>
+                    <div class="receipt-row receipt-discount-row">
+                        <dt>Promotion Discount</dt>
+                        <dd>- RM @Model.TotalDiscount.ToString("N2")</dd>
+                    </div>
+                    <div class="receipt-row">
+                        <dt>Subtotal (After Promo)</dt>
+                        <dd>RM @Model.Subtotal.ToString("N2")</dd>
+                    </div>
+                }
+                else
+                {
+                    <div class="receipt-row">
+                        <dt>Subtotal</dt>
+                        <dd>RM @Model.Subtotal.ToString("N2")</dd>
+                    </div>
+                }
+
                 <div class="receipt-row">
                     <dt>Tax (10%)</dt>
                     <dd>RM @Model.Tax.ToString("N2")</dd>
@@ -147,6 +270,17 @@
                     <dd>RM @Model.Total.ToString("N2")</dd>
                 </div>
             </dl>
+
+            @if (Model.HasPromotionDiscount)
+            {
+                <div class="receipt-savings-callout" role="note" style="margin-bottom: 1.25rem;">
+                    <svg viewBox="0 0 24 24" aria-hidden="true" class="savings-callout-icon">
+                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                    </svg>
+                    <span>You saved <strong>RM @Model.TotalDiscount.ToString("N2")</strong> on this order!</span>
+                </div>
+            }
+
             <button class="receipt-view-button print-button" type="button" onclick="window.print()">
                 <svg viewBox="0 0 24 24" aria-hidden="true">
                     <path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v7H6z" />

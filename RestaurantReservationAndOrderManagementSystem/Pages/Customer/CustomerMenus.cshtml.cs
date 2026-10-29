@@ -21,19 +21,24 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
 
         private readonly ApplicationDbContext _context;
         private readonly TableSessionStore _tableSessions;
+        private readonly PromotionService _promotionService;
         private readonly ILogger<CustomerMenusModel> _logger;
 
         public CustomerMenusModel(
             ApplicationDbContext context,
             TableSessionStore tableSessions,
+            PromotionService promotionService,
             ILogger<CustomerMenusModel> logger)
         {
             _context = context;
             _tableSessions = tableSessions;
+            _promotionService = promotionService;
             _logger = logger;
         }
 
         public List<Food_Items> MenuItems { get; set; } = new();
+        public List<Table> AvailableTables { get; set; } = new();
+        public object? ActivePromotions { get; private set; }
         public string? CurrentCustomerId { get; private set; }
         public string? SelectedTableId { get; private set; }
         public string? TableSessionMessage { get; private set; }
@@ -84,7 +89,21 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
             // Fetch menu items
             MenuItems = await _context.FoodItems.ToListAsync();
 
-            // Compute dynamic recommendations
+            // Load active promotions.
+            var activePromosMap = await _promotionService.GetActivePromotionsMapAsync();
+            ActivePromotions = activePromosMap.Values.Select(p => new
+            {
+                foodId = p.FoodID,
+                promoId = p.PromoID,
+                discountedPrice = p.DiscountedPrice,
+                originalPrice = p.Food?.Price ?? 0m,
+                discountAmount = p.Food != null ? Math.Max(0, p.Food.Price - p.DiscountedPrice) : 0m,
+                discountPercent = (p.Food != null && p.Food.Price > 0)
+                    ? (int)Math.Round((p.Food.Price - p.DiscountedPrice) / p.Food.Price * 100)
+                    : 0
+            }).ToList();
+
+            // Compute dynamic recommendations.
             List<string> recommendedFoodIds = new();
             string dynamicLabel = "Chef's Pick";
 
@@ -179,6 +198,11 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
                 return new JsonResult(new { success = false, message = "Cart is empty." }) { StatusCode = 400 };
             }
 
+            if (request.PaymentMethod is not ("Stripe" or "Counter"))
+            {
+                return new JsonResult(new { success = false, message = "Select a valid payment method." }) { StatusCode = 400 };
+            }
+
             var customer = await GetCurrentCustomerAsync();
             if (customer == null)
             {
@@ -246,7 +270,8 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
                     TableID = tableId!,
                     BookingID = activeBooking?.BookingID,
                     StaffID = null,
-                    OrderStatus = "Pending",
+                    OrderStatus = request.PaymentMethod == "Stripe" ? "Payment" : "Pending",
+                    PaymentMethod = request.PaymentMethod,
                     CreatedAt = DateTime.Now,
                     CompletedAt = null
                 };
@@ -318,7 +343,12 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
-                return new JsonResult(new { success = true, orderId = newOrderId });
+                return new JsonResult(new
+                {
+                    success = true,
+                    orderId = newOrderId,
+                    paymentMethod = request.PaymentMethod
+                });
             }
             catch (Exception ex)
             {
@@ -488,6 +518,7 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
     public class CreateOrderRequest
     {
         public List<CartItemDto> Items { get; set; } = new();
+        public string PaymentMethod { get; set; } = string.Empty;
     }
 
     public class CartItemDto

@@ -55,6 +55,7 @@ builder.Services.AddAuthorization(options =>
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 builder.Services.AddSingleton<IStripeCheckoutService, StripeCheckoutService>();
 builder.Services.AddScoped<StripePaymentService>();
+builder.Services.AddScoped<PromotionService>();
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
@@ -70,10 +71,12 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
         builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddTransient<IEmailService, EmailService>();
+builder.Services.AddHostedService<ReservationArrivalBackgroundService>();
 
 var app = builder.Build();
 
 await AccountSeeder.SeedConfiguredAccountsAsync(app.Services);
+// await TableSeeder.SeedDefaultTablesAsync(app.Services);
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())

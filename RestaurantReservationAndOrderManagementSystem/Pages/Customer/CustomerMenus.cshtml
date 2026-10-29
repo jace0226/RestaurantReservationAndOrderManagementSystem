@@ -1,4 +1,4 @@
-﻿@page "/Customer/Menus"
+@page "/Customer/Menus"
 @model RestaurantReservationAndOrderManagementSystem.Pages.Customer.CustomerMenusModel
 @inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
 @{
@@ -93,7 +93,14 @@
                     <span class="customer-category-tag" id="customerModalCategory"></span>
                     <h2 id="customerModalTitle"></h2>
                 </div>
-                <strong class="customer-modal-price" id="customerModalPrice"></strong>
+                <div class="customer-modal-pricing-wrap">
+                    <del class="customer-modal-orig-price" id="customerModalOrigPrice" hidden></del>
+                    <strong class="customer-modal-price" id="customerModalPrice"></strong>
+                </div>
+            </div>
+            <div class="customer-modal-promo-banner" id="customerModalPromoBanner" hidden>
+                <i class="fa-solid fa-tag" aria-hidden="true"></i>
+                <span id="customerModalPromoBannerText">Special Promotion!</span>
             </div>
             <p class="customer-modal-description" id="customerModalDescription"></p>
             <div class="customer-modal-facts">
@@ -165,6 +172,14 @@
     </div>
 
     <div class="customer-cart-summary" id="customerCartSummary">
+        <div class="customer-cart-row customer-cart-orig-row" id="customerCartOrigRow" hidden>
+            <span>Original Subtotal</span>
+            <span id="customerCartOrigSubtotal">RM0.00</span>
+        </div>
+        <div class="customer-cart-row customer-cart-discount-row" id="customerCartDiscountRow" hidden>
+            <span><i class="fa-solid fa-tag" aria-hidden="true"></i> Promotion Discount</span>
+            <strong id="customerCartDiscount" style="color: #159b59;">-RM0.00</strong>
+        </div>
         <div class="customer-cart-row">
             <span>Subtotal</span>
             <strong id="customerCartSubtotal">RM0.00</strong>
@@ -178,6 +193,24 @@
             <span>Total (RM)</span>
             <strong id="customerCartTotal">RM0.00</strong>
         </div>
+
+        <div class="customer-cart-savings-banner" id="customerCartSavingsBanner" hidden>
+            <i class="fa-solid fa-gift" aria-hidden="true"></i>
+            <span>You're saving <strong id="customerCartSavingsValue">RM0.00</strong> with promotions!</span>
+        </div>
+
+        <fieldset class="customer-payment-method">
+            <legend>Payment method</legend>
+            <label>
+                <input type="radio" name="paymentMethod" value="Counter" />
+                <span><strong>Pay at counter</strong><small>Pay staff when your order is ready.</small></span>
+            </label>
+            <label>
+                <input type="radio" name="paymentMethod" value="Stripe" />
+                <span><strong>Pay online with Stripe</strong><small>Continue to secure online checkout.</small></span>
+            </label>
+        </fieldset>
+
         <button class="customer-confirm-order-btn" id="customerConfirmOrder" type="button" disabled>
             Confirm Order
         </button>
@@ -196,6 +229,21 @@
                     ));
 
         window.canPlaceOrder = @Model.CanPlaceOrder.ToString().ToLowerInvariant();
+
+        window.activePromotionsData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+                    Model.ActivePromotions,
+                    new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }
+                    ));
+
+        window.availableTablesData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+                    Model.AvailableTables,
+                    new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }
+                    ));
+
+        window.activeBookingData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+                    Model.ActiveBooking,
+                    new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }
+                    ));
     </script>
     <script src="~/js/customer_menus.js" asp-append-version="true"></script>
 }

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using RestaurantReservationAndOrderManagementSystem.Data;
+using RestaurantReservationAndOrderManagementSystem.Services;
 
 namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
 {
@@ -13,13 +14,16 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
         private const string CurrentCategory = "Current";
         private const string HistoryCategory = "History";
         private readonly ApplicationDbContext _dbContext;
+        private readonly PromotionService _promotionService;
         private readonly ILogger<CustomerOrdersModel> _logger;
 
         public CustomerOrdersModel(
             ApplicationDbContext dbContext,
+            PromotionService promotionService,
             ILogger<CustomerOrdersModel> logger)
         {
             _dbContext = dbContext;
+            _promotionService = promotionService;
             _logger = logger;
         }
 
@@ -168,29 +172,57 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
                 .Include(item => item.Food)
                 .ToListAsync();
 
+            var transactionRecords = await _dbContext.Transactions
+                .AsNoTracking()
+                .Where(t => orderIds.Contains(t.OrderID))
+                .ToDictionaryAsync(t => t.OrderID);
+
             var groupedItems = itemsByOrder
                 .GroupBy(item => item.OrderID)
                 .ToDictionary(group => group.Key, group => group.ToList());
 
-            Orders = orders.Select(order =>
+            // Build each order view using promotions that were active at the order's creation time
+            var orderViews = new List<OrderView>();
+            foreach (var order in orders)
             {
                 var items = groupedItems.GetValueOrDefault(order.OrderID) ?? [];
-                var viewItems = items.Select(item => new OrderItemView(
-                    item.Quantity,
-                    item.Food.FoodName,
-                    item.Food.Price)).ToList();
-                var subtotal = viewItems.Sum(item => item.Price * item.Quantity);
-                var tax = Math.Round(subtotal * 0.10m, 2, MidpointRounding.AwayFromZero);
+                var hasRecordedTotal = transactionRecords.TryGetValue(order.OrderID, out var transaction);
+                var promotionTime = hasRecordedTotal
+                    ? transaction!.TransactionDate.ToDateTime(transaction.TransactionTime)
+                    : DateTime.Now;
+                var pricing = await _promotionService.ResolvePaymentAlignedPricingAsync(
+                    items.Select(oi => (oi.Food, oi.Quantity)),
+                    promotionTime,
+                    hasRecordedTotal ? transaction!.TransactionAmount : null,
+                    hasRecordedTotal ? transaction!.DiscountAmount : null);
 
-                return new OrderView(
+                var viewItems = pricing.Items.Select(item => new OrderItemView(
+                    item.Quantity,
+                    item.FoodName,
+                    item.OriginalUnitPrice,
+                    item.EffectiveUnitPrice,
+                    item.LineTotal,
+                    item.LineDiscount,
+                    item.HasPromotion)).ToList();
+
+                var finalTotal = hasRecordedTotal ? transaction!.TransactionAmount : pricing.Total;
+
+                orderViews.Add(new OrderView(
                     order.OrderID,
                     order.CreatedAt,
                     order.OrderStatus,
                     viewItems,
-                    subtotal,
-                    tax,
-                    subtotal + tax);
-            }).ToList();
+                    pricing.OriginalSubtotal,
+                    pricing.TotalDiscount,
+                    pricing.NetSubtotal,
+                    pricing.Tax,
+                    finalTotal,
+                    pricing.TotalDiscount > 0,
+                    order.PaymentMethod,
+                    hasRecordedTotal ? transaction!.TenderedAmount : null,
+                    hasRecordedTotal ? transaction!.ChangeGiven : null));
+            }
+            Orders = orderViews;
         }
 
         private static string NormalizeCategory(string? category) =>
@@ -203,10 +235,23 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
             DateTime CreatedAt,
             string Status,
             IReadOnlyList<OrderItemView> Items,
-            decimal Subtotal,
+            decimal OriginalSubtotal,
+            decimal TotalDiscount,
+            decimal NetSubtotal,
             decimal Tax,
-            decimal Total);
+            decimal Total,
+            bool HasPromotions,
+            string? PaymentMethod,
+            decimal? TenderedAmount,
+            decimal? ChangeGiven);
 
-        public sealed record OrderItemView(int Quantity, string Name, decimal Price);
+        public sealed record OrderItemView(
+            int Quantity,
+            string Name,
+            decimal OriginalPrice,
+            decimal EffectivePrice,
+            decimal LineTotal,
+            decimal LineDiscount,
+            bool HasPromotion);
     }
 }
