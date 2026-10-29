@@ -921,19 +921,13 @@
 }
 
 .table-reserved .table-status {
-    background: #eff4ff;
-    color: #3f68b5;
+    background: #fbf4e5;
+    color: #f0b323;
 }
 
 .table-occupied .table-status {
     background: #fff0eb;
     color: #c94f34;
-}
-
-.table-reserved .table-layout {
-    background:
-        radial-gradient(ellipse at center, #fff 0 33%, transparent 34%),
-        linear-gradient(135deg, #f7f8fc, #f2f4f8);
 }
 
 .table-reserved .table-surface {
@@ -943,12 +937,6 @@
 .table-reserved .table-chair {
     border-color: #ccd7ec;
     background: #e2e9f5;
-}
-
-.table-occupied .table-layout {
-    background:
-        radial-gradient(ellipse at center, #fff 0 33%, transparent 34%),
-        linear-gradient(135deg, #fafbff, #f4f6ff);
 }
 
 .table-validation-summary:not(:empty) {
@@ -1404,28 +1392,13 @@
     font-weight: 700;
 }
 
-.table-available .table-status {
-    background: #eaf7f0;
-    color: #258359;
-}
-
-.table-reserved .table-status {
-    background: #eef0ff;
-    color: var(--brand-color);
-}
-
-.table-occupied .table-status {
-    background: #fff0ed;
-    color: #b94d4d;
-}
-
 .table-reserved .table-surface {
-    border-color: #899cff;
+    border-color: #eed7a2;
 }
 
 .table-reserved .table-chair {
-    border-color: #899cff;
-    background: #cbd5ff;
+    border-color: #eed7a2;
+    background: #fbf4e5;
 }
 
 .table-occupied .table-surface {

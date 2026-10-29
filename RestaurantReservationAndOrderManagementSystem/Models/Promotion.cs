@@ -23,8 +23,8 @@ namespace RestaurantReservationAndOrderManagementSystem.Models
 
         public decimal DiscountedPrice { get; set; } = 0.0m;
 
-        public DateOnly DurationStart { get; set; } = DateOnly.MinValue;
+        public DateTime StartDateTime { get; set; } = DateTime.MinValue;
 
-        public TimeOnly DurationEnd { get; set; } = TimeOnly.MinValue;
+        public DateTime EndDateTime { get; set; } = DateTime.MinValue;
     }
 }

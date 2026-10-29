@@ -1,0 +1,529 @@
+@page "/Staff/Promotions"
+@model RestaurantReservationAndOrderManagementSystem.Pages.Staff.PromotionsModel
+@{
+    ViewData["Title"] = "Promotions";
+}
+
+<link rel="stylesheet" href="~/css/promotions_page.css" asp-append-version="true" />
+
+<section class="promotions-page" aria-label="Promotion management">
+    <!-- HERO HEADER -->
+    <header class="promo-hero">
+        <div>
+            <p class="promo-eyebrow">SPECIAL OFFERS & DISCOUNTS</p>
+            <h1>Promotions</h1>
+            <p class="promo-hero-caption">Create, schedule, and manage menu discounts and promotional campaigns.</p>
+        </div>
+        @if (User.IsInRole("Administrator"))
+        {
+            <button class="btn-add-promo" id="openAddPromoBtn" type="button">
+                <i class="fa-solid fa-plus" aria-hidden="true"></i>
+                <span>Add Promotion</span>
+            </button>
+        }
+    </header>
+
+    <!-- NOTICES -->
+    @if (TempData["SuccessMessage"] is string successMessage)
+    {
+        <div class="promo-notice success" role="status">
+            <i class="fa-solid fa-circle-check" aria-hidden="true"></i>
+            <span>@successMessage</span>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] is string errorMessage)
+    {
+        <div class="promo-notice error" role="alert">
+            <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+            <span>@errorMessage</span>
+        </div>
+    }
+
+    <!-- STATS CARDS -->
+    <section class="promo-stats" aria-label="Promotion metrics">
+        <article class="promo-stat-card">
+            <div class="promo-stat-label">
+                <span>Total Promotions</span>
+                <i class="fa-solid fa-tags" aria-hidden="true"></i>
+            </div>
+            <strong class="promo-stat-value">@Model.TotalPromotionsCount</strong>
+            <span class="promo-stat-sub">Configured campaigns</span>
+        </article>
+        <article class="promo-stat-card active-stat">
+            <div class="promo-stat-label">
+                <span>Active Today</span>
+                <i class="fa-solid fa-circle-check" aria-hidden="true"></i>
+            </div>
+            <strong class="promo-stat-value">@Model.ActivePromotionsCount</strong>
+            <span class="promo-stat-sub">Live discounted dishes</span>
+        </article>
+        <article class="promo-stat-card">
+            <div class="promo-stat-label">
+                <span>Upcoming</span>
+                <i class="fa-solid fa-calendar-plus" aria-hidden="true"></i>
+            </div>
+            <strong class="promo-stat-value">@Model.UpcomingPromotionsCount</strong>
+            <span class="promo-stat-sub">Scheduled for future dates</span>
+        </article>
+        <article class="promo-stat-card">
+            <div class="promo-stat-label">
+                <span>Ended / Inactive</span>
+                <i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i>
+            </div>
+            <strong class="promo-stat-value">@Model.EndedPromotionsCount</strong>
+            <span class="promo-stat-sub">Passed schedule window</span>
+        </article>
+    </section>
+
+    <!-- MAIN PROMOTION PANEL -->
+    <section class="promo-panel" aria-label="Promotion list">
+        <div class="promo-toolbar">
+            <!-- Search -->
+            <form method="get" class="promo-search-form" role="search">
+                <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                <input type="search"
+                       name="SearchTerm"
+                       value="@Model.SearchTerm"
+                       placeholder="Search by promo ID, dish, or category..."
+                       aria-label="Search promotions" />
+                <input type="hidden" name="StatusFilter" value="@Model.StatusFilter" />
+            </form>
+
+            <!-- Status Filter Tabs -->
+            <nav class="promo-filter-nav" aria-label="Filter promotions by status">
+                @foreach (var filter in new[] { "All", "Active", "Upcoming", "Ended" })
+                {
+                    var isSelected = Model.StatusFilter.Equals(filter, StringComparison.OrdinalIgnoreCase);
+                    <a asp-page="/Staff/Promotions"
+                       asp-route-statusFilter="@filter"
+                       asp-route-searchTerm="@Model.SearchTerm"
+                       class="promo-filter-btn @(isSelected ? "active" : null)"
+                       aria-pressed="@(isSelected ? "true" : "false")">
+                        @filter
+                    </a>
+                }
+            </nav>
+        </div>
+
+        <!-- TABLE OF PROMOTIONS -->
+        @if (Model.Promotions.Count == 0)
+        {
+            <div class="promo-empty">
+                <div class="promo-empty-icon">
+                    <i class="fa-solid fa-tag"></i>
+                </div>
+                <h3>No promotions found</h3>
+                <p>No promotional items match your current filter criteria.</p>
+            </div>
+        }
+        else
+        {
+            <div class="promo-table-wrap">
+                <table class="promo-table" aria-label="Promotions table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Promo ID</th>
+                            <th scope="col">Dish</th>
+                            <th scope="col">Original Price</th>
+                            <th scope="col">Promotional Price</th>
+                            <th scope="col">Schedule</th>
+                            <th scope="col">Status</th>
+                            <th scope="col">Managed By</th>
+                            @if (User.IsInRole("Administrator"))
+                            {
+                                <th scope="col" class="text-end">Actions</th>
+                            }
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var promo in Model.Promotions)
+                        {
+                            <tr>
+                                <td>
+                                    <strong>@promo.PromoID</strong>
+                                </td>
+                                <td>
+                                    <div class="promo-dish-cell">
+                                        <img src="@promo.FoodImageUrl" alt="@promo.FoodName" class="promo-dish-thumb" loading="lazy" />
+                                        <div class="promo-dish-info">
+                                            <span class="promo-dish-name">@promo.FoodName</span>
+                                            <span class="promo-dish-cat">@promo.FoodCategory · ID: @promo.FoodID</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="promo-original-price">RM @promo.OriginalPrice.ToString("N2")</span>
+                                </td>
+                                <td>
+                                    <div class="promo-pricing-cell">
+                                        <span class="promo-deal-price">RM @promo.DiscountedPrice.ToString("N2")</span>
+                                        <span class="promo-discount-badge">
+                                            <i class="fa-solid fa-arrow-down" aria-hidden="true"></i>
+                                            @promo.DiscountPercent% OFF (Save RM @promo.DiscountAmount.ToString("N2"))
+                                        </span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="promo-duration-cell">
+                                        <span><i class="fa-regular fa-calendar" aria-hidden="true"></i> From: @promo.StartDateTimeDisplay</span>
+                                        <span><i class="fa-regular fa-clock" aria-hidden="true"></i> Until: @promo.EndDateTimeDisplay</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="promo-status-badge @promo.Status.ToLowerInvariant()">
+                                        @promo.Status
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="promo-staff-name">@promo.StaffName</span>
+                                </td>
+                                @if (User.IsInRole("Administrator"))
+                                {
+                                    <td class="promo-actions-cell text-end">
+                                        <div class="promo-action-btns">
+                                            <button type="button"
+                                                    class="promo-btn-icon edit-promo-btn"
+                                                    title="Edit promotion"
+                                                    data-promo-id="@promo.PromoID"
+                                                    data-food-id="@promo.FoodID"
+                                                    data-discounted-price="@promo.DiscountedPrice.ToString("F2")"
+                                                    data-start-date="@promo.StartDateTime.ToString("yyyy-MM-dd")"
+                                                    data-start-time="@promo.StartDateTime.ToString("HH:mm")"
+                                                    data-end-date="@promo.EndDateTime.ToString("yyyy-MM-dd")"
+                                                    data-end-time="@promo.EndDateTime.ToString("HH:mm")">
+                                                <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>
+                                            </button>
+                                            <button type="button"
+                                                    class="promo-btn-icon delete delete-promo-btn"
+                                                    title="Delete promotion"
+                                                    data-promo-id="@promo.PromoID"
+                                                    data-food-name="@promo.FoodName">
+                                                <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                }
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+</section>
+
+<!-- ADD PROMOTION DIALOG -->
+<dialog class="promo-dialog" id="addPromoDialog" aria-labelledby="add-promo-title">
+    <div class="promo-dialog-heading">
+        <div>
+            <p class="promo-eyebrow">NEW CAMPAIGN</p>
+            <h2 id="add-promo-title">Add Promotion</h2>
+        </div>
+        <button type="button" class="promo-dialog-close" id="closeAddPromo" aria-label="Close dialog">&times;</button>
+    </div>
+
+    <form method="post" asp-page-handler="AddPromotion" class="promo-dialog-form">
+        @Html.AntiForgeryToken()
+
+        <label class="promo-dialog-field">
+            <span>Select Dish to Discount</span>
+            <select name="Input.FoodID" id="addFoodSelect" required>
+                <option value="" disabled selected>-- Choose Menu Item --</option>
+                @foreach (var food in Model.AvailableFoods)
+                {
+                    <option value="@food.FoodID" data-price="@food.Price.ToString("F2")">
+                        @food.FoodName (@food.Category) — RM @food.Price.ToString("N2")
+                    </option>
+                }
+            </select>
+        </label>
+
+        <label class="promo-dialog-field">
+            <span>Promotional Price (RM)</span>
+            <input type="number"
+                   name="Input.DiscountedPrice"
+                   id="addDiscountedPrice"
+                   step="0.01"
+                   min="0.01"
+                   placeholder="e.g. 12.50"
+                   required />
+        </label>
+
+        <div class="promo-calc-preview" id="addCalcPreview" hidden>
+            <span>Original: <del id="addOrigPriceDisplay">RM 0.00</del></span>
+            <span>You Save: <strong id="addSavingsDisplay">RM 0.00 (0%)</strong></span>
+        </div>
+
+        <div class="promo-field-row">
+            <label class="promo-dialog-field">
+                <span>Start Date</span>
+                <input type="date" name="Input.StartDate" id="addStartDate" value="@DateTime.Today.ToString("yyyy-MM-dd")" required />
+            </label>
+            <label class="promo-dialog-field">
+                <span>Start Time</span>
+                <input type="time" name="Input.StartTime" id="addStartTime" value="00:00" required />
+            </label>
+        </div>
+        <div class="promo-field-row">
+            <label class="promo-dialog-field">
+                <span>End Date</span>
+                <input type="date" name="Input.EndDate" id="addEndDate" value="@DateTime.Today.ToString("yyyy-MM-dd")" required />
+            </label>
+            <label class="promo-dialog-field">
+                <span>End Time</span>
+                <input type="time" name="Input.EndTime" id="addEndTime" value="23:59" required />
+            </label>
+        </div>
+
+        <footer class="promo-dialog-actions">
+            <button type="button" class="btn-promo-cancel" id="cancelAddPromo">Cancel</button>
+            <button type="submit" class="btn-promo-submit">Create Promotion</button>
+        </footer>
+    </form>
+</dialog>
+
+<!-- EDIT PROMOTION DIALOG -->
+<dialog class="promo-dialog" id="editPromoDialog" aria-labelledby="edit-promo-title">
+    <div class="promo-dialog-heading">
+        <div>
+            <p class="promo-eyebrow">UPDATE CAMPAIGN</p>
+            <h2 id="edit-promo-title">Edit Promotion</h2>
+        </div>
+        <button type="button" class="promo-dialog-close" id="closeEditPromo" aria-label="Close dialog">&times;</button>
+    </div>
+
+    <form method="post" asp-page-handler="EditPromotion" class="promo-dialog-form">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="Input.PromoID" id="editPromoId" />
+
+        <label class="promo-dialog-field">
+            <span>Promotion ID</span>
+            <input type="text" id="editPromoIdDisplay" disabled readonly />
+        </label>
+
+        <label class="promo-dialog-field">
+            <span>Select Dish</span>
+            <select name="Input.FoodID" id="editFoodSelect" required>
+                @foreach (var food in Model.AvailableFoods)
+                {
+                    <option value="@food.FoodID" data-price="@food.Price.ToString("F2")">
+                        @food.FoodName (@food.Category) — RM @food.Price.ToString("N2")
+                    </option>
+                }
+            </select>
+        </label>
+
+        <label class="promo-dialog-field">
+            <span>Promotional Price (RM)</span>
+            <input type="number"
+                   name="Input.DiscountedPrice"
+                   id="editDiscountedPrice"
+                   step="0.01"
+                   min="0.01"
+                   required />
+        </label>
+
+        <div class="promo-calc-preview" id="editCalcPreview" hidden>
+            <span>Original: <del id="editOrigPriceDisplay">RM 0.00</del></span>
+            <span>You Save: <strong id="editSavingsDisplay">RM 0.00 (0%)</strong></span>
+        </div>
+
+        <div class="promo-field-row">
+            <label class="promo-dialog-field">
+                <span>Start Date</span>
+                <input type="date" name="Input.StartDate" id="editStartDate" required />
+            </label>
+            <label class="promo-dialog-field">
+                <span>Start Time</span>
+                <input type="time" name="Input.StartTime" id="editStartTime" required />
+            </label>
+        </div>
+        <div class="promo-field-row">
+            <label class="promo-dialog-field">
+                <span>End Date</span>
+                <input type="date" name="Input.EndDate" id="editEndDate" required />
+            </label>
+            <label class="promo-dialog-field">
+                <span>End Time</span>
+                <input type="time" name="Input.EndTime" id="editEndTime" required />
+            </label>
+        </div>
+
+        <footer class="promo-dialog-actions">
+            <button type="button" class="btn-promo-delete" id="deletePromotionButton" hidden>Delete Promotion</button>
+            <button type="button" class="btn-promo-cancel" id="cancelEditPromo">Cancel</button>
+            <button type="submit" class="btn-promo-submit">Save Changes</button>
+        </footer>
+    </form>
+</dialog>
+
+<!-- DELETE PROMOTION DIALOG -->
+<dialog class="promo-dialog" id="deletePromoDialog" aria-labelledby="delete-promo-title">
+    <div class="promo-dialog-heading">
+        <div>
+            <p class="promo-eyebrow">CONFIRM REMOVAL</p>
+            <h2 id="delete-promo-title">Delete Promotion</h2>
+        </div>
+        <button type="button" class="promo-dialog-close" id="closeDeletePromo" aria-label="Close dialog">&times;</button>
+    </div>
+
+    <form method="post" asp-page-handler="DeletePromotion" class="promo-dialog-form">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="promoId" id="deletePromoId" />
+
+        <p id="deletePromoPrompt">Are you sure you want to delete this promotion? This action cannot be undone.</p>
+
+        <footer class="promo-dialog-actions">
+            <button type="button" class="btn-promo-cancel" id="cancelDeletePromo">Cancel</button>
+            <button type="submit" class="btn-promo-delete">Delete</button>
+        </footer>
+    </form>
+</dialog>
+
+@section Scripts {
+    <script>
+        (() => {
+            const addDialog = document.getElementById("addPromoDialog");
+            const editDialog = document.getElementById("editPromoDialog");
+            const deleteDialog = document.getElementById("deletePromoDialog");
+
+            const openAddBtn = document.getElementById("openAddPromoBtn");
+            const closeAddBtn = document.getElementById("closeAddPromo");
+            const cancelAddBtn = document.getElementById("cancelAddPromo");
+
+            const closeEditBtn = document.getElementById("closeEditPromo");
+            const cancelEditBtn = document.getElementById("cancelEditPromo");
+
+            const closeDeleteBtn = document.getElementById("closeDeletePromo");
+            const cancelDeleteBtn = document.getElementById("cancelDeletePromo");
+
+            // Open/close Add dialog
+            if (openAddBtn) openAddBtn.addEventListener("click", () => addDialog.showModal());
+            if (closeAddBtn) closeAddBtn.addEventListener("click", () => addDialog.close());
+            if (cancelAddBtn) cancelAddBtn.addEventListener("click", () => addDialog.close());
+
+            // Open/close Edit dialog
+            if (closeEditBtn) closeEditBtn.addEventListener("click", () => editDialog.close());
+            if (cancelEditBtn) cancelEditBtn.addEventListener("click", () => editDialog.close());
+
+            // Open/close Delete dialog
+            if (closeDeleteBtn) closeDeleteBtn.addEventListener("click", () => deleteDialog.close());
+            if (cancelDeleteBtn) cancelDeleteBtn.addEventListener("click", () => deleteDialog.close());
+
+            // Add Form Discount Calculation
+            const addFoodSelect = document.getElementById("addFoodSelect");
+            const addPriceInput = document.getElementById("addDiscountedPrice");
+            const addPreview = document.getElementById("addCalcPreview");
+            const addOrigPrice = document.getElementById("addOrigPriceDisplay");
+            const addSavings = document.getElementById("addSavingsDisplay");
+
+            function updateAddPreview() {
+                const opt = addFoodSelect.options[addFoodSelect.selectedIndex];
+                if (!opt || !opt.dataset.price) {
+                    addPreview.hidden = true;
+                    return;
+                }
+                const original = parseFloat(opt.dataset.price) || 0;
+                const deal = parseFloat(addPriceInput.value) || 0;
+                if (deal > 0 && original > 0) {
+                    const savings = Math.max(0, original - deal);
+                    const pct = Math.round((savings / original) * 100);
+                    addOrigPrice.textContent = `RM ${original.toFixed(2)}`;
+                    addSavings.textContent = `RM ${savings.toFixed(2)} (${pct}% off)`;
+                    addPreview.hidden = false;
+                } else {
+                    addPreview.hidden = true;
+                }
+            }
+
+            if (addFoodSelect) addFoodSelect.addEventListener("change", updateAddPreview);
+            if (addPriceInput) addPriceInput.addEventListener("input", updateAddPreview);
+
+            // Edit Form Calculation & Populate
+            const editFoodSelect = document.getElementById("editFoodSelect");
+            const editPriceInput = document.getElementById("editDiscountedPrice");
+            const editPreview = document.getElementById("editCalcPreview");
+            const editOrigPrice = document.getElementById("editOrigPriceDisplay");
+            const editSavings = document.getElementById("editSavingsDisplay");
+
+            function updateEditPreview() {
+                const opt = editFoodSelect.options[editFoodSelect.selectedIndex];
+                if (!opt || !opt.dataset.price) {
+                    editPreview.hidden = true;
+                    return;
+                }
+                const original = parseFloat(opt.dataset.price) || 0;
+                const deal = parseFloat(editPriceInput.value) || 0;
+                if (deal > 0 && original > 0) {
+                    const savings = Math.max(0, original - deal);
+                    const pct = Math.round((savings / original) * 100);
+                    editOrigPrice.textContent = `RM ${original.toFixed(2)}`;
+                    editSavings.textContent = `RM ${savings.toFixed(2)} (${pct}% off)`;
+                    editPreview.hidden = false;
+                } else {
+                    editPreview.hidden = true;
+                }
+            }
+
+            if (editFoodSelect) editFoodSelect.addEventListener("change", updateEditPreview);
+            if (editPriceInput) editPriceInput.addEventListener("input", updateEditPreview);
+
+            // Edit button handler
+            document.querySelectorAll(".edit-promo-btn").forEach(btn => {
+                btn.addEventListener("click", () => {
+                    const promoId = btn.dataset.promoId;
+                    const foodId = btn.dataset.foodId;
+                    const price = btn.dataset.discountedPrice;
+                    const startDate = btn.dataset.startDate;
+                    const startTime = btn.dataset.startTime;
+                    const endDate = btn.dataset.endDate;
+                    const endTime = btn.dataset.endTime;
+
+                    document.getElementById("editPromoId").value = promoId;
+                    document.getElementById("editPromoIdDisplay").value = promoId;
+                    document.getElementById("editFoodSelect").value = foodId;
+                    document.getElementById("editDiscountedPrice").value = price;
+                    document.getElementById("editStartDate").value = startDate;
+                    document.getElementById("editStartTime").value = startTime;
+                    document.getElementById("editEndDate").value = endDate;
+                    document.getElementById("editEndTime").value = endTime;
+
+                    const deleteBtn = document.getElementById("deletePromotionButton");
+                    deleteBtn.hidden = false;
+                    deleteBtn.style.display = "inline-flex";
+                    deleteBtn.dataset.promoId = promoId;
+                    deleteBtn.dataset.foodName = btn.closest("tr")?.querySelector(".promo-dish-name")?.textContent?.trim() ?? "";
+
+                    updateEditPreview();
+                    editDialog.showModal();
+                });
+            });
+
+            // Delete button in edit modal opens the existing confirmation dialog
+            const editDeleteBtn = document.getElementById("deletePromotionButton");
+            if (editDeleteBtn) {
+                editDeleteBtn.addEventListener("click", () => {
+                    document.getElementById("deletePromoId").value = editDeleteBtn.dataset.promoId ?? "";
+                    document.getElementById("deletePromoPrompt").textContent =
+                        `Are you sure you want to remove promotion "${editDeleteBtn.dataset.promoId}" for "${editDeleteBtn.dataset.foodName ?? ""}"?`;
+                    editDialog.close();
+                    deleteDialog.showModal();
+                });
+            }
+
+            // Delete button handler
+            document.querySelectorAll(".delete-promo-btn").forEach(btn => {
+                btn.addEventListener("click", () => {
+                    const promoId = btn.dataset.promoId;
+                    const foodName = btn.dataset.foodName;
+
+                    document.getElementById("deletePromoId").value = promoId;
+                    document.getElementById("deletePromoPrompt").textContent =
+                        `Are you sure you want to remove promotion "${promoId}" for "${foodName}"?`;
+
+                    deleteDialog.showModal();
+                });
+            });
+        })();
+    </script>
+}

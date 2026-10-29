@@ -273,6 +273,34 @@
     gap: 0.35rem;
 }
 
+.table-reassign-form {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.table-reassign-form select {
+    max-width: 140px;
+    min-width: 90px;
+    padding: 0.35rem 0.5rem;
+    border: 1px solid var(--reservation-line);
+    border-radius: 999px;
+    background: #fff;
+    color: var(--reservation-ink);
+    font: inherit;
+    font-size: 0.61rem;
+}
+
+.reservation-feedback {
+    margin: 0 0 0.75rem;
+    color: #398268;
+    font-size: 0.72rem;
+}
+
+.reservation-feedback-error {
+    color: #b42335;
+}
+
 .status-select {
     max-width: 125px;
     padding: 0.35rem 0.5rem;
@@ -291,6 +319,11 @@
 .status-waiting {
     background: #fff3d8;
     color: #8b6200;
+}
+
+.status-pending {
+    background: #fff0c2;
+    color: #8a5a00;
 }
 
 .status-completed {

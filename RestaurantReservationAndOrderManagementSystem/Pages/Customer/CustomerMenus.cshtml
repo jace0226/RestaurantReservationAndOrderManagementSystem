@@ -1,0 +1,249 @@
+@page "/Customer/Menus"
+@model RestaurantReservationAndOrderManagementSystem.Pages.Customer.CustomerMenusModel
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Our Menu";
+    var requestToken = Antiforgery.GetAndStoreTokens(HttpContext).RequestToken;
+}
+
+<input type="hidden" id="__RequestVerificationToken" value="@requestToken" />
+<link rel="stylesheet" href="~/css/customer_menus.css" asp-append-version="true" />
+
+<section class="customer-menu" aria-labelledby="customer-menu-title">
+    <header class="customer-menu-hero">
+        <div>
+            <p class="customer-menu-eyebrow">Made with care, served with a smile</p>
+            <h1 id="customer-menu-title">Our Menu</h1>
+            <p class="customer-menu-intro">Find a new favorite, or settle in with a dish you already love.</p>
+        </div>
+        <span class="customer-menu-hero-icon" aria-hidden="true"><i class="fa-solid fa-bowl-food"></i></span>
+    </header>
+
+    <p class="customer-table-session-status" role="status">
+        @if (Model.ActiveBooking is not null)
+        {
+            <span>Ordering for your booking at table <strong>@Model.SelectedTableId</strong>.</span>
+        }
+        else if (Model.CanPlaceOrder)
+        {
+            <span>Ordering for table <strong>@Model.SelectedTableId</strong>.</span>
+        }
+        else
+        {
+            @Model.TableSessionMessage
+        }
+    </p>
+
+    <section class="customer-recommendations" aria-labelledby="customer-recommendations-title">
+        <div class="customer-section-heading">
+            <div>
+                <p class="customer-menu-eyebrow">A few guest favorites</p>
+                <h2 id="customer-recommendations-title">Recommended for You</h2>
+            </div>
+            <span class="customer-recommendation-note"><i class="fa-solid fa-heart" aria-hidden="true"></i> Handpicked from our menu</span>
+        </div>
+        <div class="customer-recommendation-grid" id="recommendationGrid"></div>
+    </section>
+
+    <section class="customer-menu-listing" aria-labelledby="customer-menu-list-title">
+        <div class="customer-section-heading customer-listing-heading">
+            <div>
+                <p class="customer-menu-eyebrow">Something delicious awaits</p>
+                <h2 id="customer-menu-list-title">Browse the menu</h2>
+            </div>
+            <div class="customer-menu-search">
+                <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                <label class="visually-hidden" for="customerMenuSearch">Search menu items by name</label>
+                <input id="customerMenuSearch" type="search" placeholder="Search dishes..." autocomplete="off" />
+                <button class="customer-search-reset" id="customerMenuReset" type="button" aria-label="Clear search and reset category filter" title="Clear search and filters">
+                    <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                </button>
+            </div>
+        </div>
+
+        <nav class="customer-category-filters" id="customerCategoryFilters" aria-label="Filter menu by category">
+            <button type="button" class="active" data-category="All" aria-pressed="true">All</button>
+            <button type="button" data-category="Sandwiches" aria-pressed="false">Sandwiches</button>
+            <button type="button" data-category="Salads" aria-pressed="false">Salads</button>
+            <button type="button" data-category="Sides" aria-pressed="false">Sides</button>
+            <button type="button" data-category="Beverages" aria-pressed="false">Beverages</button>
+        </nav>
+
+        <p class="customer-menu-result-count" id="customerMenuResultCount" aria-live="polite"></p>
+        <div class="customer-menu-grid" id="customerMenuGrid" aria-live="polite"></div>
+        <div class="customer-menu-empty" id="customerMenuEmpty" hidden>
+            <span class="customer-empty-icon" aria-hidden="true"><i class="fa-solid fa-utensils"></i></span>
+            <h3>No dishes found</h3>
+            <p>Try another search or clear your filters to see the full menu.</p>
+            <button class="customer-reset-button" id="customerEmptyReset" type="button">Show all dishes</button>
+        </div>
+    </section>
+</section>
+
+<div class="customer-menu-modal" id="customerFoodModal" hidden>
+    <div class="customer-modal-panel" role="dialog" aria-modal="true" aria-labelledby="customerModalTitle" aria-describedby="customerModalDescription" tabindex="-1">
+        <button class="customer-modal-close" type="button" data-close-modal aria-label="Close dish details">
+            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        </button>
+        <img class="customer-modal-image" id="customerModalImage" src="" alt="" />
+        <div class="customer-modal-content">
+            <div class="customer-modal-heading">
+                <div>
+                    <span class="customer-category-tag" id="customerModalCategory"></span>
+                    <h2 id="customerModalTitle"></h2>
+                </div>
+                <div class="customer-modal-pricing-wrap">
+                    <del class="customer-modal-orig-price" id="customerModalOrigPrice" hidden></del>
+                    <strong class="customer-modal-price" id="customerModalPrice"></strong>
+                </div>
+            </div>
+            <div class="customer-modal-promo-banner" id="customerModalPromoBanner" hidden>
+                <i class="fa-solid fa-tag" aria-hidden="true"></i>
+                <span id="customerModalPromoBannerText">Special Promotion!</span>
+            </div>
+            <p class="customer-modal-description" id="customerModalDescription"></p>
+            <div class="customer-modal-facts">
+                <span><i class="fa-regular fa-clock" aria-hidden="true"></i><span id="customerModalPrepTime"></span></span>
+                <span><i class="fa-solid fa-circle-check" aria-hidden="true"></i><span id="customerModalAvailability"></span></span>
+                <span><i class="fa-solid fa-leaf" aria-hidden="true"></i><span id="customerModalDietary"></span></span>
+            </div>
+
+            <div class="customer-order-builder" id="customerOrderBuilder">
+                <div class="customer-order-customizations" id="customerOrderCustomizations"></div>
+
+                <label class="customer-order-remarks" for="customerOrderRemarks">
+                    <span>Remarks</span>
+                    <textarea id="customerOrderRemarks" rows="3" placeholder="Optional notes for the kitchen"></textarea>
+                </label>
+
+                <div class="customer-order-controls">
+                    <div class="customer-quantity-stepper" aria-label="Quantity selector">
+                        <button type="button" class="customer-quantity-btn" id="customerQtyMinus" aria-label="Decrease quantity">-</button>
+                        <span id="customerQtyValue" aria-live="polite">1</span>
+                        <button type="button" class="customer-quantity-btn" id="customerQtyPlus" aria-label="Increase quantity">+</button>
+                    </div>
+
+                    <button type="button" class="customer-add-order-btn" id="customerAddOrderBtn">
+                        <i class="fa-solid fa-plus" aria-hidden="true"></i> Add to Order
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<button class="customer-cart-toggle" id="customerCartToggle" type="button" aria-label="Open cart" aria-controls="customerCartPanel">
+    <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>
+    <span class="customer-cart-badge" id="customerCartBadge">0</span>
+</button>
+
+<aside class="customer-cart-panel" id="customerCartPanel" aria-hidden="true" aria-label="Shopping cart">
+    <div class="customer-cart-header">
+        <div>
+            <p class="customer-menu-eyebrow">Your selection</p>
+            <h2>My Cart</h2>
+            <p class="customer-cart-table-label">
+                @if (Model.ActiveBooking is not null)
+                {
+                    <span>Booking Table: <strong>@Model.SelectedTableId</strong></span>
+                }
+                else if (Model.CanPlaceOrder)
+                {
+                    <span>Table: <strong>@Model.SelectedTableId</strong></span>
+                }
+                else
+                {
+                    <span>Scan the QR code at your table to order.</span>
+                }
+            </p>
+        </div>
+        <button type="button" class="customer-cart-close" id="customerCartClose" aria-label="Close cart">
+            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        </button>
+    </div>
+
+    <div class="customer-cart-items" id="customerCartItems"></div>
+
+    <div class="customer-cart-empty" id="customerCartEmpty" hidden>
+        <span class="customer-empty-icon" aria-hidden="true"><i class="fa-solid fa-bag-shopping"></i></span>
+        <h3>Your cart is empty</h3>
+        <p>Add a dish or beverage to start your order.</p>
+    </div>
+
+    <div class="customer-cart-summary" id="customerCartSummary">
+        <div class="customer-cart-row customer-cart-orig-row" id="customerCartOrigRow" hidden>
+            <span>Original Subtotal</span>
+            <span id="customerCartOrigSubtotal">RM0.00</span>
+        </div>
+        <div class="customer-cart-row customer-cart-discount-row" id="customerCartDiscountRow" hidden>
+            <span><i class="fa-solid fa-tag" aria-hidden="true"></i> Promotion Discount</span>
+            <strong id="customerCartDiscount" style="color: #159b59;">-RM0.00</strong>
+        </div>
+        <div class="customer-cart-row">
+            <span>Subtotal</span>
+            <strong id="customerCartSubtotal">RM0.00</strong>
+        </div>
+        <div class="customer-cart-row">
+            <span>Tax (10%)</span>
+            <strong id="customerCartTax">RM0.00</strong>
+        </div>
+        <div class="customer-cart-divider"></div>
+        <div class="customer-cart-row customer-cart-total-row">
+            <span>Total (RM)</span>
+            <strong id="customerCartTotal">RM0.00</strong>
+        </div>
+
+        <div class="customer-cart-savings-banner" id="customerCartSavingsBanner" hidden>
+            <i class="fa-solid fa-gift" aria-hidden="true"></i>
+            <span>You're saving <strong id="customerCartSavingsValue">RM0.00</strong> with promotions!</span>
+        </div>
+
+        <fieldset class="customer-payment-method">
+            <legend>Payment method</legend>
+            <label>
+                <input type="radio" name="paymentMethod" value="Counter" />
+                <span><strong>Pay at counter</strong><small>Pay staff when your order is ready.</small></span>
+            </label>
+            <label>
+                <input type="radio" name="paymentMethod" value="Stripe" />
+                <span><strong>Pay online with Stripe</strong><small>Continue to secure online checkout.</small></span>
+            </label>
+        </fieldset>
+
+        <button class="customer-confirm-order-btn" id="customerConfirmOrder" type="button" disabled>
+            Confirm Order
+        </button>
+    </div>
+</aside>
+
+<div class="customer-cart-overlay" id="customerCartOverlay" hidden></div>
+
+@section Scripts {
+    <script>
+        window.currentCustomerId = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.CurrentCustomerId));
+
+        window.menuItemsData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+                    Model.MenuItems,
+                    new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }
+                    ));
+
+        window.canPlaceOrder = @Model.CanPlaceOrder.ToString().ToLowerInvariant();
+
+        window.activePromotionsData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+                    Model.ActivePromotions,
+                    new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }
+                    ));
+
+        window.availableTablesData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+                    Model.AvailableTables,
+                    new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }
+                    ));
+
+        window.activeBookingData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+                    Model.ActiveBooking,
+                    new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }
+                    ));
+    </script>
+    <script src="~/js/customer_menus.js" asp-append-version="true"></script>
+}

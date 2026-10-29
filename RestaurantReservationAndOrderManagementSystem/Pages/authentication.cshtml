@@ -38,6 +38,23 @@
 					<input asp-for="Login.Password" autocomplete="current-password" placeholder="Password" />
 				</div>
 				<span asp-validation-for="Login.Password" class="text-danger"></span>
+
+                <div class="captcha-group">
+                    <div class="captcha-header">
+                        <label asp-for="Login.CaptchaCode">Security check</label>
+                        <button type="button" id="refreshCaptcha" class="captcha-refresh" aria-label="Generate a new CAPTCHA code" title="Generate a new CAPTCHA code">
+                            <i class="fa-solid fa-rotate" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                    <div class="captcha-image-row">
+                        <img id="captchaImage" src="@Model.CaptchaImage" alt="CAPTCHA image containing six characters" />
+                    </div>
+                    <div class="form-input captcha-input">
+                        <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+                        <input asp-for="Login.CaptchaCode" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Enter 6-character code" maxlength="6" required />
+                    </div>
+                    <span asp-validation-for="Login.CaptchaCode" class="text-danger"></span>
+                </div>
 				<button type="submit">Sign in</button>
 			</div>
 
@@ -79,7 +96,7 @@
 				<span asp-validation-for="Registration.Phone" class="text-danger"></span>
 				<div class="form-input">
 					<i class="fa-solid fa-calendar"></i>
-					<input asp-for="Registration.DateOfBirth" autocomplete="bday" />
+					<input asp-for="Registration.DateOfBirth" type="date" max="@DateTime.Today.ToString("yyyy-MM-dd")" autocomplete="bday" />
 				</div>
 				<span asp-validation-for="Registration.DateOfBirth" class="text-danger"></span>
 				<button type="submit">Create account</button>
@@ -87,10 +104,6 @@
 
 			<span class="footer-text">Already have an account? <button type="button" class="auth-switch" data-show="login">Sign in</button></span>
 		</form>
-
-		<h4 class="brand">
-			Between Bites
-		</h4>
 	</div>
 
 	<script>
@@ -107,5 +120,39 @@
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     <script src="https://kit.fontawesome.com/f3ce044c74.js" crossorigin="anonymous"></script>
+	<script>
+		const captchaImage = document.getElementById("captchaImage");
+		const refreshCaptcha = document.getElementById("refreshCaptcha");
+
+		refreshCaptcha?.addEventListener("click", async () => {
+			refreshCaptcha.disabled = true;
+			try {
+				const response = await fetch("/Authenticate?handler=GenerateCaptcha", {
+					cache: "no-store",
+					headers: { "Accept": "image/svg+xml" }
+				});
+				if (!response.ok) {
+					throw new Error("CAPTCHA refresh failed");
+				}
+
+				const imageBlob = await response.blob();
+				const nextImageUrl = URL.createObjectURL(imageBlob);
+				const previousImageUrl = captchaImage.src.startsWith("blob:") ? captchaImage.src : null;
+				captchaImage.src = nextImageUrl;
+				if (previousImageUrl) {
+					URL.revokeObjectURL(previousImageUrl);
+				}
+			} finally {
+				refreshCaptcha.disabled = false;
+			}
+		});
+	</script>
+	@if (TempData["RegisterSuccess"] is true)
+	{
+		<script>
+			window.alert("Account registered successfully! Please sign in with your email, password, and CAPTCHA.");
+			document.getElementById("Login_EmailOrPhone")?.focus();
+		</script>
+	}
 </body>
 </html>

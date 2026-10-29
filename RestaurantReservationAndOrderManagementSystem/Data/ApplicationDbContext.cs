@@ -115,12 +115,14 @@ namespace RestaurantReservationAndOrderManagementSystem.Data
             modelBuilder.Entity<Booking>()
                 .HasOne(b => b.Customer)
                 .WithMany()
-                .HasForeignKey(b => b.CustomerID);
+                .HasForeignKey(b => b.CustomerID)
+                .IsRequired(false);
 
             modelBuilder.Entity<Booking>()
                 .HasOne(b => b.Table)
                 .WithMany()
                 .HasForeignKey(b => b.TableID)
+                .IsRequired(false)
                 .OnDelete(DeleteBehavior.NoAction);
 
         }

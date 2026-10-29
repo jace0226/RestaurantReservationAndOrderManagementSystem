@@ -1,0 +1,313 @@
+.customer-profile {
+    --profile-ink: #24205f;
+    --profile-muted: #7780a5;
+    --profile-line: #dfe4ff;
+    display: grid;
+    gap: 1.25rem;
+    width: min(100%, 1120px);
+    margin: 0 auto;
+    padding: 0.5rem 0 1rem;
+    color: var(--profile-ink);
+}
+
+.customer-profile-hero {
+    display: flex;
+    min-height: 150px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    padding: 1.65rem 1.85rem;
+    border: 1px solid var(--brand-border, #dfe5ff);
+    border-radius: 20px;
+    background: var(--subbrand-color, #edf1ff);
+    box-shadow: 5px 6px 0 var(--brand-border, #dfe5ff);
+}
+
+.customer-profile-eyebrow {
+    margin: 0 0 0.35rem;
+    color: var(--subtext-color, #6671a7);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    line-height: 1.4;
+    text-transform: uppercase;
+}
+
+.customer-profile-hero h1 {
+    margin: 0;
+    color: var(--profile-ink);
+    font-size: clamp(2rem, 4vw, 2.7rem);
+    font-weight: 500;
+    letter-spacing: -0.055em;
+    line-height: 1.1;
+}
+
+.customer-profile-intro {
+    margin: 0.6rem 0 0;
+    color: var(--profile-muted);
+    font-size: 0.86rem;
+}
+
+.customer-profile-hero-icon,
+.customer-profile-card-icon {
+    display: grid;
+    flex: 0 0 auto;
+    place-items: center;
+    color: #fff;
+}
+
+.customer-profile-hero-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: var(--brand-color, #011bd8);
+    font-size: 1.35rem;
+}
+
+/* Vertical Stack Layout */
+.customer-profile-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    width: 100%;
+}
+
+.customer-profile-card {
+    display: grid;
+    width: 100%;
+    min-width: 0;
+    gap: 1.25rem;
+    padding: 1.35rem;
+    border: 1px solid var(--brand-border, #dfe5ff);
+    border-radius: 18px;
+    background: #fff;
+    box-shadow: 5px 6px 0 var(--subbrand-color, #edf1ff);
+}
+
+.customer-profile-card-heading {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+}
+
+.customer-profile-card-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 13px;
+    background: var(--subbrand-color, #edf1ff);
+    color: var(--brand-color, #011bd8);
+    font-size: 1.1rem;
+}
+
+.customer-profile-card-heading .customer-profile-eyebrow {
+    margin-bottom: 0.2rem;
+}
+
+.customer-profile-card-heading h2 {
+    margin: 0;
+    color: var(--profile-ink);
+    font-size: 1.2rem;
+    font-weight: 650;
+    letter-spacing: -0.025em;
+}
+
+.customer-profile-form,
+.customer-profile-fields {
+    display: grid;
+    gap: 1rem;
+}
+
+.customer-profile-fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.customer-profile-field {
+    display: grid;
+    min-width: 0;
+    align-content: start;
+    gap: 0.4rem;
+}
+
+.customer-profile-field-wide {
+    grid-column: 1 / -1;
+}
+
+.customer-profile-field label {
+    color: var(--profile-ink);
+    font-size: 0.78rem;
+    font-weight: 650;
+}
+
+.customer-profile-field input {
+    width: 100%;
+    min-height: 44px;
+    padding: 0.65rem 0.75rem;
+    border: 1px solid var(--profile-line);
+    border-radius: 10px;
+    outline: none;
+    background: #fff;
+    color: var(--profile-ink);
+    font: inherit;
+    font-size: 0.82rem;
+    transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+    /* Disabled input styling */
+    .customer-profile-field input:disabled {
+        background-color: #f1f3f9 !important;
+        color: #61688a !important;
+        border-color: #d2d7f0 !important;
+        cursor: not-allowed;
+        opacity: 1;
+    }
+
+    .customer-profile-field input:focus:not(:disabled) {
+        border-color: var(--brand-color, #011bd8);
+        box-shadow: 0 0 0 3px rgba(1, 27, 216, 0.1);
+    }
+
+    .customer-profile-field input.input-validation-error {
+        border-color: #bd2c3c;
+    }
+
+.customer-profile-field-error,
+.customer-profile-validation-summary {
+    color: #a32132;
+    font-size: 0.74rem;
+}
+
+    .customer-profile-validation-summary:empty {
+        display: none;
+    }
+
+    .customer-profile-validation-summary ul {
+        margin: 0;
+        padding-left: 1.1rem;
+    }
+
+.customer-profile-hint {
+    margin: 0;
+    color: var(--profile-muted);
+    font-size: 0.72rem;
+}
+
+/* Action Button Container aligned to the right */
+.customer-profile-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 0.25rem;
+}
+
+/* Button CSS matched with customer-order-action */
+.customer-profile-submit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.55rem;
+    min-height: 34px;
+    padding: 0.4rem 0.85rem;
+    border: 1px solid var(--brand-color, #011bd8);
+    border-radius: 999px;
+    background: var(--brand-color, #011bd8);
+    color: #fff;
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.67rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: transform 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
+}
+
+    .customer-profile-submit:hover {
+        box-shadow: 0 3px 0 #aab6ff;
+        transform: translateY(-1px);
+    }
+
+    .customer-profile-submit:focus-visible {
+        outline: 3px solid rgba(1, 27, 216, 0.25);
+        outline-offset: 2px;
+    }
+
+.customer-profile-alert {
+    padding: 0.8rem 1rem;
+    border: 1px solid;
+    border-radius: 12px;
+    font-size: 0.82rem;
+}
+
+    .customer-profile-alert.success {
+        border-color: #b9e4cd;
+        background: #effaf4;
+        color: #17643b;
+    }
+
+@media (max-width: 540px) {
+    .customer-profile {
+        gap: 1rem;
+    }
+
+    .customer-profile-hero {
+        min-height: 130px;
+        padding: 1.25rem;
+    }
+
+    .customer-profile-hero-icon {
+        width: 48px;
+        height: 48px;
+        flex-basis: 48px;
+    }
+
+    .customer-profile-card {
+        padding: 1.05rem;
+    }
+
+    .customer-profile-fields {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .customer-profile-field-wide {
+        grid-column: auto;
+    }
+
+    .customer-profile-actions {
+        width: 100%;
+    }
+
+    .customer-profile-submit {
+        width: 100%;
+    }
+
+    .customer-profile-field input {
+        min-height: 44px;
+        height: 44px;
+        padding: 0.65rem 0.75rem;
+        font-size: 0.82rem;
+        box-sizing: border-box;
+    }
+
+    /* Force mobile date input text to align vertically center */
+    .customer-profile-field input[type="date"] {
+        display: flex;
+        align-items: center;
+        line-height: normal;
+        appearance: none;
+        -webkit-appearance: none;
+    }
+
+    /* Target WebKit datepicker internal text wrapper for iOS/Android */
+    .customer-profile-field input[type="date"]::-webkit-datetime-edit {
+        display: inline-flex;
+        align-items: center;
+        height: 100%;
+        padding: 0;
+        margin: 0;
+        line-height: normal;
+    }
+
+    /* Align calendar icon nicely on the right edge */
+    .customer-profile-field input[type="date"]::-webkit-calendar-picker-indicator {
+        margin: 0;
+        padding: 0;
+        cursor: pointer;
+    }
+}

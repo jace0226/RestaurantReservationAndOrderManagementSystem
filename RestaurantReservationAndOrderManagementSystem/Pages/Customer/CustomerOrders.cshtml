@@ -1,0 +1,238 @@
+@page "/Customer/Orders"
+@model RestaurantReservationAndOrderManagementSystem.Pages.Customer.CustomerOrdersModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "My Orders";
+}
+
+<link rel="stylesheet" href="~/css/customer_orders.css" asp-append-version="true" />
+
+<section class="customer-orders" aria-labelledby="customer-orders-title">
+    <header class="customer-orders-hero">
+        <div>
+            <p class="customer-orders-eyebrow">Your dining, all in one place</p>
+            <h1 id="customer-orders-title">My Orders</h1>
+            <p class="customer-orders-intro">Track your current orders and review what you have enjoyed before.</p>
+        </div>
+        <span class="customer-orders-hero-icon" aria-hidden="true"><i class="fa-solid fa-receipt"></i></span>
+    </header>
+
+    @if (!string.IsNullOrWhiteSpace(Model.OrderSuccess))
+    {
+        <div class="customer-orders-alert success" role="status">@Model.OrderSuccess</div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Model.OrderError))
+    {
+        <div class="customer-orders-alert error" role="alert">@Model.OrderError</div>
+    }
+
+    <div class="customer-orders-toolbar">
+        <nav class="customer-orders-categories" aria-label="Order categories">
+            <form method="get" class="customer-orders-category-form">
+                <input type="hidden" name="DateFilter" value="@Model.DateFilter?.ToString("yyyy-MM-dd")" />
+                <button type="submit"
+                        name="Category"
+                        value="Current"
+                        class="customer-orders-category-btn @(Model.Category == "Current" ? "active" : null)"
+                        aria-pressed="@(Model.Category == "Current" ? "true" : "false")">
+                    Current Order
+                </button>
+                <button type="submit"
+                        name="Category"
+                        value="History"
+                        class="customer-orders-category-btn @(Model.Category == "History" ? "active" : null)"
+                        aria-pressed="@(Model.Category == "History" ? "true" : "false")">
+                    Order History
+                </button>
+            </form>
+        </nav>
+
+        <form method="get" class="customer-orders-date-filter" role="search">
+            <input type="hidden" name="Category" value="@Model.Category" />
+            <input id="orderDateFilter" asp-for="DateFilter" type="date" />
+            <button type="submit" class="customer-orders-filter-btn">Filter</button>
+            @if (Model.DateFilter.HasValue)
+            {
+                <a class="customer-orders-clear-filter"
+                   asp-page="./CustomerOrders"
+                   asp-route-category="@Model.Category">Clear</a>
+            }
+        </form>
+    </div>
+
+    <section class="customer-orders-list-panel" aria-live="polite">
+        @if (Model.Orders.Count == 0)
+        {
+            <div class="customer-orders-empty">
+                <span class="customer-orders-empty-icon" aria-hidden="true"><i class="fa-solid fa-receipt"></i></span>
+                <h2>No orders match this view</h2>
+                <p>Try a different date or check the other order category.</p>
+            </div>
+        }
+        else
+        {
+            <div class="customer-orders-list">
+                @foreach (var order in Model.Orders)
+                {
+                    var summaryId = $"order-summary-{order.OrderId}";
+                    <article class="customer-order-card">
+                        <div class="customer-order-heading">
+                            <div class="customer-order-identity">
+                                <p class="customer-orders-label">Order ID</p>
+                                <strong>@order.OrderId</strong>
+                                <time datetime="@order.CreatedAt.ToString("O")">@order.CreatedAt.ToString("MMM d, yyyy 'at' h:mm tt")</time>
+                            </div>
+                            <div class="customer-order-heading-actions">
+                                @if (order.HasPromotions)
+                                {
+                                    <span class="customer-order-promo-pill" title="Promotional discount applied">
+                                        <i class="fa-solid fa-tag" aria-hidden="true"></i> Promo
+                                    </span>
+                                }
+                                <span class="customer-order-status status-@order.Status.Replace(" ", "-").ToLowerInvariant()">@order.Status</span>
+                                <button type="button"
+                                        class="customer-order-summary-toggle"
+                                        aria-expanded="false"
+                                        aria-controls="@summaryId">
+                                    <span>Order summary</span>
+                                    <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <section class="customer-order-summary" id="@summaryId" hidden aria-label="Order summary">
+                            <h2>Order Summary</h2>
+                            <div class="customer-order-summary-content">
+                                <div class="customer-order-summary-table-wrap">
+                                    <table class="customer-order-summary-table">
+                                        <thead>
+                                            <tr>
+                                                <th scope="col">Qty</th>
+                                                <th scope="col">Item</th>
+                                                <th scope="col" class="price-column">Unit Price</th>
+                                                <th scope="col" class="price-column">Line Total</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var item in order.Items)
+                                            {
+                                                <tr>
+                                                    <td>@item.Quantity</td>
+                                                    <td>
+                                                        <span>@item.Name</span>
+                                                        @if (item.HasPromotion)
+                                                        {
+                                                            <span class="customer-item-promo-badge">PROMO</span>
+                                                        }
+                                                    </td>
+                                                    <td class="price-column">
+                                                        @if (item.HasPromotion)
+                                                        {
+                                                            <del class="customer-order-del">RM @item.OriginalPrice.ToString("N2")</del>
+                                                            <strong class="customer-order-deal">RM @item.EffectivePrice.ToString("N2")</strong>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span>RM @item.EffectivePrice.ToString("N2")</span>
+                                                        }
+                                                    </td>
+                                                    <td class="price-column font-weight-bold">
+                                                        RM @item.LineTotal.ToString("N2")
+                                                    </td>
+                                                </tr>
+                                            }
+                                            @if (order.Items.Count == 0)
+                                            {
+                                                <tr>
+                                                    <td colspan="4" class="customer-order-no-items">No item details are available for this order.</td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <div class="customer-order-totals">
+                                    @if (order.HasPromotions)
+                                    {
+                                        <div><span>Original Subtotal</span><strong>RM @order.OriginalSubtotal.ToString("N2")</strong></div>
+                                        <div class="customer-order-discount-row"><span><i class="fa-solid fa-tag" aria-hidden="true"></i> Promotion Discount</span><strong style="color: #159b59;">- RM @order.TotalDiscount.ToString("N2")</strong></div>
+                                        <div><span>Subtotal (After Promo)</span><strong>RM @order.NetSubtotal.ToString("N2")</strong></div>
+                                    }
+                                    else
+                                    {
+                                        <div><span>Subtotal</span><strong>RM @order.NetSubtotal.ToString("N2")</strong></div>
+                                    }
+                                    <div><span>Tax (10%)</span><strong>RM @order.Tax.ToString("N2")</strong></div>
+                                    <div class="customer-order-grand-total"><span>Total</span><strong>RM @order.Total.ToString("N2")</strong></div>
+
+                                    @if (!string.IsNullOrWhiteSpace(order.PaymentMethod))
+                                    {
+                                        <div><span>Payment method</span><strong>@(order.PaymentMethod == "Counter" ? "Pay at counter" : "Stripe")</strong></div>
+                                    }
+                                    @if (order.Status == "Completed")
+                                    {
+                                        <div><span>Payment status</span><strong>Paid</strong></div>
+                                    }
+                                    @if (order.TenderedAmount.HasValue)
+                                    {
+                                        <div><span>Amount tendered</span><strong>RM @order.TenderedAmount.Value.ToString("N2")</strong></div>
+                                        <div><span>Change</span><strong>RM @order.ChangeGiven.Value.ToString("N2")</strong></div>
+                                    }
+
+                                    @if (order.HasPromotions)
+                                    {
+                                        <div class="customer-order-savings-callout">
+                                            <i class="fa-solid fa-gift" aria-hidden="true"></i>
+                                            <span>You saved RM @order.TotalDiscount.ToString("N2") with promotions!</span>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </section>
+
+                        @if (order.Status == "Pending")
+                        {
+                            <div class="customer-order-actions">
+                                <form method="post" asp-page-handler="Cancel" class="customer-order-cancel-form" data-confirm-cancel>
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="orderId" value="@order.OrderId" />
+                                    <input type="hidden" name="category" value="@Model.Category" />
+                                    <input type="hidden" name="dateFilter" value="@Model.DateFilter?.ToString("yyyy-MM-dd")" />
+                                    <button type="submit" class="customer-order-action danger">Cancel Order</button>
+                                </form>
+                            </div>
+                        }
+                        else if (order.Status == "Payment")
+                        {
+                            <div class="customer-order-actions">
+                                @if (order.PaymentMethod == "Counter")
+                                {
+                                    <span class="customer-order-action secondary">Pay RM @order.Total.ToString("N2") at the counter when your order is ready.</span>
+                                }
+                                else
+                                {
+                                    <a class="customer-order-action"
+                                       asp-page="/Customer/Payment"
+                                       asp-route-orderId="@order.OrderId">Make Payment with Stripe (RM @order.Total.ToString("N2"))</a>
+                                }
+                            </div>
+                        }
+                        else if (order.Status == "Completed")
+                        {
+                            <div class="customer-order-actions">
+                                <a class="customer-order-action secondary"
+                                   asp-page="/Payment/Index"
+                                   asp-route-orderId="@order.OrderId">View Receipt</a>
+                            </div>
+                        }
+                    </article>
+                }
+            </div>
+        }
+    </section>
+</section>
+
+@section Scripts {
+    <script src="~/js/customer_orders.js" asp-append-version="true"></script>
+}

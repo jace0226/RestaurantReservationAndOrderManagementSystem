@@ -1,0 +1,174 @@
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
+using RestaurantReservationAndOrderManagementSystem.Data;
+using RestaurantReservationAndOrderManagementSystem.Services;
+using RestaurantReservationAndOrderManagementSystem.Services.Payments;
+using Stripe;
+
+namespace RestaurantReservationAndOrderManagementSystem.Pages.Payment;
+
+[Authorize(Roles = "Customer")]
+public sealed class IndexModel : PageModel
+{
+    private readonly ApplicationDbContext _dbContext;
+    private readonly StripePaymentService _stripePaymentService;
+    private readonly PromotionService _promotionService;
+
+    public IndexModel(
+        ApplicationDbContext dbContext,
+        StripePaymentService stripePaymentService,
+        PromotionService promotionService)
+    {
+        _dbContext = dbContext;
+        _stripePaymentService = stripePaymentService;
+        _promotionService = promotionService;
+    }
+
+    public ReceiptOrder Order { get; private set; } = null!;
+    public ReceiptPayment Payment { get; private set; } = null!;
+    public IReadOnlyList<ReceiptItem> Items { get; private set; } = [];
+    public decimal OriginalSubtotal { get; private set; }
+    public decimal TotalDiscount { get; private set; }
+    public bool HasPromotionDiscount => TotalDiscount > 0;
+    public decimal Subtotal { get; private set; }
+    public decimal Tax { get; private set; }
+    public decimal Total { get; private set; }
+    public string InvoiceNumber { get; private set; } = string.Empty;
+
+    public async Task<IActionResult> OnGetAsync(
+        string? orderId,
+        [FromQuery(Name = "session_id")] string? sessionId,
+        string? paymentIntentId)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId) || string.IsNullOrWhiteSpace(orderId))
+        {
+            return BadRequest();
+        }
+
+        var order = await _dbContext.Orders
+            .AsNoTracking()
+            .Include(item => item.Customer)
+            .SingleOrDefaultAsync(item =>
+                item.OrderID == orderId &&
+                item.Customer.UserID == userId);
+        if (order is null)
+        {
+            return NotFound();
+        }
+
+        var transaction = await _dbContext.Transactions
+            .AsNoTracking()
+            .SingleOrDefaultAsync(item => item.OrderID == orderId);
+
+        if (transaction is null)
+        {
+            if (order.OrderStatus != "Payment" || order.PaymentMethod == "Counter")
+            {
+                return BadRequest("This order does not have a completed payment.");
+            }
+
+            if (!string.IsNullOrWhiteSpace(sessionId))
+            {
+                var checkoutSession = await _stripePaymentService.GetCheckoutSessionAsync(sessionId);
+                if (checkoutSession.PaymentStatus != "paid" ||
+                    !checkoutSession.Metadata.TryGetValue("OrderID", out var sessionOrderId) ||
+                    sessionOrderId != orderId ||
+                    !checkoutSession.Metadata.TryGetValue("CustomerID", out var sessionCustomerId) ||
+                    sessionCustomerId != order.CustomerID ||
+                    string.IsNullOrWhiteSpace(checkoutSession.PaymentIntentId))
+                {
+                    return BadRequest("The checkout session could not be verified for this order.");
+                }
+
+                paymentIntentId = checkoutSession.PaymentIntentId;
+            }
+
+            if (string.IsNullOrWhiteSpace(paymentIntentId))
+            {
+                return BadRequest();
+            }
+
+            var paymentIntent = await _stripePaymentService.GetPaymentIntentAsync(paymentIntentId);
+            if (paymentIntent.Status != "succeeded" ||
+                !paymentIntent.Metadata.TryGetValue("OrderID", out var paymentOrderId) ||
+                paymentOrderId != orderId ||
+                !paymentIntent.Metadata.TryGetValue("CustomerID", out var paymentCustomerId) ||
+                paymentCustomerId != order.CustomerID)
+            {
+                return BadRequest("The payment could not be verified for this order.");
+            }
+
+            await _stripePaymentService.CompleteSucceededPaymentAsync(paymentIntent);
+            transaction = await _dbContext.Transactions
+                .AsNoTracking()
+                .SingleOrDefaultAsync(item =>
+                    item.OrderID == orderId &&
+                    item.TransactionID == paymentIntentId);
+        }
+
+        if (transaction is null ||
+            !await _dbContext.Orders.AnyAsync(item =>
+                item.OrderID == orderId &&
+                item.OrderStatus == "Completed"))
+        {
+            return BadRequest("A completed payment receipt is not available for this order.");
+        }
+
+        var orderItems = await _dbContext.OrderItems
+            .AsNoTracking()
+            .Where(item => item.OrderID == orderId)
+            .Include(item => item.Food)
+            .ToListAsync();
+
+        var paymentTime = transaction.TransactionDate.ToDateTime(transaction.TransactionTime);
+        var pricing = await _promotionService.ResolvePaymentAlignedPricingAsync(
+            orderItems.Select(item => (item.Food, item.Quantity)),
+            paymentTime,
+            transaction.TransactionAmount,
+            transaction.DiscountAmount);
+
+        Items = pricing.Items.Select(item => new ReceiptItem(
+            item.FoodName,
+            item.Quantity,
+            item.OriginalUnitPrice,
+            item.EffectiveUnitPrice,
+            item.LineDiscount,
+            item.LineTotal,
+            item.HasPromotion)).ToList();
+
+        Order = new ReceiptOrder(order.OrderID, order.CreatedAt);
+        Payment = new ReceiptPayment(
+            transaction.TransactionID,
+            transaction.TransactionType,
+            transaction.TransactionAmount,
+            transaction.TenderedAmount,
+            transaction.ChangeGiven);
+        OriginalSubtotal = pricing.OriginalSubtotal;
+        TotalDiscount = pricing.TotalDiscount;
+        Subtotal = pricing.NetSubtotal;
+        Tax = pricing.Tax;
+        Total = transaction.TransactionAmount;
+        InvoiceNumber = $"INV-{order.OrderID}-{order.CreatedAt:yyyyMMddHHmmss}";
+        return Page();
+    }
+
+    public sealed record ReceiptOrder(string OrderID, DateTime OrderDateTime);
+    public sealed record ReceiptPayment(
+        string TransactionReference,
+        string PaymentMethod,
+        decimal Amount,
+        decimal? TenderedAmount,
+        decimal? ChangeGiven);
+    public sealed record ReceiptItem(
+        string Name,
+        int Quantity,
+        decimal OriginalUnitPrice,
+        decimal EffectiveUnitPrice,
+        decimal LineDiscount,
+        decimal LineTotal,
+        bool HasPromotion);
+}
