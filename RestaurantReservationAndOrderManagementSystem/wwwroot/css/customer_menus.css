@@ -1,4 +1,4 @@
-﻿.customer-menu {
+.customer-menu {
     --customer-ink: #24205f;
     --customer-muted: #7780a5;
     --customer-line: #dfe4ff;
@@ -1315,4 +1315,125 @@ body.customer-modal-open {
     .customer-quantity-stepper {
         justify-content: space-between;
     }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .customer-food-image,
+    .customer-view-details,
+    .customer-cart-panel {
+        transition: none;
+    }
+}
+
+/* Customer Promotional & Discount Enhancements */
+.customer-promo-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    background: #d4f7dc;
+    color: #127a42;
+    font-size: 0.65rem;
+    font-weight: 750;
+    margin-bottom: 0.35rem;
+    width: fit-content;
+}
+
+.customer-card-orig-price {
+    color: #9aa2c2;
+    text-decoration: line-through;
+    font-size: 0.78rem;
+    margin-right: 0.35rem;
+    font-weight: 500;
+}
+
+.customer-card-deal-price {
+    color: var(--brand-color, #011bd8);
+    font-weight: 750;
+}
+
+.customer-modal-pricing-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.15rem;
+}
+
+.customer-modal-orig-price {
+    color: #9aa2c2;
+    text-decoration: line-through;
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.customer-modal-promo-banner {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.6rem 0.9rem;
+    border-radius: 12px;
+    background: #eafaf1;
+    border: 1px solid #bfe7cc;
+    color: #127a42;
+    font-size: 0.8rem;
+    font-weight: 650;
+    margin-bottom: 0.75rem;
+}
+
+.cart-promo-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    padding: 0.1rem 0.35rem;
+    border-radius: 6px;
+    background: #d4f7dc;
+    color: #127a42;
+    font-size: 0.58rem;
+    font-weight: 750;
+    margin-left: 0.35rem;
+    vertical-align: middle;
+}
+
+.cart-orig-price {
+    color: #9ba4c4;
+    text-decoration: line-through;
+    font-size: 0.68rem;
+    margin-right: 0.25rem;
+}
+
+.cart-deal-price {
+    color: var(--brand-color, #011bd8);
+    font-weight: 700;
+}
+
+.cart-line-savings {
+    display: block;
+    color: #159b59;
+    font-size: 0.64rem;
+    font-weight: 600;
+    margin-top: 0.15rem;
+}
+
+.customer-cart-discount-row {
+    color: #159b59 !important;
+}
+
+.customer-cart-orig-row {
+    color: #8c96ba !important;
+    font-size: 0.82rem;
+}
+
+.customer-cart-savings-banner {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.65rem 0.85rem;
+    border-radius: 10px;
+    background: #eafaf1;
+    border: 1px solid #bfe7cc;
+    color: #127a42;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin: 0.65rem 0 0.35rem;
 }

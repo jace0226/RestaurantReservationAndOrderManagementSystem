@@ -1,6 +1,22 @@
 (() => {
     const menuItems = window.menuItemsData || [];
     const canPlaceOrder = window.canPlaceOrder === true;
+    const activePromotions = window.activePromotionsData || [];
+    const availableTables = window.availableTablesData || [];
+    const activeBooking = window.activeBookingData || null;
+
+    const promoMap = new Map();
+    activePromotions.forEach((p) => {
+        if (p.foodId) {
+            promoMap.set(String(p.foodId).toLowerCase(), p);
+        }
+    });
+
+    function getPromo(item) {
+        if (!item) return null;
+        const id = String(item.foodID || item.foodId || "").toLowerCase();
+        return promoMap.get(id) || null;
+    }
 
     const menuGrid = document.getElementById("customerMenuGrid");
     const recommendationGrid = document.getElementById("recommendationGrid");
@@ -27,6 +43,17 @@
     const orderCustomizations = document.getElementById("customerOrderCustomizations");
     const addOrderButton = document.getElementById("customerAddOrderBtn");
     const cartCloseButton = document.getElementById("customerCartClose");
+
+    const modalOrigPrice = document.getElementById("customerModalOrigPrice");
+    const modalPromoBanner = document.getElementById("customerModalPromoBanner");
+    const modalPromoText = document.getElementById("customerModalPromoBannerText");
+
+    const cartOrigRow = document.getElementById("customerCartOrigRow");
+    const cartOrigSubtotal = document.getElementById("customerCartOrigSubtotal");
+    const cartDiscountRow = document.getElementById("customerCartDiscountRow");
+    const cartDiscount = document.getElementById("customerCartDiscount");
+    const cartSavingsBanner = document.getElementById("customerCartSavingsBanner");
+    const cartSavingsValue = document.getElementById("customerCartSavingsValue");
 
     let selectedCategory = "All";
     let lastFocusedElement = null;
@@ -82,6 +109,7 @@
         card.id = `dish-${itemId}`;
 
         const available = isItemAvailable(item);
+        const promo = getPromo(item);
 
         const imageWrap = makeElement("div", "customer-food-image-wrap");
         const categoryTag = makeElement("span", "customer-category-tag", item.category || "Main Course");
@@ -106,11 +134,28 @@
         });
 
         const content = makeElement("div", "customer-food-content");
+
+        if (promo) {
+            const promoPill = makeElement("span", "customer-promo-pill");
+            promoPill.innerHTML = `<i class="fa-solid fa-tag" aria-hidden="true"></i> ${promo.discountPercent}% OFF`;
+            content.appendChild(promoPill);
+        }
+
         const titleRow = makeElement("div", "customer-food-title-row");
-        titleRow.append(
-            makeElement("h3", "", item.foodName || "Unnamed Dish"),
-            makeElement("span", "customer-food-price", formatPrice(item.price))
-        );
+        const titleH3 = makeElement("h3", "", item.foodName || "Unnamed Dish");
+
+        if (promo) {
+            const priceWrap = makeElement("div", "customer-food-price-wrap");
+            const origPrice = makeElement("del", "customer-card-orig-price", formatPrice(item.price));
+            const dealPrice = makeElement("span", "customer-food-price customer-card-deal-price", formatPrice(promo.discountedPrice));
+            priceWrap.append(origPrice, dealPrice);
+            titleRow.append(titleH3, priceWrap);
+        } else {
+            titleRow.append(
+                titleH3,
+                makeElement("span", "customer-food-price", formatPrice(item.price))
+            );
+        }
 
         const footer = makeElement("div", "customer-food-footer");
         const availability = makeElement(
@@ -158,12 +203,23 @@
         card.setAttribute("role", "button");
         card.setAttribute("aria-label", `Jump to ${item.foodName}`);
 
+        const promo = getPromo(item);
+
         const details = makeElement("div", "customer-recommendation-details");
-        details.append(
-            makeElement("span", "customer-recommendation-label", item.recommendation),
-            makeElement("h3", "", item.foodName),
-            makeElement("span", "customer-recommendation-price", formatPrice(item.price))
-        );
+        details.appendChild(makeElement("span", "customer-recommendation-label", item.recommendation));
+        details.appendChild(makeElement("h3", "", item.foodName));
+
+        if (promo) {
+            const priceWrap = makeElement("div", "customer-recommendation-price-wrap");
+            priceWrap.append(
+                makeElement("del", "customer-card-orig-price", formatPrice(item.price)),
+                makeElement("span", "customer-recommendation-price customer-card-deal-price", formatPrice(promo.discountedPrice))
+            );
+            details.appendChild(priceWrap);
+        } else {
+            details.appendChild(makeElement("span", "customer-recommendation-price", formatPrice(item.price)));
+        }
+
         card.append(makeImage(item, "customer-recommendation-image"), details);
 
         card.addEventListener("click", () => scrollToDish(itemId));
@@ -263,12 +319,29 @@
         currentQuantity = 1;
 
         const available = isItemAvailable(item);
+        const promo = getPromo(item);
 
         document.getElementById("customerModalImage").src = item.imageUrl || "/images/placeholder-food.jpg";
         document.getElementById("customerModalImage").alt = item.imageAlt || item.foodName;
         document.getElementById("customerModalCategory").textContent = item.category || "Main Course";
         document.getElementById("customerModalTitle").textContent = item.foodName;
-        document.getElementById("customerModalPrice").textContent = formatPrice(item.price);
+
+        if (promo) {
+            if (modalOrigPrice) {
+                modalOrigPrice.textContent = formatPrice(item.price);
+                modalOrigPrice.hidden = false;
+            }
+            document.getElementById("customerModalPrice").textContent = formatPrice(promo.discountedPrice);
+            if (modalPromoBanner && modalPromoText) {
+                modalPromoBanner.hidden = false;
+                modalPromoText.textContent = `Special Promotion! Save ${formatPrice(promo.discountAmount)} (${promo.discountPercent}% off)`;
+            }
+        } else {
+            if (modalOrigPrice) modalOrigPrice.hidden = true;
+            document.getElementById("customerModalPrice").textContent = formatPrice(item.price);
+            if (modalPromoBanner) modalPromoBanner.hidden = true;
+        }
+
         document.getElementById("customerModalDescription").textContent = item.fullDescription || item.foodDescription || "";
         document.getElementById("customerModalPrepTime").textContent = item.prepTime || "15-20 mins";
         document.getElementById("customerModalAvailability").textContent = available ? "Available today" : "Currently unavailable";
@@ -308,11 +381,19 @@
         if (!currentDraftItem || !currentDraftItem.item) return;
 
         const item = currentDraftItem.item;
+        const promo = getPromo(item);
+        const origPrice = Number(item.price) || 0;
+        const effectivePrice = promo ? Number(promo.discountedPrice) : origPrice;
+
         const newSelection = {
             foodId: item.foodID || item.foodId,
             name: item.foodName,
             image: item.imageUrl || "/images/placeholder-food.jpg",
-            price: Number(item.price) || 0,
+            price: effectivePrice,
+            originalPrice: origPrice,
+            hasPromo: !!promo,
+            discountAmount: promo ? Math.max(0, origPrice - effectivePrice) : 0,
+            discountPercent: promo ? promo.discountPercent : 0,
             quantity: currentQuantity,
             sugar: currentDraftItem.sugar || "",
             ice: currentDraftItem.ice || "",
@@ -337,13 +418,28 @@
     }
 
     function updateCartSummary() {
-        const subtotal = cart.reduce((total, item) => total + Number(item.price || 0) * Number(item.quantity || 0), 0);
-        const tax = subtotal * 0.1;
-        const total = subtotal + tax;
+        const origSubtotal = cart.reduce((total, item) => total + (item.originalPrice || item.price) * Number(item.quantity || 0), 0);
+        const netSubtotal = cart.reduce((total, item) => total + Number(item.price || 0) * Number(item.quantity || 0), 0);
+        const totalDiscount = Math.max(0, origSubtotal - netSubtotal);
+        const tax = netSubtotal * 0.1;
+        const total = netSubtotal + tax;
 
-        cartSubtotal.textContent = formatPrice(subtotal);
+        cartSubtotal.textContent = formatPrice(netSubtotal);
         cartTax.textContent = formatPrice(tax);
         cartTotal.textContent = formatPrice(total);
+
+        if (totalDiscount > 0) {
+            if (cartOrigRow) cartOrigRow.hidden = false;
+            if (cartOrigSubtotal) cartOrigSubtotal.textContent = formatPrice(origSubtotal);
+            if (cartDiscountRow) cartDiscountRow.hidden = false;
+            if (cartDiscount) cartDiscount.textContent = `- ${formatPrice(totalDiscount)}`;
+            if (cartSavingsBanner) cartSavingsBanner.hidden = false;
+            if (cartSavingsValue) cartSavingsValue.textContent = formatPrice(totalDiscount);
+        } else {
+            if (cartOrigRow) cartOrigRow.hidden = true;
+            if (cartDiscountRow) cartDiscountRow.hidden = true;
+            if (cartSavingsBanner) cartSavingsBanner.hidden = true;
+        }
 
         const totalUnits = cart.reduce((total, item) => total + Number(item.quantity || 0), 0);
         cartBadge.textContent = String(totalUnits);
@@ -373,6 +469,10 @@
             // Middle Column: Food Name & Options/Remarks
             const itemBody = makeElement("div", "customer-cart-item-body");
             const name = makeElement("h3", "customer-cart-item-name", entry.name);
+            if (entry.hasPromo) {
+                const promoBadge = makeElement("span", "cart-promo-badge", "PROMO");
+                name.appendChild(promoBadge);
+            }
             itemBody.appendChild(name);
 
             const optionText = buildSelectionText(entry);
@@ -384,10 +484,22 @@
                 itemBody.appendChild(makeElement("p", "customer-cart-item-remark", `Remark: ${entry.remarks}`));
             }
 
-            // Right Column: Centered Price sitting exactly above Stepper
+            // Right Column: Price and Stepper
             const itemSide = makeElement("div", "customer-cart-item-side");
             const itemTotalPrice = entry.price * entry.quantity;
-            const priceDisplay = makeElement("span", "customer-cart-item-price", formatPrice(itemTotalPrice));
+
+            const priceDisplay = makeElement("div", "customer-cart-item-price-wrap");
+            if (entry.hasPromo) {
+                const origTotalPrice = entry.originalPrice * entry.quantity;
+                const origPriceEl = makeElement("del", "cart-orig-price", formatPrice(origTotalPrice));
+                const dealPriceEl = makeElement("span", "customer-cart-item-price cart-deal-price", formatPrice(itemTotalPrice));
+                priceDisplay.append(origPriceEl, dealPriceEl);
+                const savingsEl = makeElement("span", "cart-line-savings", `Save ${formatPrice(origTotalPrice - itemTotalPrice)}`);
+                priceDisplay.appendChild(savingsEl);
+            } else {
+                const priceEl = makeElement("span", "customer-cart-item-price", formatPrice(itemTotalPrice));
+                priceDisplay.appendChild(priceEl);
+            }
 
             const controls = makeElement("div", "customer-cart-item-controls");
             const decreaseButton = makeElement("button", "customer-cart-qty-btn", "");

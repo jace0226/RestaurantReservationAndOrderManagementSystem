@@ -55,6 +55,7 @@ builder.Services.AddAuthorization(options =>
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 builder.Services.AddSingleton<IStripeCheckoutService, StripeCheckoutService>();
 builder.Services.AddScoped<StripePaymentService>();
+builder.Services.AddScoped<PromotionService>();
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {

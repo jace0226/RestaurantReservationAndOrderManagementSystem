@@ -63,7 +63,15 @@
                             <span><i class="fa-solid fa-utensils" aria-hidden="true"></i> @order.ItemCount items</span>
                         </div>
                         <div class="order-card-footer">
-                            <span class="order-total">RM @order.Total.ToString("N2")</span>
+                            <div>
+                                <span class="order-total">RM @order.Total.ToString("N2")</span>
+                                @if (order.HasPromotions)
+                                {
+                                    <span class="order-promo-badge" title="Order includes promotional discount">
+                                        <i class="fa-solid fa-tag" aria-hidden="true"></i> Promo
+                                    </span>
+                                }
+                            </div>
                             <span class="status-badge">@order.Status</span>
                         </div>
                     </a>
@@ -79,7 +87,15 @@
                                 <p class="eyebrow">Order details</p>
                                 <h2>@selectedOrder.CustomerName</h2>
                             </div>
-                            <span class="status-badge">@selectedOrder.Status</span>
+                            <div class="d-flex align-items-center gap-2">
+                                @if (selectedOrder.HasPromotions)
+                                {
+                                    <span class="promo-badge-pill" title="Order received special promotional pricing">
+                                        <i class="fa-solid fa-tags" aria-hidden="true"></i> Promo Applied
+                                    </span>
+                                }
+                                <span class="status-badge">@selectedOrder.Status</span>
+                            </div>
                         </div>
                         <p class="detail-order-id">#@selectedOrder.OrderId</p>
                         <div class="detail-meta">
@@ -101,17 +117,76 @@
                             <div class="order-item" role="listitem">
                                 <span class="item-icon" aria-hidden="true"><i class="fa-solid fa-utensils"></i></span>
                                 <div class="item-meta">
-                                    <span class="item-name">@item.Name</span>
-                                    <span class="item-quantity">@item.Quantity × RM @item.UnitPrice.ToString("N2")</span>
+                                    <div class="d-flex align-items-center">
+                                        <span class="item-name">@item.Name</span>
+                                        @if (item.HasPromotion)
+                                        {
+                                            <span class="item-promo-tag" title="Promotional item">
+                                                <i class="fa-solid fa-tag" aria-hidden="true"></i> PROMO
+                                            </span>
+                                        }
+                                    </div>
+                                    <span class="item-quantity">
+                                        @if (item.HasPromotion)
+                                        {
+                                            <span>
+                                                @item.Quantity × 
+                                                <del class="item-orig-price">RM @item.OriginalUnitPrice.ToString("N2")</del>
+                                                <span class="item-promo-price">RM @item.EffectiveUnitPrice.ToString("N2")</span>
+                                                <span class="item-savings-text">(Save RM @item.LineDiscount.ToString("N2"))</span>
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span>@item.Quantity × RM @item.OriginalUnitPrice.ToString("N2")</span>
+                                        }
+                                    </span>
                                 </div>
-                                <strong class="item-line-total">RM @((item.UnitPrice * item.Quantity).ToString("N2"))</strong>
+                                <strong class="item-line-total">RM @item.LineTotal.ToString("N2")</strong>
                             </div>
                         }
                     </div>
 
-                    <div class="cost-summary">
-                        <span>@(selectedOrder.HasRecordedTotal ? "Recorded transaction total" : "Current menu price total")</span>
-                        <strong>RM @selectedOrder.Total.ToString("N2")</strong>
+                    <!-- ORDER COST BREAKDOWN REDESIGN -->
+                    <div class="order-breakdown">
+                        @if (selectedOrder.HasPromotions)
+                        {
+                            <div class="breakdown-row">
+                                <span>Original Subtotal</span>
+                                <span>RM @selectedOrder.OriginalSubtotal.ToString("N2")</span>
+                            </div>
+                            <div class="breakdown-row discount-row">
+                                <span><i class="fa-solid fa-tag" aria-hidden="true"></i> Promotion Discount</span>
+                                <span>- RM @selectedOrder.TotalDiscount.ToString("N2")</span>
+                            </div>
+                            <div class="breakdown-row">
+                                <span>Subtotal (After Promo)</span>
+                                <span>RM @selectedOrder.NetSubtotal.ToString("N2")</span>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="breakdown-row">
+                                <span>Subtotal</span>
+                                <span>RM @selectedOrder.NetSubtotal.ToString("N2")</span>
+                            </div>
+                        }
+                        <div class="breakdown-row">
+                            <span>Service Tax (10%)</span>
+                            <span>RM @selectedOrder.Tax.ToString("N2")</span>
+                        </div>
+                        <div class="breakdown-row total-row">
+                            <span>@(selectedOrder.HasRecordedTotal ? "Recorded Transaction Total" : "Order Total Amount")</span>
+                            <strong>RM @selectedOrder.Total.ToString("N2")</strong>
+                        </div>
+
+                        @if (selectedOrder.HasPromotions)
+                        {
+                            <div class="order-savings-callout">
+                                <i class="fa-solid fa-gift" aria-hidden="true"></i>
+                                <span>Total promotional savings for this order: RM @selectedOrder.TotalDiscount.ToString("N2")</span>
+                            </div>
+                        }
                     </div>
 
                     <form method="post" asp-page-handler="UpdateStatus" class="order-status-form">

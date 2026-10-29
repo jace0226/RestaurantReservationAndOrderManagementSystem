@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using RestaurantReservationAndOrderManagementSystem.Data;
+using RestaurantReservationAndOrderManagementSystem.Services;
 using RestaurantReservationAndOrderManagementSystem.Services.Payments;
 using Stripe;
 
@@ -14,15 +15,18 @@ public sealed class PaymentModel : PageModel
 {
     private readonly ApplicationDbContext _dbContext;
     private readonly StripePaymentService _stripePaymentService;
+    private readonly PromotionService _promotionService;
     private readonly ILogger<PaymentModel> _logger;
 
     public PaymentModel(
         ApplicationDbContext dbContext,
         StripePaymentService stripePaymentService,
+        PromotionService promotionService,
         ILogger<PaymentModel> logger)
     {
         _dbContext = dbContext;
         _stripePaymentService = stripePaymentService;
+        _promotionService = promotionService;
         _logger = logger;
     }
 
@@ -71,15 +75,22 @@ public sealed class PaymentModel : PageModel
             return BadRequest("This order has no items to pay for.");
         }
 
-        var checkoutItems = orderItems.Select(item => (
-            Name: item.Food.FoodName,
-            UnitPrice: item.Food.Price,
-            Quantity: item.Quantity)).ToList();
-        var amounts = PaymentPricing.Calculate(checkoutItems.Select(item => (item.UnitPrice, item.Quantity)));
-        if (amounts.Total <= 0)
+        var pricing = await _promotionService.ResolvePaymentAlignedPricingAsync(
+            orderItems.Select(item => (item.Food, item.Quantity)),
+            DateTime.Now);
+
+        if (pricing.Total <= 0)
         {
             return BadRequest("This order has an invalid total.");
         }
+
+        var checkoutItems = pricing.Items.Select(item => (
+            Name: item.FoodName,
+            OriginalUnitPrice: item.OriginalUnitPrice,
+            EffectiveUnitPrice: item.EffectiveUnitPrice,
+            Quantity: item.Quantity,
+            HasPromotion: item.HasPromotion,
+            DiscountAmount: item.UnitDiscount)).ToList();
 
         OrderId = order.OrderID;
         var successUrl = Url.Page(

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using RestaurantReservationAndOrderManagementSystem.Data;
 using RestaurantReservationAndOrderManagementSystem.Models;
+using RestaurantReservationAndOrderManagementSystem.Services;
 
 namespace RestaurantReservationAndOrderManagementSystem.Pages
 {
@@ -20,11 +21,16 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
         ];
 
         private readonly ApplicationDbContext _dbContext;
+        private readonly PromotionService _promotionService;
         private readonly ILogger<OrdersModel> _logger;
 
-        public OrdersModel(ApplicationDbContext dbContext, ILogger<OrdersModel> logger)
+        public OrdersModel(
+            ApplicationDbContext dbContext,
+            PromotionService promotionService,
+            ILogger<OrdersModel> logger)
         {
             _dbContext = dbContext;
+            _promotionService = promotionService;
             _logger = logger;
         }
 
@@ -97,6 +103,7 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
             {
                 StatusFilter = "All";
             }
+
             List<Order_Items> items = orderIds.Length == 0
                 ? []
                 : await _dbContext.OrderItems
@@ -104,30 +111,47 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
                     .Where(item => orderIds.Contains(item.OrderID))
                     .Include(item => item.Food)
                     .ToListAsync();
-            var transactionTotals = orderIds.Length == 0
-                ? new Dictionary<string, decimal>()
+
+            var transactionRecords = orderIds.Length == 0
+                ? new Dictionary<string, Transaction>()
                 : await _dbContext.Transactions
                     .AsNoTracking()
                     .Where(transaction => orderIds.Contains(transaction.OrderID))
-                    .ToDictionaryAsync(transaction => transaction.OrderID, transaction => transaction.TransactionAmount);
+                    .ToDictionaryAsync(transaction => transaction.OrderID);
+
             var itemsByOrder = items
                 .GroupBy(item => item.OrderID)
                 .ToDictionary(group => group.Key, group => group.ToList());
 
-            var allRows = sourceOrders.Select(order =>
+            // Build each order row using promotions that were active at the order's creation time
+            var allRows = new List<OrderRow>();
+            foreach (var order in sourceOrders)
             {
                 var orderItems = itemsByOrder.GetValueOrDefault(order.OrderID) ?? [];
-                var hasRecordedTotal = transactionTotals.TryGetValue(order.OrderID, out var recordedTotal);
-                return new OrderRow(
+                var hasRecordedTotal = transactionRecords.TryGetValue(order.OrderID, out var transaction);
+                var paymentTime = hasRecordedTotal
+                    ? transaction!.TransactionDate.ToDateTime(transaction.TransactionTime)
+                    : DateTime.Now;
+                var pricing = await _promotionService.ResolvePaymentAlignedPricingAsync(
+                    orderItems.Select(oi => (oi.Food, oi.Quantity)),
+                    paymentTime,
+                    hasRecordedTotal ? transaction!.TransactionAmount : null,
+                    hasRecordedTotal ? transaction!.DiscountAmount : null);
+
+                var effectiveTotal = hasRecordedTotal ? transaction!.TransactionAmount : pricing.Total;
+
+                allRows.Add(new OrderRow(
                     order.OrderID,
                     order.CreatedAt,
                     order.Table.TableID,
                     order.Customer.User.FullName,
                     order.OrderStatus,
                     orderItems.Sum(item => item.Quantity),
-                    hasRecordedTotal ? recordedTotal : orderItems.Sum(item => item.Food.Price * item.Quantity),
-                    hasRecordedTotal);
-            }).ToList();
+                    effectiveTotal,
+                    hasRecordedTotal,
+                    pricing.TotalDiscount > 0,
+                    pricing.TotalDiscount));
+            }
 
             var filteredRows = StatusFilter == "All"
                 ? allRows
@@ -147,6 +171,19 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
 
             OrderId = selected.OrderId;
             var selectedItems = itemsByOrder.GetValueOrDefault(selected.OrderId) ?? [];
+
+            var selectedTransaction = transactionRecords.GetValueOrDefault(selected.OrderId);
+            var selectedPaymentTime = selectedTransaction is null
+                ? DateTime.Now
+                : selectedTransaction.TransactionDate.ToDateTime(selectedTransaction.TransactionTime);
+            var selectedPricing = await _promotionService.ResolvePaymentAlignedPricingAsync(
+                selectedItems.Select(oi => (oi.Food, oi.Quantity)),
+                selectedPaymentTime,
+                selectedTransaction?.TransactionAmount,
+                selectedTransaction?.DiscountAmount);
+
+            var finalSelectedTotal = selected.HasRecordedTotal ? selected.Total : selectedPricing.Total;
+
             SelectedOrder = new OrderDetails(
                 selected.OrderId,
                 selected.CreatedAt,
@@ -154,12 +191,22 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
                 selected.CustomerName,
                 selected.Status,
                 selected.ItemCount,
-                selected.Total,
+                selectedPricing.OriginalSubtotal,
+                selectedPricing.TotalDiscount,
+                selectedPricing.NetSubtotal,
+                selectedPricing.Tax,
+                finalSelectedTotal,
                 selected.HasRecordedTotal,
-                selectedItems.Select(item => new OrderItemRow(
-                    item.Food.FoodName,
-                    item.Food.Price,
-                    item.Quantity)).ToList());
+                selectedPricing.TotalDiscount > 0,
+                selectedPricing.Items.Select(item => new OrderItemRow(
+                    item.FoodName,
+                    item.OriginalUnitPrice,
+                    item.EffectiveUnitPrice,
+                    item.Quantity,
+                    item.LineTotal,
+                    item.LineDiscount,
+                    item.HasPromotion,
+                    item.PromoId)).ToList());
         }
 
         public sealed record OrderRow(
@@ -170,7 +217,9 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
             string Status,
             int ItemCount,
             decimal Total,
-            bool HasRecordedTotal);
+            bool HasRecordedTotal,
+            bool HasPromotions,
+            decimal TotalDiscount);
 
         public sealed record OrderDetails(
             string OrderId,
@@ -179,10 +228,23 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
             string CustomerName,
             string Status,
             int ItemCount,
+            decimal OriginalSubtotal,
+            decimal TotalDiscount,
+            decimal NetSubtotal,
+            decimal Tax,
             decimal Total,
             bool HasRecordedTotal,
+            bool HasPromotions,
             IReadOnlyList<OrderItemRow> Items);
 
-        public sealed record OrderItemRow(string Name, decimal UnitPrice, int Quantity);
+        public sealed record OrderItemRow(
+            string Name,
+            decimal OriginalUnitPrice,
+            decimal EffectiveUnitPrice,
+            int Quantity,
+            decimal LineTotal,
+            decimal LineDiscount,
+            bool HasPromotion,
+            string? PromoId);
     }
 }

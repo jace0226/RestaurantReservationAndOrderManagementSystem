@@ -11,11 +11,16 @@ public sealed class StripePaymentService
 {
     private const string Currency = "myr";
     private readonly ApplicationDbContext _dbContext;
+    private readonly PromotionService _promotionService;
     private readonly StripeClient? _stripeClient;
 
-    public StripePaymentService(ApplicationDbContext dbContext, IConfiguration configuration)
+    public StripePaymentService(
+        ApplicationDbContext dbContext,
+        PromotionService promotionService,
+        IConfiguration configuration)
     {
         _dbContext = dbContext;
+        _promotionService = promotionService;
         var secretKey = configuration["Stripe:SecretKey"];
         if (!string.IsNullOrWhiteSpace(secretKey))
         {
@@ -29,27 +34,35 @@ public sealed class StripePaymentService
         string orderId,
         string customerId,
         string customerEmail,
-        IEnumerable<(string Name, decimal UnitPrice, int Quantity)> items,
+        IEnumerable<(string Name, decimal OriginalUnitPrice, decimal EffectiveUnitPrice, int Quantity, bool HasPromotion, decimal DiscountAmount)> items,
         string successUrl,
         string cancelUrl)
     {
         var lineItems = items.ToList();
-        var amounts = PaymentPricing.Calculate(lineItems.Select(item => (item.UnitPrice, item.Quantity)));
+        var originalSubtotal = lineItems.Sum(item => item.OriginalUnitPrice * item.Quantity);
+        var netSubtotal = lineItems.Sum(item => item.EffectiveUnitPrice * item.Quantity);
+        var totalDiscount = Math.Max(0, originalSubtotal - netSubtotal);
+        var tax = decimal.Round(netSubtotal * 0.10m, 2, MidpointRounding.AwayFromZero);
+        var total = netSubtotal + tax;
+
         var stripeLineItems = lineItems.Select(item => new SessionLineItemOptions
         {
             Quantity = item.Quantity,
             PriceData = new SessionLineItemPriceDataOptions
             {
                 Currency = Currency,
-                UnitAmount = ToMinorUnits(item.UnitPrice),
+                UnitAmount = ToMinorUnits(item.EffectiveUnitPrice),
                 ProductData = new SessionLineItemPriceDataProductDataOptions
                 {
-                    Name = item.Name
+                    Name = item.HasPromotion ? $"{item.Name} [Promo Applied]" : item.Name,
+                    Description = item.HasPromotion
+                        ? $"Promotional item: regular price RM {item.OriginalUnitPrice:N2} (Saved RM {item.DiscountAmount:N2})"
+                        : null
                 }
             }
         }).ToList();
 
-        if (amounts.Tax > 0)
+        if (tax > 0)
         {
             stripeLineItems.Add(new SessionLineItemOptions
             {
@@ -57,7 +70,7 @@ public sealed class StripePaymentService
                 PriceData = new SessionLineItemPriceDataOptions
                 {
                     Currency = Currency,
-                    UnitAmount = ToMinorUnits(amounts.Tax),
+                    UnitAmount = ToMinorUnits(tax),
                     ProductData = new SessionLineItemPriceDataProductDataOptions
                     {
                         Name = "Tax (10%)"
@@ -68,7 +81,7 @@ public sealed class StripePaymentService
 
         var checkoutTotal = stripeLineItems.Sum(item =>
             item.PriceData.UnitAmount.GetValueOrDefault() * item.Quantity.GetValueOrDefault());
-        if (checkoutTotal != ToMinorUnits(amounts.Total))
+        if (checkoutTotal != ToMinorUnits(total))
         {
             throw new InvalidOperationException("The order total cannot be represented exactly in MYR minor units.");
         }
@@ -76,8 +89,15 @@ public sealed class StripePaymentService
         var metadata = new Dictionary<string, string>
         {
             ["OrderID"] = orderId,
-            ["CustomerID"] = customerId
+            ["CustomerID"] = customerId,
+            ["OriginalSubtotal"] = originalSubtotal.ToString("F2"),
+            ["TotalDiscount"] = totalDiscount.ToString("F2"),
+            ["PromoApplied"] = totalDiscount > 0 ? "true" : "false",
+            ["NetSubtotal"] = netSubtotal.ToString("F2"),
+            ["Tax"] = tax.ToString("F2"),
+            ["Total"] = total.ToString("F2")
         };
+
         var options = new SessionCreateOptions
         {
             Mode = "payment",
@@ -95,7 +115,7 @@ public sealed class StripePaymentService
         };
         var requestOptions = new RequestOptions
         {
-            IdempotencyKey = $"checkout:{orderId}:{ToMinorUnits(amounts.Total).ToString(CultureInfo.InvariantCulture)}"
+            IdempotencyKey = $"checkout:{orderId}:{ToMinorUnits(total).ToString(CultureInfo.InvariantCulture)}"
         };
 
         var session = await new SessionService(GetStripeClient())
@@ -107,6 +127,23 @@ public sealed class StripePaymentService
         }
 
         return session;
+    }
+
+    public async Task<Session> CreateCheckoutSessionAsync(
+        string orderId,
+        string customerId,
+        string customerEmail,
+        IEnumerable<(string Name, decimal UnitPrice, int Quantity)> items,
+        string successUrl,
+        string cancelUrl)
+    {
+        return await CreateCheckoutSessionAsync(
+            orderId,
+            customerId,
+            customerEmail,
+            items.Select(i => (i.Name, i.UnitPrice, i.UnitPrice, i.Quantity, false, 0m)),
+            successUrl,
+            cancelUrl);
     }
 
     public async Task<Session> GetCheckoutSessionAsync(string sessionId) =>
@@ -171,15 +208,22 @@ public sealed class StripePaymentService
             .Where(item => item.OrderID == orderId)
             .Include(item => item.Food)
             .ToListAsync();
-        var amounts = PaymentPricing.Calculate(items.Select(item => (item.Food.Price, item.Quantity)));
 
-        if (paymentIntent.Amount != ToMinorUnits(amounts.Total))
+        var paidAt = DateTime.Now;
+        decimal? expectedRecordedAmount = paymentIntent.Amount == 0
+            ? null
+            : paymentIntent.Amount / 100m;
+        var pricing = await _promotionService.ResolvePaymentAlignedPricingAsync(
+            items.Select(item => (item.Food, item.Quantity)),
+            paidAt,
+            expectedRecordedAmount);
+
+        if (paymentIntent.Amount != ToMinorUnits(pricing.Total))
         {
             throw new InvalidOperationException("The PaymentIntent amount does not match the order total.");
         }
 
         var paymentMethod = await GetPaymentMethodDescriptionAsync(paymentIntent);
-        var paidAt = DateTime.Now;
 
         await using var databaseTransaction = await _dbContext.Database.BeginTransactionAsync(
             System.Data.IsolationLevel.Serializable);
@@ -214,7 +258,11 @@ public sealed class StripePaymentService
             TransactionType = paymentMethod,
             TransactionDate = DateOnly.FromDateTime(paidAt),
             TransactionTime = TimeOnly.FromDateTime(paidAt),
-            TransactionAmount = amounts.Total
+            TransactionAmount = pricing.Total,
+            OriginalSubtotal = pricing.OriginalSubtotal,
+            DiscountAmount = pricing.TotalDiscount,
+            NetSubtotal = pricing.NetSubtotal,
+            TaxAmount = pricing.Tax
         });
 
         await _dbContext.SaveChangesAsync();

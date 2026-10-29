@@ -26,5 +26,10 @@ namespace RestaurantReservationAndOrderManagementSystem.Models
 
         [Required(ErrorMessage = "Transaction Amount is required")]
         public decimal TransactionAmount { get; set; } = 0.0m;
+
+        public decimal? OriginalSubtotal { get; set; }
+        public decimal? DiscountAmount { get; set; }
+        public decimal? NetSubtotal { get; set; }
+        public decimal? TaxAmount { get; set; }
     }
 }

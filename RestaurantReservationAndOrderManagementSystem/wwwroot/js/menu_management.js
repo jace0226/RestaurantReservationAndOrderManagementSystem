@@ -144,82 +144,111 @@
     }
 
     if (modal) {
-        openAddButton.addEventListener("click", startNewItem);
+        if (openAddButton) {
+            openAddButton.addEventListener("click", startNewItem);
+        }
+
         document.querySelectorAll("[data-close-menu-modal]").forEach((button) => {
             button.addEventListener("click", closeModal);
         });
 
-        document.querySelectorAll("[data-edit-food]").forEach((button) => {
-            button.addEventListener("click", () => startEditItem(button.dataset.editFood));
+        document.querySelectorAll("[data-food-id], [data-edit-food]").forEach((button) => {
+            button.addEventListener("click", () => {
+                const foodId = button.dataset.foodId || button.dataset.editFood;
+                startEditItem(foodId);
+            });
         });
 
-        imageInput.addEventListener("change", () => {
-            const image = imageInput.files && imageInput.files[0];
-            if (!image) {
-                return;
-            }
+        if (imageInput) {
+            imageInput.addEventListener("change", () => {
+                const image = imageInput.files && imageInput.files[0];
+                if (!image) {
+                    return;
+                }
 
-            setPreview(URL.createObjectURL(image), image.name, true);
-        });
+                setPreview(URL.createObjectURL(image), image.name, true);
+            });
+        }
 
-        deleteForm.addEventListener("submit", (event) => {
-            if (!window.confirm("Delete this menu item? This action cannot be undone.")) {
-                event.preventDefault();
-            }
-        });
+        if (deleteForm) {
+            deleteForm.addEventListener("submit", (event) => {
+                if (!window.confirm("Delete this menu item? This action cannot be undone.")) {
+                    event.preventDefault();
+                }
+            });
+        }
 
         if (window.staffMenuFormOpen) {
             openModal();
         }
     }
 
-    categoryFilters.querySelectorAll("button").forEach((button) => {
-        button.addEventListener("click", () => {
-            selectedCategory = button.dataset.category;
-            categoryFilters.querySelectorAll("button").forEach((filter) => {
-                const active = filter === button;
-                filter.classList.toggle("active", active);
-                filter.setAttribute("aria-pressed", String(active));
-            });
-            updateMenu();
-        });
-    });
-
-    availabilityFilters.querySelectorAll("a").forEach((filter) => {
-        filter.addEventListener("click", (event) => {
-            event.preventDefault();
-            selectedAvailability = new URL(filter.href).searchParams.get("availabilityFilter") || "All";
-            availabilityFilters.querySelectorAll("a").forEach((candidate) => {
-                const active = candidate === filter;
-                candidate.classList.toggle("active", active);
-                candidate.setAttribute("aria-pressed", String(active));
-            });
-            updateMenu();
-        });
-    });
-
-    searchInput.addEventListener("input", updateMenu);
-    document.getElementById("staffMenuReset").addEventListener("click", () => {
-        searchInput.value = "";
-        selectedCategory = "All";
-        selectedAvailability = "All";
+    if (categoryFilters) {
         categoryFilters.querySelectorAll("button").forEach((button) => {
-            const active = button.dataset.category === "All";
-            button.classList.toggle("active", active);
-            button.setAttribute("aria-pressed", String(active));
+            button.addEventListener("click", () => {
+                selectedCategory = button.dataset.category;
+                categoryFilters.querySelectorAll("button").forEach((filter) => {
+                    const active = filter === button;
+                    filter.classList.toggle("active", active);
+                    filter.setAttribute("aria-pressed", String(active));
+                });
+                updateMenu();
+            });
         });
-        availabilityFilters.querySelectorAll("a").forEach((filter) => {
-            const active = new URL(filter.href).searchParams.get("availabilityFilter") === "All";
-            filter.classList.toggle("active", active);
-            filter.setAttribute("aria-pressed", String(active));
-        });
-        updateMenu();
-        searchInput.focus();
-    });
+    }
 
-    document.getElementById("staffEmptyReset").addEventListener("click", () => {
-        document.getElementById("staffMenuReset").click();
-    });
+    if (availabilityFilters) {
+        availabilityFilters.querySelectorAll("a").forEach((filter) => {
+            filter.addEventListener("click", (event) => {
+                event.preventDefault();
+                const url = new URL(filter.href, window.location.origin);
+                selectedAvailability = url.searchParams.get("availabilityFilter") || "All";
+                availabilityFilters.querySelectorAll("a").forEach((candidate) => {
+                    const active = candidate === filter;
+                    candidate.classList.toggle("active", active);
+                    candidate.setAttribute("aria-pressed", String(active));
+                });
+                updateMenu();
+            });
+        });
+    }
+
+    if (searchInput) {
+        searchInput.addEventListener("input", updateMenu);
+    }
+
+    const resetButton = document.getElementById("staffMenuReset");
+    if (resetButton) {
+        resetButton.addEventListener("click", () => {
+            if (searchInput) searchInput.value = "";
+            selectedCategory = "All";
+            selectedAvailability = "All";
+            if (categoryFilters) {
+                categoryFilters.querySelectorAll("button").forEach((button) => {
+                    const active = button.dataset.category === "All";
+                    button.classList.toggle("active", active);
+                    button.setAttribute("aria-pressed", String(active));
+                });
+            }
+            if (availabilityFilters) {
+                availabilityFilters.querySelectorAll("a").forEach((filter) => {
+                    const url = new URL(filter.href, window.location.origin);
+                    const active = (url.searchParams.get("availabilityFilter") || "All") === "All";
+                    filter.classList.toggle("active", active);
+                    filter.setAttribute("aria-pressed", String(active));
+                });
+            }
+            updateMenu();
+            if (searchInput) searchInput.focus();
+        });
+    }
+
+    const emptyResetButton = document.getElementById("staffEmptyReset");
+    if (emptyResetButton && resetButton) {
+        emptyResetButton.addEventListener("click", () => {
+            resetButton.click();
+        });
+    }
 
     document.addEventListener("keydown", (event) => {
         if (event.key === "Escape" && modal && !modal.hidden) {

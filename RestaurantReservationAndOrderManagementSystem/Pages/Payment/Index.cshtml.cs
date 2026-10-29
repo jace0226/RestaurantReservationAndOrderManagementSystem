@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using RestaurantReservationAndOrderManagementSystem.Data;
+using RestaurantReservationAndOrderManagementSystem.Services;
 using RestaurantReservationAndOrderManagementSystem.Services.Payments;
 using Stripe;
 
@@ -14,16 +15,24 @@ public sealed class IndexModel : PageModel
 {
     private readonly ApplicationDbContext _dbContext;
     private readonly StripePaymentService _stripePaymentService;
+    private readonly PromotionService _promotionService;
 
-    public IndexModel(ApplicationDbContext dbContext, StripePaymentService stripePaymentService)
+    public IndexModel(
+        ApplicationDbContext dbContext,
+        StripePaymentService stripePaymentService,
+        PromotionService promotionService)
     {
         _dbContext = dbContext;
         _stripePaymentService = stripePaymentService;
+        _promotionService = promotionService;
     }
 
     public ReceiptOrder Order { get; private set; } = null!;
     public ReceiptPayment Payment { get; private set; } = null!;
     public IReadOnlyList<ReceiptItem> Items { get; private set; } = [];
+    public decimal OriginalSubtotal { get; private set; }
+    public decimal TotalDiscount { get; private set; }
+    public bool HasPromotionDiscount => TotalDiscount > 0;
     public decimal Subtotal { get; private set; }
     public decimal Tax { get; private set; }
     public decimal Total { get; private set; }
@@ -99,20 +108,32 @@ public sealed class IndexModel : PageModel
             .Where(item => item.OrderID == orderId)
             .Include(item => item.Food)
             .ToListAsync();
-        Items = orderItems.Select(item => new ReceiptItem(
-            item.Food.FoodName,
-            item.Quantity,
-            item.Food.Price,
-            item.Food.Price * item.Quantity)).ToList();
 
-        var amounts = PaymentPricing.Calculate(Items.Select(item => (item.UnitPrice, item.Quantity)));
+        var paymentTime = transaction.TransactionDate.ToDateTime(transaction.TransactionTime);
+        var pricing = await _promotionService.ResolvePaymentAlignedPricingAsync(
+            orderItems.Select(item => (item.Food, item.Quantity)),
+            paymentTime,
+            transaction.TransactionAmount,
+            transaction.DiscountAmount);
+
+        Items = pricing.Items.Select(item => new ReceiptItem(
+            item.FoodName,
+            item.Quantity,
+            item.OriginalUnitPrice,
+            item.EffectiveUnitPrice,
+            item.LineDiscount,
+            item.LineTotal,
+            item.HasPromotion)).ToList();
+
         Order = new ReceiptOrder(order.OrderID, order.CreatedAt);
         Payment = new ReceiptPayment(
             transaction.TransactionID,
             transaction.TransactionType,
             transaction.TransactionAmount);
-        Subtotal = amounts.Subtotal;
-        Tax = amounts.Tax;
+        OriginalSubtotal = pricing.OriginalSubtotal;
+        TotalDiscount = pricing.TotalDiscount;
+        Subtotal = pricing.NetSubtotal;
+        Tax = pricing.Tax;
         Total = transaction.TransactionAmount;
         InvoiceNumber = $"INV-{order.OrderID}-{order.CreatedAt:yyyyMMddHHmmss}";
         return Page();
@@ -120,5 +141,12 @@ public sealed class IndexModel : PageModel
 
     public sealed record ReceiptOrder(string OrderID, DateTime OrderDateTime);
     public sealed record ReceiptPayment(string TransactionReference, string PaymentMethod, decimal Amount);
-    public sealed record ReceiptItem(string Name, int Quantity, decimal UnitPrice, decimal LineTotal);
+    public sealed record ReceiptItem(
+        string Name,
+        int Quantity,
+        decimal OriginalUnitPrice,
+        decimal EffectiveUnitPrice,
+        decimal LineDiscount,
+        decimal LineTotal,
+        bool HasPromotion);
 }
