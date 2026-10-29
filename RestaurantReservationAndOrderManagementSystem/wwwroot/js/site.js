@@ -22,3 +22,36 @@ if (customerSidebar && customerSidebarToggle) {
         }
     });
 }
+
+document.addEventListener("DOMContentLoaded", function () {
+    const mobileProfileBtn = document.getElementById("mobileProfileBtn");
+    const mobileProfileMenu = document.getElementById("mobileProfileMenu");
+
+    if (mobileProfileBtn && mobileProfileMenu) {
+        mobileProfileBtn.addEventListener("click", function (e) {
+            e.stopPropagation();
+            const isOpen = mobileProfileMenu.classList.toggle("is-open");
+            mobileProfileBtn.setAttribute("aria-expanded", String(isOpen));
+        });
+
+        document.addEventListener("click", function (e) {
+            if (!mobileProfileMenu.contains(e.target) && !mobileProfileBtn.contains(e.target)) {
+                mobileProfileMenu.classList.remove("is-open");
+                mobileProfileBtn.setAttribute("aria-expanded", "false");
+            }
+        });
+    }
+
+    const mobileCategorySelect = document.getElementById("mobileCategorySelect");
+    if (mobileCategorySelect) {
+        mobileCategorySelect.addEventListener("change", function () {
+            const selectedCategory = this.value;
+
+            // Trigger click on corresponding desktop category button to sync filter logic
+            const categoryBtn = document.querySelector(`.customer-category-filters button[data-category="${selectedCategory}"]`);
+            if (categoryBtn) {
+                categoryBtn.click();
+            }
+        });
+    }
+});

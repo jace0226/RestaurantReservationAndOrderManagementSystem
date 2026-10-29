@@ -5,26 +5,42 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using RestaurantReservationAndOrderManagementSystem.Data;
 using RestaurantReservationAndOrderManagementSystem.Models;
+using RestaurantReservationAndOrderManagementSystem.Services;
 using CustomerEntity = RestaurantReservationAndOrderManagementSystem.Models.Customer;
 
 namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
 {
     [Authorize(Roles = "Customer")]
+    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)] // Prevent browser caching table state
     public class CustomerMenusModel : PageModel
     {
-        private readonly ApplicationDbContext _context;
+        private const string SelectedTableSessionKey = "SelectedTableID";
+        private const string TableOwnerUserIdSessionKey = "SelectedTableOwnerUserID";
+        private const string TableSessionExpiredMessage =
+            "Your table session has expired or this table has been claimed by another customer. Please scan the QR code on your table again before placing an order.";
 
-        public CustomerMenusModel(ApplicationDbContext context)
+        private readonly ApplicationDbContext _context;
+        private readonly TableSessionStore _tableSessions;
+        private readonly ILogger<CustomerMenusModel> _logger;
+
+        public CustomerMenusModel(
+            ApplicationDbContext context,
+            TableSessionStore tableSessions,
+            ILogger<CustomerMenusModel> logger)
         {
             _context = context;
+            _tableSessions = tableSessions;
+            _logger = logger;
         }
 
         public List<Food_Items> MenuItems { get; set; } = new();
-        public List<Table> AvailableTables { get; set; } = new();
-        public object? ActiveBooking { get; set; }
         public string? CurrentCustomerId { get; private set; }
+        public string? SelectedTableId { get; private set; }
+        public string? TableSessionMessage { get; private set; }
+        public object? ActiveBooking { get; private set; }
+        public bool CanPlaceOrder { get; private set; }
 
-        public async Task<IActionResult> OnGetAsync()
+        public async Task<IActionResult> OnGetAsync(string? tableID)
         {
             var customer = await GetCurrentCustomerAsync();
             if (customer == null)
@@ -33,38 +49,45 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
             }
 
             CurrentCustomerId = customer.CustomerID;
-            var today = DateOnly.FromDateTime(DateTime.Now);
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            // SCENARIO A: Find active booking for today with an assigned TableID
-            var activeBookingEntity = await _context.Bookings
-                .Include(b => b.Table)
-                .FirstOrDefaultAsync(b =>
-                    b.CustomerID == CurrentCustomerId &&
-                    b.BookingDate == today &&
-                    (b.BookingStatus == "Confirmed" || b.BookingStatus == "Arriving" || b.BookingStatus == "Seated") &&
-                    !string.IsNullOrEmpty(b.TableID));
-
-            if (activeBookingEntity != null)
+            // Clean up stale session if user ID changed on same browser
+            var sessionOwner = HttpContext.Session.GetString(TableOwnerUserIdSessionKey);
+            if (!string.IsNullOrEmpty(sessionOwner) && !string.Equals(sessionOwner, userId, StringComparison.Ordinal))
             {
+                HttpContext.Session.Remove(SelectedTableSessionKey);
+                HttpContext.Session.Remove(TableOwnerUserIdSessionKey);
+            }
+
+            var activeBooking = await FindActiveBookingAsync(customer.CustomerID);
+            if (activeBooking is not null)
+            {
+                HttpContext.Session.Remove(SelectedTableSessionKey);
+                HttpContext.Session.Remove(TableOwnerUserIdSessionKey);
                 ActiveBooking = new
                 {
-                    bookingId = activeBookingEntity.BookingID,
-                    tableId = activeBookingEntity.TableID
+                    bookingId = activeBooking.BookingID,
+                    tableId = activeBooking.TableID
                 };
+                SelectedTableId = activeBooking.TableID;
+                CanPlaceOrder = activeBooking.Table is not null;
+                if (!CanPlaceOrder)
+                {
+                    TableSessionMessage = "Your active booking's table could not be found. Please contact restaurant staff.";
+                }
             }
             else
             {
-                ActiveBooking = null; // SCENARIO B: Fallback to walk-in table selection
+                await ResolveTableSessionAsync(tableID, customer, userId);
             }
 
-            // 1. Fetch all food items directly from DB
+            // Fetch menu items
             MenuItems = await _context.FoodItems.ToListAsync();
 
-            // 2. Compute dynamic recommendations (Top 3 Priority Fallback)
+            // Compute dynamic recommendations
             List<string> recommendedFoodIds = new();
             string dynamicLabel = "Chef's Pick";
 
-            // --- Priority 1: Check if the current user has ordered 3 or more distinct food items ---
             var userTopFoodIds = await _context.OrderItems
                 .Where(oi => oi.Order.CustomerID == CurrentCustomerId && oi.FoodID != null)
                 .GroupBy(oi => oi.FoodID!)
@@ -80,7 +103,6 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
             }
             else
             {
-                // --- Priority 2: Check if global database order items have 3 or more distinct food items ---
                 var globalTopFoodIds = await _context.OrderItems
                     .Where(oi => oi.FoodID != null)
                     .GroupBy(oi => oi.FoodID!)
@@ -96,7 +118,6 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
                 }
                 else
                 {
-                    // --- Priority 3: Fallback to selecting 3 random items from the menu ---
                     recommendedFoodIds = MenuItems
                         .Where(f => !string.IsNullOrEmpty(f.FoodID))
                         .OrderBy(_ => Guid.NewGuid())
@@ -108,7 +129,6 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
                 }
             }
 
-            // Assign recommendation label to selected items
             foreach (var item in MenuItems)
             {
                 if (!string.IsNullOrEmpty(item.FoodID) && recommendedFoodIds.Contains(item.FoodID))
@@ -117,25 +137,46 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
                 }
             }
 
-            // 4. Load available tables for walk-ins
-            AvailableTables = await _context.Tables
-                .Where(t => t.TableAvailability == "On dine-in")
-                .ToListAsync();
-
             return Page();
         }
 
-        // --- POST Handler: Create Order ---
-        public async Task<IActionResult> OnPostCreateOrderAsync([FromBody] CreateOrderRequest request)
+        // Endpoint for polling table session status in real-time
+        public async Task<IActionResult> OnGetCheckTableSessionStatusAsync()
         {
-            if (request == null || request.Items == null || request.Items.Count == 0)
+            var customer = await GetCurrentCustomerAsync();
+            if (customer == null) return new JsonResult(new { valid = false, message = "User unauthenticated." });
+
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var activeBooking = await FindActiveBookingAsync(customer.CustomerID);
+            if (activeBooking is not null)
             {
-                return new JsonResult(new { success = false, message = "Cart is empty." }) { StatusCode = 400 };
+                return new JsonResult(new { valid = true, tableId = activeBooking.TableID });
             }
 
-            if (string.IsNullOrEmpty(request.TableId))
+            var tableId = HttpContext.Session.GetString(SelectedTableSessionKey);
+            var sessionOwner = HttpContext.Session.GetString(TableOwnerUserIdSessionKey);
+
+            if (string.IsNullOrEmpty(tableId) || string.IsNullOrEmpty(userId) || !string.Equals(sessionOwner, userId, StringComparison.Ordinal))
             {
-                return new JsonResult(new { success = false, message = "Table ID is required." }) { StatusCode = 400 };
+                return new JsonResult(new { valid = false, message = "Please scan the QR code at your table to start an order." });
+            }
+
+            bool isValid = await HasValidTableOwnershipAsync(tableId, userId);
+            if (!isValid)
+            {
+                HttpContext.Session.Remove(SelectedTableSessionKey);
+                HttpContext.Session.Remove(TableOwnerUserIdSessionKey);
+                return new JsonResult(new { valid = false, message = TableSessionExpiredMessage });
+            }
+
+            return new JsonResult(new { valid = true, tableId = tableId });
+        }
+
+        public async Task<IActionResult> OnPostCreateOrderAsync([FromBody] CreateOrderRequest request)
+        {
+            if (request?.Items == null || request.Items.Count == 0)
+            {
+                return new JsonResult(new { success = false, message = "Cart is empty." }) { StatusCode = 400 };
             }
 
             var customer = await GetCurrentCustomerAsync();
@@ -144,10 +185,44 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
                 return new JsonResult(new { success = false, message = "User not authenticated." }) { StatusCode = 401 };
             }
 
-            using var transaction = await _context.Database.BeginTransactionAsync();
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                return new JsonResult(new { success = false, message = "User not authenticated." }) { StatusCode = 401 };
+            }
+
+            var activeBooking = await FindActiveBookingAsync(customer.CustomerID);
+            var isWalkIn = activeBooking is null;
+            var tableId = activeBooking?.TableID;
+            var tableLock = default(SemaphoreSlim);
+            if (isWalkIn)
+            {
+                tableId = HttpContext.Session.GetString(SelectedTableSessionKey);
+                if (string.IsNullOrWhiteSpace(tableId))
+                {
+                    return TableSessionError();
+                }
+
+                tableLock = _tableSessions.GetLock(tableId);
+                await tableLock.WaitAsync();
+            }
+
             try
             {
-                // Generate sequential Order ID: ORD-001, ORD-002, etc.
+                if (activeBooking is not null && (string.IsNullOrWhiteSpace(activeBooking.TableID) || activeBooking.Table is null))
+                {
+                    return new JsonResult(new { success = false, message = "Your active booking's table could not be found. Please contact restaurant staff." }) { StatusCode = 409 };
+                }
+
+                if (isWalkIn && !await HasValidTableOwnershipAsync(tableId!, userId))
+                {
+                    HttpContext.Session.Remove(SelectedTableSessionKey);
+                    HttpContext.Session.Remove(TableOwnerUserIdSessionKey);
+                    return TableSessionError();
+                }
+
+                await using var transaction = await _context.Database.BeginTransactionAsync();
+
                 var existingOrderIds = await _context.Orders
                     .AsNoTracking()
                     .Where(o => o.OrderID != null && o.OrderID.StartsWith("ORD-"))
@@ -164,13 +239,12 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
                 }
                 string newOrderId = $"ORD-{(maxOrderNum + 1):D3}";
 
-                // 1. Create and add Order header
                 var order = new Order
                 {
                     OrderID = newOrderId,
                     CustomerID = customer.CustomerID,
-                    TableID = request.TableId,
-                    BookingID = string.IsNullOrWhiteSpace(request.BookingId) ? null : request.BookingId,
+                    TableID = tableId!,
+                    BookingID = activeBooking?.BookingID,
                     StaffID = null,
                     OrderStatus = "Pending",
                     CreatedAt = DateTime.Now,
@@ -179,7 +253,6 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
 
                 _context.Orders.Add(order);
 
-                // Generate sequential OrderItemID: OIT-001, OIT-002, etc.
                 var existingOrderItemIds = await _context.OrderItems
                     .AsNoTracking()
                     .Where(oi => oi.OrderItemID != null && oi.OrderItemID.StartsWith("OIT-"))
@@ -196,7 +269,6 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
                 }
                 int nextOrderItemNumber = maxOrderItemNum + 1;
 
-                // 2. Add each order item separately
                 foreach (var cartItem in request.Items)
                 {
                     string newOrderItemId = $"OIT-{nextOrderItemNumber:D3}";
@@ -214,6 +286,35 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
                     _context.OrderItems.Add(orderItem);
                 }
 
+                var latestBooking = await FindActiveBookingAsync(customer.CustomerID);
+                if (latestBooking is not null)
+                {
+                    if (string.IsNullOrWhiteSpace(latestBooking.TableID) || latestBooking.Table is null)
+                    {
+                        await transaction.RollbackAsync();
+                        return new JsonResult(new { success = false, message = "Your active booking's table could not be found. Please contact restaurant staff." }) { StatusCode = 409 };
+                    }
+
+                    order.TableID = latestBooking.TableID;
+                    order.BookingID = latestBooking.BookingID;
+                }
+                else
+                {
+                    var currentTableId = HttpContext.Session.GetString(SelectedTableSessionKey);
+                    if (!isWalkIn ||
+                        !string.Equals(currentTableId, tableId, StringComparison.Ordinal) ||
+                        !await HasValidTableOwnershipAsync(tableId!, userId))
+                    {
+                        await transaction.RollbackAsync();
+                        HttpContext.Session.Remove(SelectedTableSessionKey);
+                        HttpContext.Session.Remove(TableOwnerUserIdSessionKey);
+                        return TableSessionError();
+                    }
+
+                    order.TableID = tableId!;
+                    order.BookingID = null;
+                }
+
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
@@ -221,10 +322,154 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
             }
             catch (Exception ex)
             {
-                await transaction.RollbackAsync();
-                return new JsonResult(new { success = false, message = "Database error: " + ex.Message }) { StatusCode = 500 };
+                _logger.LogError(ex, "Could not create an order for customer {CustomerId} at table {TableId}.", customer.CustomerID, tableId);
+                return new JsonResult(new { success = false, message = "The order could not be saved. Please try again." }) { StatusCode = 500 };
+            }
+            finally
+            {
+                tableLock?.Release();
             }
         }
+
+        private async Task ResolveTableSessionAsync(string? requestedTableId, CustomerEntity customer, string? currentUserId)
+        {
+            if (!string.IsNullOrWhiteSpace(requestedTableId))
+            {
+                var candidateTable = await GetOrderableTableAsync(requestedTableId);
+
+                // 1. Table does not exist in the database at all
+                if (candidateTable is null)
+                {
+                    HttpContext.Session.Remove(SelectedTableSessionKey);
+                    HttpContext.Session.Remove(TableOwnerUserIdSessionKey);
+                    TableSessionMessage = "This table QR code is invalid or does not exist. Please contact restaurant staff.";
+                    return;
+                }
+
+                // 2. Table exists, but status is "Available" (or anything other than "On dine-in")
+                if (!IsWalkInOrderableTable(candidateTable))
+                {
+                    HttpContext.Session.Remove(SelectedTableSessionKey);
+                    HttpContext.Session.Remove(TableOwnerUserIdSessionKey);
+
+                    string currentStatus = string.IsNullOrWhiteSpace(candidateTable.TableAvailability)
+                        ? "Unavailable"
+                        : candidateTable.TableAvailability;
+
+                    TableSessionMessage = $"Table {requestedTableId} is not yet activated for ordering (Current Status: {currentStatus}). Please inform restaurant staff to activate your table.";
+                    return;
+                }
+
+                // 3. Table is "On dine-in" -> Proceed to claim session
+                var tableLock = _tableSessions.GetLock(requestedTableId);
+                await tableLock.WaitAsync();
+                try
+                {
+                    var table = await GetOrderableTableAsync(requestedTableId);
+                    if (table is null || !IsWalkInOrderableTable(table))
+                    {
+                        HttpContext.Session.Remove(SelectedTableSessionKey);
+                        HttpContext.Session.Remove(TableOwnerUserIdSessionKey);
+                        TableSessionMessage = "This table is currently unavailable for customer ordering.";
+                        return;
+                    }
+
+                    if (string.IsNullOrWhiteSpace(currentUserId))
+                    {
+                        HttpContext.Session.Remove(SelectedTableSessionKey);
+                        HttpContext.Session.Remove(TableOwnerUserIdSessionKey);
+                        TableSessionMessage = "Please sign in again before ordering.";
+                        return;
+                    }
+
+                    _tableSessions.Claim(requestedTableId, currentUserId);
+                    HttpContext.Session.SetString(SelectedTableSessionKey, requestedTableId);
+                    HttpContext.Session.SetString(TableOwnerUserIdSessionKey, currentUserId);
+                    SelectedTableId = requestedTableId;
+                    CanPlaceOrder = true;
+                }
+                finally
+                {
+                    tableLock.Release();
+                }
+
+                return;
+            }
+
+            // Default session fallback
+            var selectedTableId = HttpContext.Session.GetString(SelectedTableSessionKey);
+            var sessionOwner = HttpContext.Session.GetString(TableOwnerUserIdSessionKey);
+
+            if (!string.IsNullOrWhiteSpace(selectedTableId) && !string.IsNullOrWhiteSpace(currentUserId))
+            {
+                if (string.Equals(sessionOwner, currentUserId, StringComparison.Ordinal))
+                {
+                    var tableLock = _tableSessions.GetLock(selectedTableId);
+                    await tableLock.WaitAsync();
+                    try
+                    {
+                        if (await HasValidTableOwnershipAsync(selectedTableId, currentUserId))
+                        {
+                            SelectedTableId = selectedTableId;
+                            CanPlaceOrder = true;
+                            return;
+                        }
+                    }
+                    finally
+                    {
+                        tableLock.Release();
+                    }
+
+                    HttpContext.Session.Remove(SelectedTableSessionKey);
+                    HttpContext.Session.Remove(TableOwnerUserIdSessionKey);
+                    TableSessionMessage = TableSessionExpiredMessage;
+                    return;
+                }
+            }
+
+            HttpContext.Session.Remove(SelectedTableSessionKey);
+            HttpContext.Session.Remove(TableOwnerUserIdSessionKey);
+            TableSessionMessage = "Please scan the QR code at your table to start an order.";
+        }
+
+        private async Task<bool> HasValidTableOwnershipAsync(string tableId, string userId)
+        {
+            if (!string.Equals(_tableSessions.GetOwner(tableId), userId, StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            var table = await GetOrderableTableAsync(tableId);
+            return table is not null && IsWalkInOrderableTable(table);
+        }
+
+        private async Task<Table?> GetOrderableTableAsync(string tableId)
+        {
+            return await _context.Tables
+                .AsNoTracking()
+                .SingleOrDefaultAsync(item => item.TableID == tableId);
+        }
+
+        private Task<Booking?> FindActiveBookingAsync(string customerId)
+        {
+            var today = DateOnly.FromDateTime(DateTime.Now);
+            return _context.Bookings
+                .Include(booking => booking.Table)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(booking =>
+                    booking.CustomerID == customerId &&
+                    booking.BookingDate == today &&
+                    (booking.BookingStatus == "Confirmed" ||
+                     booking.BookingStatus == "Arriving" ||
+                     booking.BookingStatus == "On dine-in") &&
+                    !string.IsNullOrEmpty(booking.TableID));
+        }
+
+        private static bool IsWalkInOrderableTable(Table table) =>
+            table.TableAvailability.Equals("On dine-in", StringComparison.OrdinalIgnoreCase);
+
+        private JsonResult TableSessionError() =>
+            new(new { success = false, message = TableSessionExpiredMessage }) { StatusCode = 409 };
 
         private async Task<CustomerEntity?> GetCurrentCustomerAsync()
         {
@@ -242,8 +487,6 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
 
     public class CreateOrderRequest
     {
-        public string TableId { get; set; } = string.Empty;
-        public string? BookingId { get; set; }
         public List<CartItemDto> Items { get; set; } = new();
     }
 

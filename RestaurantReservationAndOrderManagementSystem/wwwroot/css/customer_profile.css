@@ -276,4 +276,38 @@
     .customer-profile-submit {
         width: 100%;
     }
+
+    .customer-profile-field input {
+        min-height: 44px;
+        height: 44px;
+        padding: 0.65rem 0.75rem;
+        font-size: 0.82rem;
+        box-sizing: border-box;
+    }
+
+    /* Force mobile date input text to align vertically center */
+    .customer-profile-field input[type="date"] {
+        display: flex;
+        align-items: center;
+        line-height: normal;
+        appearance: none;
+        -webkit-appearance: none;
+    }
+
+    /* Target WebKit datepicker internal text wrapper for iOS/Android */
+    .customer-profile-field input[type="date"]::-webkit-datetime-edit {
+        display: inline-flex;
+        align-items: center;
+        height: 100%;
+        padding: 0;
+        margin: 0;
+        line-height: normal;
+    }
+
+    /* Align calendar icon nicely on the right edge */
+    .customer-profile-field input[type="date"]::-webkit-calendar-picker-indicator {
+        margin: 0;
+        padding: 0;
+        cursor: pointer;
+    }
 }
