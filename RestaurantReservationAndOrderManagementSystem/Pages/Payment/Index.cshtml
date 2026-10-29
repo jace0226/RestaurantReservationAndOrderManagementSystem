@@ -15,7 +15,7 @@
 <body class="payment-success-page">
     <main class="payment-success-main">
         <article class="receipt-card" aria-labelledby="payment-success-title">
-            <a class="receipt-close" href="/Customer/Orders" aria-label="Close and return to the main menu">
+            <a class="receipt-close" href="/Customer/Orders?Category=History" aria-label="Close and return to the main menu">
                 <svg viewBox="0 0 24 24" aria-hidden="true">
                     <path d="m6 6 12 12M18 6 6 18" />
                 </svg>
@@ -49,6 +49,10 @@
                         <dd>@Model.Payment.PaymentMethod</dd>
                     </div>
                     <div class="receipt-row">
+                        <dt>Transaction Reference</dt>
+                        <dd>@Model.Payment.TransactionReference</dd>
+                    </div>
+                    <div class="receipt-row">
                         <dt>Payment Status</dt>
                         <dd><span class="status-badge">Successful</span></dd>
                     </div>
@@ -56,6 +60,17 @@
                         <dt>Amount</dt>
                         <dd>RM @Model.Payment.Amount.ToString("N2")</dd>
                     </div>
+                    @if (Model.Payment.TenderedAmount.HasValue)
+                    {
+                        <div class="receipt-row">
+                            <dt>Amount Tendered</dt>
+                            <dd>RM @Model.Payment.TenderedAmount.Value.ToString("N2")</dd>
+                        </div>
+                        <div class="receipt-row">
+                            <dt>Change Given</dt>
+                            <dd>RM @Model.Payment.ChangeGiven.Value.ToString("N2")</dd>
+                        </div>
+                    }
                 </dl>
             </section>
 
@@ -171,6 +186,10 @@
                     <dd>@Model.Payment.PaymentMethod</dd>
                 </div>
                 <div class="receipt-row">
+                    <dt>Transaction Reference</dt>
+                    <dd>@Model.Payment.TransactionReference</dd>
+                </div>
+                <div class="receipt-row">
                     <dt>Payment Status</dt>
                     <dd>Successful</dd>
                 </div>
@@ -178,6 +197,17 @@
                     <dt>Amount</dt>
                     <dd>RM @Model.Payment.Amount.ToString("N2")</dd>
                 </div>
+                @if (Model.Payment.TenderedAmount.HasValue)
+                {
+                    <div class="receipt-row">
+                        <dt>Amount Tendered</dt>
+                        <dd>RM @Model.Payment.TenderedAmount.Value.ToString("N2")</dd>
+                    </div>
+                    <div class="receipt-row">
+                        <dt>Change Given</dt>
+                        <dd>RM @Model.Payment.ChangeGiven.Value.ToString("N2")</dd>
+                    </div>
+                }
 
                 @foreach (var item in Model.Items)
                 {

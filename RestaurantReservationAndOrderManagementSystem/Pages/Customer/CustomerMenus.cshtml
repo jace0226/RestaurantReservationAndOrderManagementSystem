@@ -199,6 +199,18 @@
             <span>You're saving <strong id="customerCartSavingsValue">RM0.00</strong> with promotions!</span>
         </div>
 
+        <fieldset class="customer-payment-method">
+            <legend>Payment method</legend>
+            <label>
+                <input type="radio" name="paymentMethod" value="Counter" />
+                <span><strong>Pay at counter</strong><small>Pay staff when your order is ready.</small></span>
+            </label>
+            <label>
+                <input type="radio" name="paymentMethod" value="Stripe" />
+                <span><strong>Pay online with Stripe</strong><small>Continue to secure online checkout.</small></span>
+            </label>
+        </fieldset>
+
         <button class="customer-confirm-order-btn" id="customerConfirmOrder" type="button" disabled>
             Confirm Order
         </button>

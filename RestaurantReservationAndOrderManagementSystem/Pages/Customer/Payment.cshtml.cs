@@ -53,9 +53,9 @@ public sealed class PaymentModel : PageModel
             return NotFound();
         }
 
-        if (order.OrderStatus != "Payment")
+        if (order.OrderStatus != "Payment" || order.PaymentMethod == "Counter")
         {
-            return BadRequest("This order is not awaiting payment.");
+            return BadRequest("This order is not awaiting Stripe payment.");
         }
 
         if (!_stripePaymentService.IsConfigured)

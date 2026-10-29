@@ -19,20 +19,41 @@
         </div>
     </header>
 
+    @if (!string.IsNullOrWhiteSpace(Model.PaymentSuccess))
+    {
+        <div class="alert alert-success" role="status">@Model.PaymentSuccess</div>
+    }
+    @if (!string.IsNullOrWhiteSpace(Model.PaymentError))
+    {
+        <div class="alert alert-danger" role="alert">@Model.PaymentError</div>
+    }
+
     <section class="orders-list-panel" aria-label="Order queue">
         <div class="orders-toolbar">
             <div class="list-heading">
                 <div>
                     <p class="eyebrow">Order queue</p>
-                    <h2>Find an order</h2>
+                    <h2>Orders (@Model.SelectedDate.ToString("dd/MM/yyyy"))</h2>
                 </div>
             </div>
+            <form method="get" asp-page="/Staff/Orders" class="orders-date-filter">
+                <div class="date-control">
+                    <i class="fa-regular fa-calendar-days" aria-hidden="true"></i>
+                    <label for="selectedDate" class="visually-hidden">Select date</label>
+                    <input id="selectedDate"
+                           type="date"
+                           name="selectedDate"
+                           value="@Model.SelectedDate.ToString("yyyy-MM-dd")" />
+                </div>
+                <input type="hidden" name="statusFilter" value="@Model.StatusFilter" />
+                <button class="filter-submit" type="submit">Filter</button>
+            </form>
             <nav class="filter-nav" aria-label="Order status filters">
-                <a asp-page="/Staff/Orders" asp-route-statusFilter="All"
+                <a asp-page="/Staff/Orders" asp-route-statusFilter="All" asp-route-selectedDate="@Model.SelectedDate.ToString("yyyy-MM-dd")"
                    aria-pressed="@(Model.StatusFilter == "All")">All</a>
                 @foreach (var status in Model.Statuses)
                 {
-                    <a asp-page="/Staff/Orders" asp-route-statusFilter="@status"
+                    <a asp-page="/Staff/Orders" asp-route-statusFilter="@status" asp-route-selectedDate="@Model.SelectedDate.ToString("yyyy-MM-dd")"
                        aria-pressed="@(Model.StatusFilter.Equals(status, StringComparison.OrdinalIgnoreCase))">@status</a>
                 }
             </nav>
@@ -51,6 +72,7 @@
                        asp-page="/Staff/Orders"
                        asp-route-orderId="@order.OrderId"
                        asp-route-statusFilter="@Model.StatusFilter"
+                       asp-route-selectedDate="@Model.SelectedDate.ToString("yyyy-MM-dd")"
                        aria-current="@(isSelected ? "true" : null)">
                         <div class="order-card-header">
                             <span class="order-id">Order #@order.OrderId</span>
@@ -179,6 +201,25 @@
                             <span>@(selectedOrder.HasRecordedTotal ? "Recorded Transaction Total" : "Order Total Amount")</span>
                             <strong>RM @selectedOrder.Total.ToString("N2")</strong>
                         </div>
+                        <div class="breakdown-row">
+                            <span>Payment method</span>
+                            <strong>@(selectedOrder.RecordedPaymentMethod ?? (selectedOrder.PaymentMethod == "Counter" ? "Pay at counter" : selectedOrder.PaymentMethod ?? "Not specified"))</strong>
+                        </div>
+                        <div class="breakdown-row">
+                            <span>Payment status</span>
+                            <strong>@(selectedOrder.HasRecordedTotal ? "Paid" : selectedOrder.Status == "Payment" && selectedOrder.PaymentMethod == "Counter" ? "Awaiting counter payment" : selectedOrder.Status == "Payment" ? "Awaiting Stripe payment" : "Not paid")</strong>
+                        </div>
+                        @if (selectedOrder.TenderedAmount.HasValue)
+                        {
+                            <div class="breakdown-row">
+                                <span>Amount tendered</span>
+                                <strong>RM @selectedOrder.TenderedAmount.Value.ToString("N2")</strong>
+                            </div>
+                            <div class="breakdown-row">
+                                <span>Change given</span>
+                                <strong>RM @selectedOrder.ChangeGiven.Value.ToString("N2")</strong>
+                            </div>
+                        }
 
                         @if (selectedOrder.HasPromotions)
                         {
@@ -189,9 +230,33 @@
                         }
                     </div>
 
+                    @if (selectedOrder.Status == "Payment" &&
+                         selectedOrder.PaymentMethod == "Counter" &&
+                         !selectedOrder.HasRecordedTotal)
+                    {
+                        <form method="post" asp-page-handler="RecordCounterPayment" class="order-status-form">
+                            <input type="hidden" name="orderId" value="@selectedOrder.OrderId" />
+                            <input type="hidden" name="statusFilter" value="@Model.StatusFilter" />
+                            <input type="hidden" name="selectedDate" value="@Model.SelectedDate.ToString("yyyy-MM-dd")" />
+                            <label for="counter-tendered-amount">Amount received (RM)</label>
+                            <div class="status-form-controls">
+                                <input id="counter-tendered-amount"
+                                       name="tenderedAmount"
+                                       type="number"
+                                       min="@selectedOrder.Total.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)"
+                                       step="0.01"
+                                       required
+                                       aria-describedby="counter-payment-help" />
+                                <button type="submit">Record payment</button>
+                            </div>
+                            <small id="counter-payment-help">Amount due: RM @selectedOrder.Total.ToString("N2"). Change is calculated and saved when payment is recorded.</small>
+                        </form>
+                    }
+
                     <form method="post" asp-page-handler="UpdateStatus" class="order-status-form">
                         <input type="hidden" name="orderId" value="@selectedOrder.OrderId" />
                         <input type="hidden" name="statusFilter" value="@Model.StatusFilter" />
+                        <input type="hidden" name="selectedDate" value="@Model.SelectedDate.ToString("yyyy-MM-dd")" />
                         <label for="order-status">Update order status</label>
                         <div class="status-form-controls">
                             <select id="order-status" name="status">

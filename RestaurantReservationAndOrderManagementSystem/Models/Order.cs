@@ -36,5 +36,7 @@ namespace RestaurantReservationAndOrderManagementSystem.Models
         public DateTime? CompletedAt { get; set; }
 
         public string OrderStatus { get; set; } = string.Empty;
+
+        public string? PaymentMethod { get; set; }
     }
 }

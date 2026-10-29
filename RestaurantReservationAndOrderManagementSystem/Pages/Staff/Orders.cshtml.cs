@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using RestaurantReservationAndOrderManagementSystem.Data;
 using RestaurantReservationAndOrderManagementSystem.Models;
@@ -7,6 +8,7 @@ using RestaurantReservationAndOrderManagementSystem.Services;
 
 namespace RestaurantReservationAndOrderManagementSystem.Pages
 {
+    [Authorize(Roles = "Staff,Administrator")]
     public class OrdersModel : PageModel
     {
         private static readonly string[] OrderStatuses =
@@ -40,22 +42,35 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
         [BindProperty(SupportsGet = true)]
         public string? OrderId { get; set; }
 
+        [BindProperty(SupportsGet = true)]
+        public DateTime SelectedDate { get; set; } = DateTime.Today;
+
         [BindProperty]
         public string Status { get; set; } = string.Empty;
+
+        [TempData]
+        public string? PaymentSuccess { get; set; }
+
+        [TempData]
+        public string? PaymentError { get; set; }
 
         public IReadOnlyList<string> Statuses { get; private set; } = OrderStatuses;
         public IReadOnlyList<OrderRow> Orders { get; private set; } = [];
         public OrderDetails? SelectedOrder { get; private set; }
 
-        public async Task OnGetAsync()
+        public async Task OnGetAsync(DateTime? selectedDate)
         {
+            SelectedDate = selectedDate.HasValue && selectedDate.Value != default
+                ? selectedDate.Value.Date
+                : DateTime.Today;
             await LoadOrdersAsync();
         }
 
         public async Task<IActionResult> OnPostUpdateStatusAsync(
             string? orderId,
             string? status,
-            string? statusFilter)
+            string? statusFilter,
+            DateTime? selectedDate)
         {
             if (string.IsNullOrWhiteSpace(orderId) ||
                 status is null ||
@@ -72,6 +87,13 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
                 return NotFound();
             }
 
+            if (status == "Completed" &&
+                !await _dbContext.Transactions.AnyAsync(item => item.OrderID == orderId))
+            {
+                PaymentError = "Record payment before marking this order as completed.";
+                return RedirectToPage(new { orderId, statusFilter, selectedDate });
+            }
+
             order.OrderStatus = status;
             try
             {
@@ -83,16 +105,109 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
                 return StatusCode(StatusCodes.Status500InternalServerError);
             }
 
-            return RedirectToPage(new { orderId, statusFilter });
+            return RedirectToPage(new { orderId, statusFilter, selectedDate });
+        }
+
+        public async Task<IActionResult> OnPostRecordCounterPaymentAsync(
+            string? orderId,
+            decimal tenderedAmount,
+            string? statusFilter,
+            DateTime? selectedDate)
+        {
+            if (string.IsNullOrWhiteSpace(orderId) ||
+                tenderedAmount <= 0 ||
+                tenderedAmount > 9999999999999999.99m ||
+                decimal.Round(tenderedAmount, 2) != tenderedAmount ||
+                (!User.IsInRole("Staff") && !User.IsInRole("Administrator")))
+            {
+                return BadRequest();
+            }
+
+            await using var databaseTransaction = await _dbContext.Database.BeginTransactionAsync(
+                System.Data.IsolationLevel.Serializable);
+
+            var order = await _dbContext.Orders
+                .SingleOrDefaultAsync(item => item.OrderID == orderId);
+            if (order is null)
+            {
+                return NotFound();
+            }
+
+            if (order.OrderStatus != "Payment" ||
+                order.PaymentMethod != "Counter" ||
+                await _dbContext.Transactions.AnyAsync(item => item.OrderID == orderId))
+            {
+                PaymentError = "This order is not awaiting counter payment.";
+                return RedirectToPage(new { orderId, statusFilter, selectedDate });
+            }
+
+            var items = await _dbContext.OrderItems
+                .AsNoTracking()
+                .Where(item => item.OrderID == orderId)
+                .Include(item => item.Food)
+                .ToListAsync();
+            var paidAt = DateTime.Now;
+            var pricing = await _promotionService.ResolvePaymentAlignedPricingAsync(
+                items.Select(item => (item.Food, item.Quantity)),
+                paidAt);
+
+            if (pricing.Total <= 0)
+            {
+                PaymentError = "This order has an invalid payment total.";
+                return RedirectToPage(new { orderId, statusFilter, selectedDate });
+            }
+
+            if (tenderedAmount < pricing.Total)
+            {
+                PaymentError = $"Amount received must be at least RM {pricing.Total:N2}.";
+                return RedirectToPage(new { orderId, statusFilter, selectedDate });
+            }
+
+            order.OrderStatus = "Completed";
+            order.CompletedAt = paidAt;
+            _dbContext.Transactions.Add(new Transaction
+            {
+                TransactionID = $"CTR-{Guid.NewGuid():N}",
+                OrderID = orderId,
+                TransactionType = "Counter",
+                TransactionDate = DateOnly.FromDateTime(paidAt),
+                TransactionTime = TimeOnly.FromDateTime(paidAt),
+                TransactionAmount = pricing.Total,
+                OriginalSubtotal = pricing.OriginalSubtotal,
+                DiscountAmount = pricing.TotalDiscount,
+                NetSubtotal = pricing.NetSubtotal,
+                TaxAmount = pricing.Tax,
+                TenderedAmount = tenderedAmount,
+                ChangeGiven = tenderedAmount - pricing.Total
+            });
+
+            try
+            {
+                await _dbContext.SaveChangesAsync();
+                await databaseTransaction.CommitAsync();
+            }
+            catch (DbUpdateException exception)
+            {
+                await databaseTransaction.RollbackAsync();
+                _logger.LogError(exception, "Could not record counter payment for order {OrderId}.", orderId);
+                PaymentError = "The counter payment could not be recorded. Please try again.";
+                return RedirectToPage(new { orderId, statusFilter, selectedDate });
+            }
+
+            PaymentSuccess = $"Counter payment recorded. Change due: RM {tenderedAmount - pricing.Total:N2}.";
+            return RedirectToPage(new { orderId, statusFilter, selectedDate });
         }
 
         private async Task LoadOrdersAsync()
         {
+            var startOfDay = SelectedDate.Date;
+            var endOfDay = startOfDay.AddDays(1);
             var sourceOrders = await _dbContext.Orders
                 .AsNoTracking()
                 .Include(order => order.Customer)
                     .ThenInclude(customer => customer.User)
                 .Include(order => order.Table)
+                .Where(order => order.CreatedAt >= startOfDay && order.CreatedAt < endOfDay)
                 .OrderByDescending(order => order.CreatedAt)
                 .ToListAsync();
 
@@ -150,7 +265,8 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
                     effectiveTotal,
                     hasRecordedTotal,
                     pricing.TotalDiscount > 0,
-                    pricing.TotalDiscount));
+                    pricing.TotalDiscount,
+                    order.PaymentMethod));
             }
 
             var filteredRows = StatusFilter == "All"
@@ -198,6 +314,10 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
                 finalSelectedTotal,
                 selected.HasRecordedTotal,
                 selectedPricing.TotalDiscount > 0,
+                selected.PaymentMethod,
+                selectedTransaction?.TransactionType,
+                selectedTransaction?.TenderedAmount,
+                selectedTransaction?.ChangeGiven,
                 selectedPricing.Items.Select(item => new OrderItemRow(
                     item.FoodName,
                     item.OriginalUnitPrice,
@@ -219,7 +339,8 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
             decimal Total,
             bool HasRecordedTotal,
             bool HasPromotions,
-            decimal TotalDiscount);
+            decimal TotalDiscount,
+            string? PaymentMethod);
 
         public sealed record OrderDetails(
             string OrderId,
@@ -235,6 +356,10 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
             decimal Total,
             bool HasRecordedTotal,
             bool HasPromotions,
+            string? PaymentMethod,
+            string? RecordedPaymentMethod,
+            decimal? TenderedAmount,
+            decimal? ChangeGiven,
             IReadOnlyList<OrderItemRow> Items);
 
         public sealed record OrderItemRow(

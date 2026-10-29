@@ -198,6 +198,11 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
                 return new JsonResult(new { success = false, message = "Cart is empty." }) { StatusCode = 400 };
             }
 
+            if (request.PaymentMethod is not ("Stripe" or "Counter"))
+            {
+                return new JsonResult(new { success = false, message = "Select a valid payment method." }) { StatusCode = 400 };
+            }
+
             var customer = await GetCurrentCustomerAsync();
             if (customer == null)
             {
@@ -265,7 +270,8 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
                     TableID = tableId!,
                     BookingID = activeBooking?.BookingID,
                     StaffID = null,
-                    OrderStatus = "Pending",
+                    OrderStatus = request.PaymentMethod == "Stripe" ? "Payment" : "Pending",
+                    PaymentMethod = request.PaymentMethod,
                     CreatedAt = DateTime.Now,
                     CompletedAt = null
                 };
@@ -337,7 +343,12 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
-                return new JsonResult(new { success = true, orderId = newOrderId });
+                return new JsonResult(new
+                {
+                    success = true,
+                    orderId = newOrderId,
+                    paymentMethod = request.PaymentMethod
+                });
             }
             catch (Exception ex)
             {
@@ -507,6 +518,7 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
     public class CreateOrderRequest
     {
         public List<CartItemDto> Items { get; set; } = new();
+        public string PaymentMethod { get; set; } = string.Empty;
     }
 
     public class CartItemDto

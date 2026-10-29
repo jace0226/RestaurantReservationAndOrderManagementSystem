@@ -31,5 +31,10 @@ namespace RestaurantReservationAndOrderManagementSystem.Models
         public decimal? DiscountAmount { get; set; }
         public decimal? NetSubtotal { get; set; }
         public decimal? TaxAmount { get; set; }
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal? TenderedAmount { get; set; }
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal? ChangeGiven { get; set; }
     }
 }

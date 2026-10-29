@@ -60,47 +60,62 @@ public sealed class IndexModel : PageModel
             return NotFound();
         }
 
-        if (!string.IsNullOrWhiteSpace(sessionId))
-        {
-            var checkoutSession = await _stripePaymentService.GetCheckoutSessionAsync(sessionId);
-            if (checkoutSession.PaymentStatus != "paid" ||
-                !checkoutSession.Metadata.TryGetValue("OrderID", out var sessionOrderId) ||
-                sessionOrderId != orderId ||
-                !checkoutSession.Metadata.TryGetValue("CustomerID", out var sessionCustomerId) ||
-                sessionCustomerId != order.CustomerID ||
-                string.IsNullOrWhiteSpace(checkoutSession.PaymentIntentId))
-            {
-                return BadRequest("The checkout session could not be verified for this order.");
-            }
-
-            paymentIntentId = checkoutSession.PaymentIntentId;
-        }
-
-        if (string.IsNullOrWhiteSpace(paymentIntentId))
-        {
-            return BadRequest();
-        }
-
-        var paymentIntent = await _stripePaymentService.GetPaymentIntentAsync(paymentIntentId);
-        if (paymentIntent.Status != "succeeded" ||
-            !paymentIntent.Metadata.TryGetValue("OrderID", out var paymentOrderId) ||
-            paymentOrderId != orderId ||
-            !paymentIntent.Metadata.TryGetValue("CustomerID", out var paymentCustomerId) ||
-            paymentCustomerId != order.CustomerID)
-        {
-            return BadRequest("The payment could not be verified for this order.");
-        }
-
-        await _stripePaymentService.CompleteSucceededPaymentAsync(paymentIntent);
-
         var transaction = await _dbContext.Transactions
             .AsNoTracking()
-            .SingleOrDefaultAsync(item =>
-                item.OrderID == orderId &&
-                item.TransactionID == paymentIntentId);
+            .SingleOrDefaultAsync(item => item.OrderID == orderId);
+
         if (transaction is null)
         {
-            return NotFound();
+            if (order.OrderStatus != "Payment" || order.PaymentMethod == "Counter")
+            {
+                return BadRequest("This order does not have a completed payment.");
+            }
+
+            if (!string.IsNullOrWhiteSpace(sessionId))
+            {
+                var checkoutSession = await _stripePaymentService.GetCheckoutSessionAsync(sessionId);
+                if (checkoutSession.PaymentStatus != "paid" ||
+                    !checkoutSession.Metadata.TryGetValue("OrderID", out var sessionOrderId) ||
+                    sessionOrderId != orderId ||
+                    !checkoutSession.Metadata.TryGetValue("CustomerID", out var sessionCustomerId) ||
+                    sessionCustomerId != order.CustomerID ||
+                    string.IsNullOrWhiteSpace(checkoutSession.PaymentIntentId))
+                {
+                    return BadRequest("The checkout session could not be verified for this order.");
+                }
+
+                paymentIntentId = checkoutSession.PaymentIntentId;
+            }
+
+            if (string.IsNullOrWhiteSpace(paymentIntentId))
+            {
+                return BadRequest();
+            }
+
+            var paymentIntent = await _stripePaymentService.GetPaymentIntentAsync(paymentIntentId);
+            if (paymentIntent.Status != "succeeded" ||
+                !paymentIntent.Metadata.TryGetValue("OrderID", out var paymentOrderId) ||
+                paymentOrderId != orderId ||
+                !paymentIntent.Metadata.TryGetValue("CustomerID", out var paymentCustomerId) ||
+                paymentCustomerId != order.CustomerID)
+            {
+                return BadRequest("The payment could not be verified for this order.");
+            }
+
+            await _stripePaymentService.CompleteSucceededPaymentAsync(paymentIntent);
+            transaction = await _dbContext.Transactions
+                .AsNoTracking()
+                .SingleOrDefaultAsync(item =>
+                    item.OrderID == orderId &&
+                    item.TransactionID == paymentIntentId);
+        }
+
+        if (transaction is null ||
+            !await _dbContext.Orders.AnyAsync(item =>
+                item.OrderID == orderId &&
+                item.OrderStatus == "Completed"))
+        {
+            return BadRequest("A completed payment receipt is not available for this order.");
         }
 
         var orderItems = await _dbContext.OrderItems
@@ -129,7 +144,9 @@ public sealed class IndexModel : PageModel
         Payment = new ReceiptPayment(
             transaction.TransactionID,
             transaction.TransactionType,
-            transaction.TransactionAmount);
+            transaction.TransactionAmount,
+            transaction.TenderedAmount,
+            transaction.ChangeGiven);
         OriginalSubtotal = pricing.OriginalSubtotal;
         TotalDiscount = pricing.TotalDiscount;
         Subtotal = pricing.NetSubtotal;
@@ -140,7 +157,12 @@ public sealed class IndexModel : PageModel
     }
 
     public sealed record ReceiptOrder(string OrderID, DateTime OrderDateTime);
-    public sealed record ReceiptPayment(string TransactionReference, string PaymentMethod, decimal Amount);
+    public sealed record ReceiptPayment(
+        string TransactionReference,
+        string PaymentMethod,
+        decimal Amount,
+        decimal? TenderedAmount,
+        decimal? ChangeGiven);
     public sealed record ReceiptItem(
         string Name,
         int Quantity,

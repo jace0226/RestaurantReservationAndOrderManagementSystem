@@ -217,7 +217,10 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
                     pricing.NetSubtotal,
                     pricing.Tax,
                     finalTotal,
-                    pricing.TotalDiscount > 0));
+                    pricing.TotalDiscount > 0,
+                    order.PaymentMethod,
+                    hasRecordedTotal ? transaction!.TenderedAmount : null,
+                    hasRecordedTotal ? transaction!.ChangeGiven : null));
             }
             Orders = orderViews;
         }
@@ -237,7 +240,10 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
             decimal NetSubtotal,
             decimal Tax,
             decimal Total,
-            bool HasPromotions);
+            bool HasPromotions,
+            string? PaymentMethod,
+            decimal? TenderedAmount,
+            decimal? ChangeGiven);
 
         public sealed record OrderItemView(
             int Quantity,
