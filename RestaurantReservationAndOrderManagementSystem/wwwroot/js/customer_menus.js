@@ -632,6 +632,12 @@
             return;
         }
 
+        const selectedPaymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value;
+        if (!selectedPaymentMethod) {
+            window.alert("Please select a payment method before placing your order.");
+            return;
+        }
+
         confirmOrderButton.disabled = true;
         confirmOrderButton.textContent = "Placing Order...";
 
@@ -649,7 +655,10 @@
             };
         });
 
-        const payload = { items: orderItemsPayload };
+        const payload = {
+            items: orderItemsPayload,
+            paymentMethod: selectedPaymentMethod
+        };
 
         const token = document.getElementById("__RequestVerificationToken")?.value || "";
 

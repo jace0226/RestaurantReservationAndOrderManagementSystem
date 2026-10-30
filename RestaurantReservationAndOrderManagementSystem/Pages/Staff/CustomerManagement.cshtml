@@ -1,4 +1,4 @@
-﻿@page "/Staff/CustomerManagement"
+﻿@page "/Admin/CustomerManagement"
 @model RestaurantReservationAndOrderManagementSystem.Pages.Staff.CustomerManagementModel
 @{
 }
@@ -73,7 +73,6 @@
                         <th>Email</th>
                         <th>Phone</th>
                         <th>Date Of Birth</th>
-                        <th>Address</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -87,7 +86,6 @@
                             <td>@customer.Email</td>
                             <td>@customer.Phone</td>
                             <td>@customer.DateOfBirth</td>
-                            <td>@customer.Address</td>
                             <td class="row-btn-cell">
                                 <div class="row-container">
                                     <a class="row-edit" href="#"
@@ -96,7 +94,6 @@
                                        data-email="@customer.Email"
                                        data-phone="@customer.Phone"
                                        data-date-of-birth="@customer.DateOfBirth.ToString("yyyy-MM-dd")"
-                                       data-address="@customer.Address"
                                     >
                                         <i class="fas fa-pen-to-square"></i>
                                     </a>
@@ -154,11 +151,6 @@
             <input type="date" name="DateOfBirth" id="NewUser_DateOfBirth" max="@DateTime.Today.ToString("yyyy-MM-dd")" required />
         </label>
 
-        <label class="user-dialog-field">
-            <span>Address</span>
-            <input name="Address" id="NewUser_Address" placeholder="Enter address..."/>
-        </label>
-
         <footer class="user-dialog-actions">
             <button type="button" class="user-dialog-cancel" id="cancelAddUser">Cancel</button>
             <button type="submit" class="user-dialog-submit">Add Customer</button>
@@ -203,11 +195,6 @@
         <label class="user-dialog-field">
             <span>Date Of Birth</span>
             <input type="date" name="DateOfBirth" id="EditDateOfBirth" max="@DateTime.Today.ToString("yyyy-MM-dd")" required />
-        </label>
-
-        <label class="user-dialog-field">
-            <span>Address</span>
-            <input name="Address" id="EditAddress" placeholder="Enter address..." />
         </label>
 
         <footer class="user-dialog-actions">
@@ -307,14 +294,12 @@
                 const email = button.dataset.email;
                 const phone = button.dataset.phone;
                 const dateofbirth = button.getAttribute("data-date-of-birth");
-                const address = button.dataset.address;
 
                 document.getElementById("EditCustomerID").value = customerId;
                 document.getElementById("EditFullName").value = fullName;
                 document.getElementById("EditEmail").value = email;
                 document.getElementById("EditPhone").value = phone;
                 document.getElementById("EditDateOfBirth").value = dateofbirth;
-                document.getElementById("EditAddress").value = address;
 
                 editUserDialog.showModal();
             })

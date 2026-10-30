@@ -72,6 +72,9 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 builder.Services.AddTransient<IEmailService, EmailService>();
 builder.Services.AddHostedService<ReservationArrivalBackgroundService>();
+builder.Services.AddHostedService<RestaurantReservationAndOrderManagementSystem.Services.BookingExpirationWorker>();
+
+QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
 
 var app = builder.Build();
 
