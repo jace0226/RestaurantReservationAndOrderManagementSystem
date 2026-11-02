@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Identity.Client;
 using RestaurantReservationAndOrderManagementSystem.Data;
 using RestaurantReservationAndOrderManagementSystem.Models;
 using RestaurantReservationAndOrderManagementSystem.Services;
@@ -10,6 +11,8 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
 {
     public class ReservationsModel : PageModel
     {
+        private readonly IEmailService _emailService;
+
         private static readonly string[] BookingStatuses =
         [
             "Pending",
@@ -25,10 +28,12 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
 
         public ReservationsModel(
             ApplicationDbContext dbContext,
-            ILogger<ReservationsModel> logger)
+            ILogger<ReservationsModel> logger,
+            IEmailService emailService)
         {
             _dbContext = dbContext;
             _logger = logger;
+            _emailService = emailService;
         }
 
         [BindProperty(Name = "selectedDate", SupportsGet = true)]
@@ -145,38 +150,38 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
             {
                 if ((booking.BookingStatus is "Pending" or "Waiting") && newStatus == "Confirmed")
                 {
-                    if (string.IsNullOrWhiteSpace(tableId))
-                    {
-                        TempData["ReservationStatusError"] =
-                            "Select an available table before confirming this reservation.";
-                        return RedirectToPage(new
-                        {
-                            selectedDate = SelectedDate?.ToString("yyyy-MM-dd"),
-                            search = Search
-                        });
-                    }
+                    //if (string.IsNullOrWhiteSpace(tableId))
+                    //{
+                    //    TempData["ReservationStatusError"] =
+                    //        "Select an available table before confirming this reservation.";
+                    //    return RedirectToPage(new
+                    //    {
+                    //        selectedDate = SelectedDate?.ToString("yyyy-MM-dd"),
+                    //        search = Search
+                    //    });
+                    //}
 
-                    var table = await _dbContext.Tables
-                        .SingleOrDefaultAsync(item => item.TableID == tableId);
-                    if (table is null ||
-                        !table.TableAvailability.Equals("Available", StringComparison.OrdinalIgnoreCase) ||
-                        table.MaxPax < booking.PartySize)
-                    {
-                        TempData["ReservationStatusError"] = table is null
-                            ? "The selected table does not exist."
-                            : !table.TableAvailability.Equals("Available", StringComparison.OrdinalIgnoreCase)
-                                ? "The selected table is not available."
-                                : $"The selected table seats up to {table.MaxPax} guests.";
-                        return RedirectToPage(new
-                        {
-                            selectedDate = SelectedDate?.ToString("yyyy-MM-dd"),
-                            search = Search
-                        });
-                    }
+                    //var table = await _dbContext.Tables
+                    //    .SingleOrDefaultAsync(item => item.TableID == tableId);
+                    //if (table is null ||
+                    //    !table.TableAvailability.Equals("Available", StringComparison.OrdinalIgnoreCase) ||
+                    //    table.MaxPax < booking.PartySize)
+                    //{
+                    //    TempData["ReservationStatusError"] = table is null
+                    //        ? "The selected table does not exist."
+                    //        : !table.TableAvailability.Equals("Available", StringComparison.OrdinalIgnoreCase)
+                    //            ? "The selected table is not available."
+                    //            : $"The selected table seats up to {table.MaxPax} guests.";
+                    //    return RedirectToPage(new
+                    //    {
+                    //        selectedDate = SelectedDate?.ToString("yyyy-MM-dd"),
+                    //        search = Search
+                    //    });
+                    //}
 
                     var tableAlreadyBooked = await _dbContext.Bookings.AnyAsync(item =>
                         item.BookingID != booking.BookingID &&
-                        item.TableID == table.TableID &&
+                        //item.TableID == table.TableID &&
                         item.BookingDate == booking.BookingDate &&
                         item.BookingTime == booking.BookingTime &&
                         item.BookingStatus != "Cancelled" &&
@@ -192,7 +197,7 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
                         });
                     }
 
-                    booking.TableID = table.TableID;
+                    //booking.TableID = table.TableID;
                 }
 
                 await ReservationStatusWorkflow.ApplyAsync(_dbContext, booking, newStatus);
@@ -210,6 +215,88 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
             }
 
             TempData["ReservationStatusMessage"] = $"Reservation status changed to {newStatus}.";
+
+            var customerDetails = await _dbContext.Bookings.Where(b => b.BookingID == bookingId).Select(b => new
+            {
+                CustomerName = b.Customer.User.FullName,
+                CustomerEmail = b.Customer.User.Email,
+                BookingDate = b.BookingDate,
+                BookingTime = b.BookingTime,
+                PartySize = b.PartySize,
+                TableId = b.TableID
+            }).SingleOrDefaultAsync();
+
+            string safeName = System.Net.WebUtility.HtmlEncode(customerDetails.CustomerName);
+            string safeBookingId = System.Net.WebUtility.HtmlEncode(bookingId);
+
+            string subject = "Reservation Update";
+            string body = $@"
+            <!DOCTYPE html>
+            <html>
+            <body style='margin:0; padding:20px; background-color:#f4f4f4;
+                         font-family:Arial,sans-serif;'>
+
+                <div style='max-width:600px; margin:auto;
+                            background:white; border-radius:10px;
+                            overflow:hidden;'>
+
+                    <div style='background:#252525; padding:25px;
+                                text-align:center;'>
+                        <h1 style='color:white; margin:0;'>
+                            Between Bites
+                        </h1>
+                    </div>
+
+                    <div style='padding:30px; color:#333;'>
+
+                        <h2>Hello {safeName},</h2>
+
+                        <div style='background:#f5f5f5; padding:20px;
+                                    border-radius:8px;'>
+
+                            <h3>Reservation Details</h3>
+
+                            <p><strong>Booking ID:</strong> {safeBookingId}</p>
+
+                            <p><strong>Date:</strong>
+                                {customerDetails.BookingDate}</p>
+
+                            <p><strong>Time:</strong>
+                                {customerDetails.BookingTime}</p>
+
+                            <p><strong>Party Size:</strong>
+                                {customerDetails.PartySize} guests</p>
+
+                            <p><strong>Table Id:</strong>
+                                {customerDetails.TableId}</p>
+
+                            <p><strong>Status:</strong>
+                                {System.Net.WebUtility.HtmlEncode(newStatus)}</p>
+
+                        </div>
+
+                        <p style='margin-top:25px;'>
+                            Thank you for choosing Between Bites!
+                        </p>
+
+                    </div>
+
+                    <div style='background:#eeeeee; padding:15px;
+                                text-align:center; color:#888;
+                                font-size:12px;'>
+                        &copy; 2026 Between Bites. All rights reserved.
+                    </div>
+
+                </div>
+
+            </body>
+            </html>";
+
+            await _emailService.SendEmailAsync(
+                customerDetails.CustomerEmail,
+                subject,
+                body);
+
             return RedirectToPage(new { selectedDate = SelectedDate?.ToString("yyyy-MM-dd"), search = Search });
         }
 
