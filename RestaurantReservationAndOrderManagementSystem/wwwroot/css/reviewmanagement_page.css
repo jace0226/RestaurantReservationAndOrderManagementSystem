@@ -284,3 +284,29 @@ user-search-form > i {
     .user-table tbody tr {
         border-bottom: 1px solid var(--subbrand-color);
     }
+
+    .user-table th:nth-child(1),
+    .user-table td:nth-child(1) {
+        width: 25%;
+    }
+
+    .user-table th:nth-child(2),
+    .user-table td:nth-child(2) {
+        width: 15%;
+    }
+
+    .user-table th:nth-child(3),
+    .user-table td:nth-child(3) {
+        width: 60%;
+    }
+
+.review-message {
+    max-width: 400px;
+    white-space: normal;
+    overflow-wrap: break-word;
+    word-warp: break-word;
+}
+
+.star {
+    color: #f8be00;
+}
