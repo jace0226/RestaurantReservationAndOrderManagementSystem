@@ -24,7 +24,7 @@ namespace RestaurantReservationAndOrderManagementSystem.Services
 
             email.Body = new BodyBuilder
             {
-                TextBody = body
+                HtmlBody = body
             }.ToMessageBody();
 
             using var smtp = new SmtpClient();

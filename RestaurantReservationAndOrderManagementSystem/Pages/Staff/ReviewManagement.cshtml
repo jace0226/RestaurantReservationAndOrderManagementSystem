@@ -67,7 +67,7 @@
 
                     <input type="text"
                            name="SearchTerm"
-                           value=""
+                           value="@Model.SearchTerm"
                            placeholder="Search by customer name, food item or comment..." />
 
                     <button type="submit" class="search-button">Search</button>
@@ -76,15 +76,22 @@
                 <div class="user-filter" id="userFilter">
                     <i class="fas fa-filter"></i>
 
-                    <select id="ratingFilter" name="Filter">
-                        <option value="" selected="">All Ratings</option>
-                        <option value="5" selected="">5 stars</option>
-                        <option value="4" selected="">4 stars</option>
-                        <option value="3" selected="">3 stars</option>
-                        <option value="2" selected="">2 stars</option>
-                        <option value="1" selected="">1 star</option>
+                    <select id="ratingFilter" name="FilterRating">
+                        <option value="" selected="@(string.IsNullOrEmpty(Model.FilterRating))">
+                            All Ratings
+                        </option>
+
+                        <option value="5" selected="@(Model.FilterRating == "5")">5 stars</option>
+                        <option value="4" selected="@(Model.FilterRating == "4")">4 stars</option>
+                        <option value="3" selected="@(Model.FilterRating == "3")">3 stars</option>
+                        <option value="2" selected="@(Model.FilterRating == "2")">2 stars</option>
+                        <option value="1" selected="@(Model.FilterRating == "1")">1 star</option>
                     </select>
                     <i class="fas fa-chevron-down dropdown-arrow" id="dropdownArrow"></i>
+                </div>
+
+                <div class="reset-filter" id="resetFilter" title="Reset filters">
+                    <i class="fas fa-rotate-left"></i>
                 </div>
             </div>
         </form>
@@ -105,8 +112,11 @@
                 {
                 <tr>
                     <td>@review.FullName</td>
-                    <td>@review.Stars</td>
-                    <td>@review.Message</td>
+                    <td>
+                        @review.Stars
+                            <span class="star">★</span>
+                    </td>
+                    <td class="review-message">@review.Message</td>
                 </tr>    
                 }
             </tbody>
@@ -114,29 +124,45 @@
     </div>
 </sectiom>
 
-@section Scripts{
+@section Scripts {
     <script>
-        const search = document.getElementById("search");
-        const roleFilter = document.getElementById("roleFilter");
-        const userFilter = document.getElementById("ratingFilter");
+        const searchForm = document.getElementById("searchForm");
+        const ratingFilter = document.getElementById("ratingFilter");
+        const userFilter = document.getElementById("userFilter");
 
-        roleFilter.addEventListener("mousedown", () => {
+        // Dropdown animation
+        ratingFilter.addEventListener("mousedown", () => {
             userFilter.classList.add("is-open");
         });
 
-        roleFilter.addEventListener("change", () => {
+        // Automatically submit when rating changes
+        ratingFilter.addEventListener("change", () => {
             userFilter.classList.remove("is-open");
-            search.submit();
+            searchForm.submit();
         });
 
-        roleFilter.addEventListener("blur", () => {
+        // Close dropdown animation
+        ratingFilter.addEventListener("blur", () => {
             userFilter.classList.remove("is-open");
         });
 
-        roleFilter.addEventListener("keydown", (event) => {
+        ratingFilter.addEventListener("keydown", (event) => {
             if (event.key === "Escape" || event.key === "Tab") {
                 userFilter.classList.remove("is-open");
             }
+        });
+
+        // Reset search and rating filter
+        document.getElementById("resetFilter").addEventListener("click", function() {
+            const searchBar = searchForm.querySelector('input[name="SearchTerm"]');
+
+            if (searchBar) {
+                searchBar.value = "";
+            }
+
+            ratingFilter.selectedIndex = 0;
+
+            searchForm.submit();
         });
 
         document.getElementById("resetFilter").addEventListener("click", function() {
