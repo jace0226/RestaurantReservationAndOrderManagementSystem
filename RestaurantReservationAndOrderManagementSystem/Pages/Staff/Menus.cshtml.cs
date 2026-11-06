@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
+using System.ComponentModel.DataAnnotations;
 using RestaurantReservationAndOrderManagementSystem.Data;
 using RestaurantReservationAndOrderManagementSystem.Models;
 

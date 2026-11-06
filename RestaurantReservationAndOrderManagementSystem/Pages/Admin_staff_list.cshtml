@@ -13,17 +13,16 @@
     <h5>Staff List</h5>
     <div class="container">
         <div class="search-container">
-            <form>
-                <a>
-                    <span class="">
-                        <i class="fas fa-search"></i>
-                    </span>
-                </a>
-                <input
-                    type="text"
-                    name="search"
-                    id="search"
-                    placeholder="Enter search details...">
+            <form role="search">
+                <div class="system-search">
+                    <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                    <label class="visually-hidden" for="staffSearch">Search staff</label>
+                    <input type="search" name="search" id="staffSearch" placeholder="Enter search details...">
+                    <button class="system-search-clear" type="button" aria-label="Clear search">
+                        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                    </button>
+                    <button class="system-search-submit" type="submit">Search</button>
+                </div>
             </form>
         </div>
         <div class="add-container">
@@ -73,16 +72,16 @@
     <h5>Customer List</h5>
     <div class="container">
         <div class="search-container">
-            <form>
-                <a>
-                    <span class="">
-                        <i class="fas fa-search"></i>
-                    </span>
-                </a>
-                <input type="text"
-                       name="search"
-                       id="search"
-                       placeholder="Enter search details...">
+            <form role="search">
+                <div class="system-search">
+                    <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                    <label class="visually-hidden" for="customerSearch">Search customers</label>
+                    <input type="search" name="search" id="customerSearch" placeholder="Enter search details...">
+                    <button class="system-search-clear" type="button" aria-label="Clear search">
+                        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                    </button>
+                    <button class="system-search-submit" type="submit">Search</button>
+                </div>
             </form>
         </div>
         <div class="add-container">

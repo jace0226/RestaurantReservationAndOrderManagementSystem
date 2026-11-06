@@ -190,38 +190,6 @@
     border-bottom: 1px solid #edf0ff;
 }
 
-.promo-search-form {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.4rem 0.85rem;
-    border: 1px solid var(--promo-line);
-    border-radius: 999px;
-    background: #fafaff;
-    min-width: 280px;
-    max-width: 420px;
-    flex: 1 1 auto;
-}
-
-.promo-search-form i {
-    color: var(--promo-muted);
-    font-size: 0.85rem;
-}
-
-.promo-search-form input {
-    border: none;
-    background: transparent;
-    outline: none;
-    width: 100%;
-    font: inherit;
-    font-size: 0.82rem;
-    color: var(--promo-ink);
-}
-
-.promo-search-form input::placeholder {
-    color: #9aa2c2;
-}
-
 .promo-filter-nav {
     display: flex;
     gap: 0.4rem;

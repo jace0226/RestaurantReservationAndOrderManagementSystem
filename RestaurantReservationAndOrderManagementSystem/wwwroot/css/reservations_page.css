@@ -115,11 +115,10 @@
 
 .reservation-filters {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-columns: minmax(0, 1fr) auto;
     gap: 0.7rem;
 }
 
-.search-control,
 .date-control {
     display: flex;
     min-width: 0;
@@ -133,13 +132,11 @@
     color: var(--brand-color);
 }
 
-.search-control > i,
 .date-control > i {
     flex: 0 0 auto;
     font-size: 0.75rem;
 }
 
-.search-control input,
 .date-control input {
     width: 100%;
     min-width: 0;
@@ -149,10 +146,6 @@
     color: var(--reservation-ink);
     font: inherit;
     font-size: 0.65rem;
-}
-
-.search-control input::placeholder {
-    color: #969db8;
 }
 
 .date-control input {
@@ -336,8 +329,7 @@
     color: #b42335;
 }
 
-.save-status-button,
-.filter-submit {
+.save-status-button {
     padding: 0.4rem 0.65rem;
     border: 1px solid var(--brand-color);
     border-radius: 999px;
@@ -348,8 +340,7 @@
     font-size: 0.61rem;
 }
 
-.save-status-button:hover,
-.filter-submit:hover {
+.save-status-button:hover {
     background: var(--brand-color);
     color: #fff;
 }
@@ -595,11 +586,10 @@
     }
 
     .reservation-filters {
-        grid-template-columns: minmax(0, 1fr) auto auto;
+        grid-template-columns: minmax(0, 1fr) auto;
         gap: 0.45rem;
     }
 
-    .search-control,
     .date-control {
         min-height: 36px;
         padding: 0 0.65rem;

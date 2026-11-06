@@ -60,17 +60,20 @@
 
 
     <div>
-        <form method="get" id="searchForm">
+        <form method="get" id="searchForm" role="search">
             <div class="filter-container">
-                <div class="user-search-form">
-                    <i class="fas fa-search"></i>
-
-                    <input type="text"
+                <div class="system-search">
+                    <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                    <label class="visually-hidden" for="reviewManagementSearch">Search reviews</label>
+                    <input id="reviewManagementSearch"
+                           type="search"
                            name="SearchTerm"
                            value="@Model.SearchTerm"
                            placeholder="Search by customer name, food item or comment..." />
-
-                    <button type="submit" class="search-button">Search</button>
+                    <button type="button" class="system-search-clear" aria-label="Clear search">
+                        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                    </button>
+                    <button type="submit" class="system-search-submit">Search</button>
                 </div>
 
                 <div class="user-filter" id="userFilter">

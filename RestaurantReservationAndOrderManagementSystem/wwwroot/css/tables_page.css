@@ -217,34 +217,9 @@
 }
 
 .table-filters {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 0.6rem;
-}
-
-.table-search {
     display: flex;
-    min-height: 42px;
-    align-items: center;
-    gap: 0.6rem;
-    padding: 0 0.8rem;
-    border: 1px solid var(--tables-line);
-    border-radius: 999px;
-    background: #fff;
-    color: var(--brand-color);
 }
 
-.table-search input {
-    width: 100%;
-    min-width: 0;
-    border: 0;
-    outline: 0;
-    color: var(--tables-ink);
-    font: inherit;
-    font-size: 0.7rem;
-}
-
-.table-filter-submit,
 .save-table-button {
     padding: 0.45rem 0.7rem;
     border: 1px solid var(--brand-color);
@@ -256,7 +231,6 @@
     font-size: 0.62rem;
 }
 
-.table-filter-submit:hover,
 .save-table-button:hover {
     background: var(--brand-color);
     color: #fff;
@@ -622,31 +596,6 @@
     background: #f07868;
 }
 
-.table-filters {
-    grid-template-columns: minmax(0, 1fr) auto;
-}
-
-.table-search {
-    min-height: 44px;
-    border-radius: 11px;
-    border-color: var(--tables-line);
-    color: var(--tables-muted);
-}
-
-.table-filter-submit {
-    min-width: 88px;
-    border-radius: 11px;
-    border-color: var(--tables-line);
-    color: var(--tables-ink);
-    font-size: 0.72rem;
-    font-weight: 600;
-}
-
-.table-filter-submit:hover {
-    border-color: var(--brand-color);
-    background: var(--brand-color);
-}
-
 .area-filters {
     gap: 0.45rem;
 }
@@ -965,7 +914,6 @@
 
 .table-edit-field input:focus-visible,
 .table-edit-field select:focus-visible,
-.table-search:focus-within,
 .table-dialog-field input:focus-visible,
 .table-dialog-field select:focus-visible {
     outline: 3px solid rgb(1 27 216 / 18%);
@@ -1162,26 +1110,7 @@
 
 .table-filters {
     width: min(100%, 300px);
-    grid-template-columns: minmax(0, 1fr) auto;
     gap: 0.45rem;
-}
-
-.table-search {
-    min-height: 38px;
-    border: 1px dashed var(--brand-border);
-    border-radius: 999px;
-}
-
-.table-search input {
-    font-size: 0.72rem;
-}
-
-.table-filter-submit {
-    min-height: 38px;
-    padding-inline: 0.8rem;
-    border-radius: 999px;
-    font-size: 0.69rem;
-    font-weight: 650;
 }
 
 .area-filters {
@@ -1421,7 +1350,6 @@
 
 .table-edit-field input:focus-visible,
 .table-edit-field select:focus-visible,
-.table-search:focus-within,
 .table-dialog-field input:focus-visible,
 .table-dialog-field select:focus-visible {
     outline: 3px solid rgb(1 27 216 / 18%);

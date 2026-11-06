@@ -64,14 +64,17 @@
                 <p class="staff-menu-eyebrow">Your restaurant, your menu</p>
                 <h2 id="staff-menu-list-title">Browse menu items</h2>
             </div>
-            <div class="staff-menu-search">
-                <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
-                <label class="visually-hidden" for="staffMenuSearch">Search menu items</label>
-                <input id="staffMenuSearch" type="search" value="@Model.Search" placeholder="Search dishes..." autocomplete="off" />
-                <button class="staff-search-reset" id="staffMenuReset" type="button" aria-label="Clear search and reset filters" title="Clear search and filters">
-                    <i class="fa-solid fa-xmark" aria-hidden="true"></i>
-                </button>
-            </div>
+            <form class="system-search-host" role="search" data-live-search>
+                <div class="system-search">
+                    <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                    <label class="visually-hidden" for="staffMenuSearch">Search menu items</label>
+                    <input id="staffMenuSearch" type="search" value="@Model.Search" placeholder="Search dishes..." autocomplete="off" />
+                    <button class="system-search-clear" id="staffMenuReset" type="button" aria-label="Clear search and reset filters" title="Clear search and filters">
+                        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                    </button>
+                    <button class="system-search-submit" type="submit">Search</button>
+                </div>
+            </form>
         </div>
 
         <nav class="filter-nav" id="staffCategoryFilters" aria-label="Filter menu by category">
@@ -285,4 +288,3 @@
     </script>
     <script src="~/js/menu_management.js" asp-append-version="true"></script>
 }
-

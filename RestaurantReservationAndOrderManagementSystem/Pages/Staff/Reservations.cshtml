@@ -35,11 +35,15 @@
     </section>
 
     <form class="reservation-filters" method="get" asp-page="/Staff/Reservations" role="search">
-        <label class="search-control">
+        <div class="system-search">
             <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
-            <span class="visually-hidden">Search guests or tables</span>
+            <label class="visually-hidden" for="Search">Search guests or tables</label>
             <input asp-for="Search" type="search" placeholder="Search guests or tables..." />
-        </label>
+            <button type="button" class="system-search-clear" aria-label="Clear search">
+                <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+            </button>
+            <button class="system-search-submit" type="submit">Search</button>
+        </div>
         <div class="date-control">
             <i class="fa-regular fa-calendar-days" aria-hidden="true"></i>
             <label for="selectedDate" class="visually-hidden">Select date</label>
@@ -48,7 +52,6 @@
                    name="selectedDate"
                    value="@Model.SelectedDate?.ToString("yyyy-MM-dd")" />
         </div>
-        <button class="filter-submit" type="submit">Filter</button>
     </form>
 
     <section class="reservation-list-panel" aria-labelledby="reservation-list-title">
