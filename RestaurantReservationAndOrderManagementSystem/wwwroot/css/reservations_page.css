@@ -119,6 +119,12 @@
     gap: 0.7rem;
 }
 
+.reservation-date-filter {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+}
+
 .date-control {
     display: flex;
     min-width: 0;
@@ -151,6 +157,26 @@
 .date-control input {
     width: 100px;
     cursor: pointer;
+}
+
+.reservation-date-filter .filter-submit {
+    min-height: 44px;
+    padding: 0.4rem 0.65rem;
+    border: 1px solid var(--brand-color);
+    border-radius: 999px;
+    background: #fff;
+    color: var(--brand-color);
+    font: inherit;
+    font-size: 0.61rem;
+    font-weight: 650;
+    cursor: pointer;
+    transition: background-color 150ms ease, color 150ms ease;
+}
+
+.reservation-date-filter .filter-submit:hover,
+.reservation-date-filter .filter-submit:focus-visible {
+    background: var(--brand-color);
+    color: #fff;
 }
 
 .reservation-list-panel {
@@ -590,9 +616,18 @@
         gap: 0.45rem;
     }
 
+    .reservation-date-filter {
+        gap: 0.45rem;
+    }
+
     .date-control {
         min-height: 36px;
         padding: 0 0.65rem;
+    }
+
+    .reservation-date-filter .filter-submit {
+        min-height: 40px;
+        padding-inline: 0.75rem;
     }
 
     .date-control {

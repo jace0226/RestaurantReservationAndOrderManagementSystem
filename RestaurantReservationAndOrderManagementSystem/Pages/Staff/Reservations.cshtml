@@ -44,13 +44,16 @@
             </button>
             <button class="system-search-submit" type="submit">Search</button>
         </div>
-        <div class="date-control">
-            <i class="fa-regular fa-calendar-days" aria-hidden="true"></i>
-            <label for="selectedDate" class="visually-hidden">Select date</label>
-            <input type="date"
-                   id="selectedDate"
-                   name="selectedDate"
-                   value="@Model.SelectedDate?.ToString("yyyy-MM-dd")" />
+        <div class="reservation-date-filter">
+            <div class="date-control">
+                <i class="fa-regular fa-calendar-days" aria-hidden="true"></i>
+                <label for="selectedDate" class="visually-hidden">Select date</label>
+                <input type="date"
+                       id="selectedDate"
+                       name="selectedDate"
+                       value="@Model.SelectedDate?.ToString("yyyy-MM-dd")" />
+            </div>
+            <button class="filter-submit" type="submit">Filter</button>
         </div>
     </form>
 
