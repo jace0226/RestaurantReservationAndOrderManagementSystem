@@ -2,6 +2,7 @@ using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using RestaurantReservationAndOrderManagementSystem.Data;
 using RestaurantReservationAndOrderManagementSystem.Models;
+using RestaurantReservationAndOrderManagementSystem.Services;
 using Stripe;
 using Stripe.Checkout;
 
@@ -251,6 +252,9 @@ public sealed class StripePaymentService
 
         currentOrder.OrderStatus = "Completed";
         currentOrder.CompletedAt = paidAt;
+        await ReservationStatusWorkflow.SyncCompletedOrderAsync(
+            _dbContext,
+            currentOrder);
         _dbContext.Transactions.Add(new Transaction
         {
             TransactionID = paymentIntent.Id,

@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using RestaurantReservationAndOrderManagementSystem.Data;
 using RestaurantReservationAndOrderManagementSystem.Models;
 
@@ -6,6 +7,57 @@ namespace RestaurantReservationAndOrderManagementSystem.Services;
 
 public static class ReservationStatusWorkflow
 {
+    public static async Task SyncCompletedOrderAsync(
+        ApplicationDbContext dbContext,
+        Order order,
+        ILogger? logger = null,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            Booking? booking = null;
+
+            if (!string.IsNullOrWhiteSpace(order.BookingID))
+            {
+                booking = await dbContext.Bookings
+                    .SingleOrDefaultAsync(item => item.BookingID == order.BookingID, cancellationToken);
+            }
+
+            if (booking is null && !string.IsNullOrWhiteSpace(order.TableID))
+            {
+                var bookingDate = DateOnly.FromDateTime(order.CreatedAt);
+                booking = await dbContext.Bookings
+                    .Where(item =>
+                        item.TableID == order.TableID &&
+                        item.BookingDate == bookingDate &&
+                        (item.BookingStatus == "On dine-in" ||
+                         item.BookingStatus == "Arriving" ||
+                         item.BookingStatus == "Confirmed"))
+                    .OrderByDescending(item => item.BookingTime)
+                    .FirstOrDefaultAsync(cancellationToken);
+            }
+
+            if (booking is null ||
+                !string.Equals(booking.TableID, order.TableID, StringComparison.OrdinalIgnoreCase) ||
+                booking.BookingDate != DateOnly.FromDateTime(order.CreatedAt) ||
+                (booking.BookingStatus != "On dine-in" &&
+                 booking.BookingStatus != "Arriving" &&
+                 booking.BookingStatus != "Confirmed"))
+            {
+                return;
+            }
+
+            await ApplyAsync(dbContext, booking, "Completed", cancellationToken);
+        }
+        catch (Exception exception)
+        {
+            logger?.LogWarning(
+                exception,
+                "Could not synchronize the reservation for completed order {OrderId}.",
+                order.OrderID);
+        }
+    }
+
     public static async Task ApplyAsync(
         ApplicationDbContext dbContext,
         Booking booking,
