@@ -239,8 +239,7 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
 
             var today = DateOnly.FromDateTime(DateTime.Today);
             var canCancel = (booking.BookingStatus == "Pending" ||
-                             booking.BookingStatus == "Waiting" ||
-                             booking.BookingStatus == "Confirmed") &&
+                             booking.BookingStatus == "Waiting") &&
                 booking.BookingDate > today;
 
             if (!canCancel)
@@ -413,8 +412,7 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
                     booking.BookingNotes,
                     booking.BookingStatus == "Pending" || booking.BookingStatus == "Waiting",
                     (booking.BookingStatus == "Pending" ||
-                     booking.BookingStatus == "Waiting" ||
-                     booking.BookingStatus == "Confirmed") && booking.BookingDate > today))
+                     booking.BookingStatus == "Waiting") && booking.BookingDate > today))
                 .ToListAsync();
         }
 
