@@ -170,6 +170,18 @@
                     <i class="fa-solid fa-utensils"></i>
                 </div>
                 <p>Popular Food Items</p>
+                <div class="category-filter" id="weekContainer">
+                    <form method="get" id="categoryFilterForm">
+                        <input type="hidden" name="WeekStart" value="@Model.SelectedWeekStart.ToString("yyyy-MM-dd")"/>
+                        <select asp-for="SelectedCategory">
+                            <option value="">All Categories</option>
+                            <option value="Sandwiches">Sandwiches</option>
+                            <option value="Salads">Salads</option>
+                            <option value="Beverages">Beverages</option>
+                        </select>
+                        <i class="fas fa-chevron-down dropdown-arrow" id="dropdownArrow"></i>
+                    </form>
+                </div>
             </div>
 
             <div>
@@ -271,6 +283,10 @@
             if (event.key === "Escape" || event.key === "Tab") {
                 weekContainer.classList.remove("is-open");
             }
+        });
+
+        document.getElementById("categoryFilterForm").querySelector("select").addEventListener("change", function(){
+            document.getElementById("categoryFilterForm").submit();
         });
 
         const revenueLabels = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.RevenueLabels));
