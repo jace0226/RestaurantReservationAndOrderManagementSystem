@@ -20,7 +20,7 @@
             </div>
             @if (User.IsInRole("Administrator"))
             {
-                <button class="add-table-button" type="button" id="openAddTable">
+                <button class="add-table-button" type="button" id="openAddTableModal">
                 <i class="fa-solid fa-plus" aria-hidden="true"></i>
                 Add table
                 </button>
@@ -47,14 +47,17 @@
                     <span class="legend-item"><i class="legend-dot legend-reserved" aria-hidden="true"></i>Reserved <strong>@Model.ReservedTables</strong></span>
                     <span class="legend-item"><i class="legend-dot legend-occupied" aria-hidden="true"></i>On dine-in <strong>@Model.OccupiedTables</strong></span>
                 </div>
-                <form class="table-filters" method="get" action="/Staff/Tables">
-                    <label class="table-search">
-                        <span class="visually-hidden">Search table IDs</span>
+                <form class="table-filters" method="get" action="/Staff/Tables" role="search">
+                    <div class="system-search">
                         <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                        <label class="visually-hidden" for="Search">Search table IDs</label>
                         <input asp-for="Search" type="search" placeholder="Search tables..." />
-                    </label>
+                        <button type="button" class="system-search-clear" aria-label="Clear search">
+                            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                        </button>
+                        <button class="system-search-submit" type="submit">Search</button>
+                    </div>
                     <input type="hidden" name="StatusFilter" value="@Model.StatusFilter" />
-                    <button class="table-filter-submit" type="submit">Search</button>
                 </form>
             </div>
         </div>
@@ -161,6 +164,55 @@
     </section>
 </section>
 
+<dialog class="table-dialog" id="addTableModal" aria-labelledby="add-table-dialog-title">
+    <form method="post" action="/Staff/Tables?handler=AddTable" class="table-dialog-form" id="addTableForm">
+        @Html.AntiForgeryToken()
+        <header class="table-dialog-header">
+            <div>
+                <p class="eyebrow">Dining room setup</p>
+                <h2 id="add-table-dialog-title">Add table</h2>
+            </div>
+            <button type="button" class="table-dialog-close" data-close-table-modal aria-label="Close add table dialog">
+                <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+            </button>
+        </header>
+        <label class="table-edit-field">
+            <span>Table ID</span>
+            <input type="text" name="tableId" maxlength="20" required placeholder="e.g. T-21" />
+        </label>
+        <label class="table-edit-field">
+            <span>Capacity</span>
+            <input type="number" name="capacity" min="1" max="100" required />
+        </label>
+        <label class="table-edit-field">
+            <span>Status</span>
+            <select name="availability" required>
+                @foreach (var status in Model.AvailabilityStatuses)
+                {
+                    <option value="@status">@status</option>
+                }
+            </select>
+        </label>
+        <div class="table-dialog-actions">
+            <button type="button" class="table-dialog-cancel" data-close-table-modal>Cancel</button>
+            <button type="submit" class="save-table-button">
+                <i class="fa-solid fa-plus" aria-hidden="true"></i>
+                Add table
+            </button>
+        </div>
+    </form>
+</dialog>
+
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/tables_management.js" asp-append-version="true"></script>
+    <script>
+        document.getElementById("tableSearchReset")?.addEventListener("click", () => {
+            const input = document.querySelector(".search-bar input[name='Search']");
+            if (input) {
+                input.value = "";
+                input.focus();
+            }
+        });
+    </script>
 }

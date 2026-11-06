@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
+using System.ComponentModel.DataAnnotations;
 using RestaurantReservationAndOrderManagementSystem.Data;
 using RestaurantReservationAndOrderManagementSystem.Models;
 
@@ -413,7 +415,7 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
 
             var fileName = $"{foodId}{extension}";
             var filePath = Path.Combine(imageDirectory, fileName);
-            var imageUrl = $"/images/{fileName}";
+            var imageUrl = $"/images/menu/{fileName}";
             try
             {
                 await using var destination = System.IO.File.Create(filePath);
@@ -440,7 +442,7 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
                 webRoot = Path.Combine(_environment.ContentRootPath, "wwwroot");
             }
 
-            return Path.Combine(webRoot, "images");
+            return Path.Combine(webRoot, "images", "menu");
         }
 
         private async Task<bool> DeleteImageIfUnusedAsync(string? imageUrl, string foodId)
@@ -458,12 +460,12 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
         private bool DeleteImageFile(string? imageUrl)
         {
             if (string.IsNullOrWhiteSpace(imageUrl) ||
-                !imageUrl.StartsWith("/images/", StringComparison.Ordinal))
+                !imageUrl.StartsWith("/images/menu/", StringComparison.Ordinal))
             {
                 return true;
             }
 
-            var fileName = imageUrl["/images/".Length..];
+            var fileName = imageUrl["/images/menu/".Length..];
             if (string.IsNullOrWhiteSpace(fileName) ||
                 !string.Equals(fileName, Path.GetFileName(fileName), StringComparison.Ordinal))
             {
@@ -543,4 +545,3 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
             string ImageAlt);
     }
 }
-

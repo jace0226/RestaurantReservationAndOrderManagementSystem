@@ -73,7 +73,7 @@
                                 <span class="customer-feedback-avatar" aria-hidden="true">
                                     <i class="fa-solid fa-user"></i>
                                 </span>
-                                <strong>@(string.IsNullOrWhiteSpace(feedback.CustomerID) ? "Anonymous" : feedback.CustomerID)</strong>
+                                <strong>@(string.IsNullOrWhiteSpace(feedback.DisplayName) ? "Anonymous" : feedback.DisplayName)</strong>
                                 <span class="customer-feedback-card-stars" role="img" aria-label="@feedback.Stars out of 5 stars">
                                     @for (var star = 1; star <= 5; star++)
                                     {

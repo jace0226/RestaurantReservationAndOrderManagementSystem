@@ -52,26 +52,28 @@
 /* Action Buttons */
 .staff-add-menu-button {
     display: inline-flex;
-    min-height: 38px;
+    min-height: 40px;
+    flex: 0 0 auto;
     align-items: center;
     justify-content: center;
     gap: 0.55rem;
-    padding: 0.4rem 0.95rem;
+    padding: 0.55rem 0.9rem;
     border: 1px solid var(--brand-color, #011bd8);
     border-radius: 999px;
     background: var(--brand-color, #011bd8);
+    box-shadow: 0 4px 0 #aab6ff;
     color: #fff;
     font: inherit;
-    font-size: 0.75rem;
-    font-weight: 700;
+    font-size: 0.68rem;
+    font-weight: 400;
     cursor: pointer;
     transition: transform 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
 }
 
     .staff-add-menu-button:hover {
         background: var(--brand-color, #011bd8);
-        box-shadow: 0 3px 0 #aab6ff;
-        transform: translateY(-1px);
+        box-shadow: 0 2px 0 #aab6ff;
+        transform: translateY(2px);
     }
 
 /* Restaurant Overview Stats */
@@ -183,58 +185,6 @@
     font-weight: 600;
     letter-spacing: -0.035em;
 }
-
-/* Search Bar */
-.staff-menu-search {
-    display: flex;
-    width: min(100%, 285px);
-    min-height: 42px;
-    align-items: center;
-    gap: 0.6rem;
-    padding: 0 0.75rem;
-    border: 1px solid var(--brand-border);
-    border-radius: 999px;
-    background: #fff;
-    color: var(--brand-color);
-}
-
-    .staff-menu-search:focus-within {
-        outline: 3px solid rgb(1 27 216 / 12%);
-        border-color: var(--brand-color);
-    }
-
-    .staff-menu-search > i {
-        font-size: 0.78rem;
-    }
-
-    .staff-menu-search input {
-        width: 100%;
-        min-width: 0;
-        border: 0;
-        outline: 0;
-        background: transparent;
-        color: var(--staff-ink);
-        font: inherit;
-        font-size: 0.76rem;
-    }
-
-.staff-search-reset {
-    display: grid;
-    width: 28px;
-    height: 28px;
-    flex: 0 0 28px;
-    place-items: center;
-    border: 0;
-    border-radius: 50%;
-    background: transparent;
-    color: #7c86a0;
-    cursor: pointer;
-}
-
-    .staff-search-reset:hover {
-        background: var(--subbrand-color);
-        color: var(--brand-color);
-    }
 
 /* Category & Availability Filters */
 .filter-nav {
@@ -851,10 +801,6 @@ body.staff-menu-modal-open {
         .staff-listing-heading h2 {
             font-size: 1.35rem;
         }
-
-    .staff-menu-search {
-        width: 100%;
-    }
 
     .staff-menu-grid {
         grid-template-columns: 1fr;

@@ -141,6 +141,66 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
             });
         }
 
+        public async Task<IActionResult> OnPostAddTableAsync(
+            string tableId,
+            int capacity,
+            string availability)
+        {
+            if (!User.IsInRole("Administrator"))
+            {
+                return Forbid();
+            }
+
+            tableId = tableId?.Trim().ToUpperInvariant() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(tableId))
+            {
+                return BadRequest("Table ID is required.");
+            }
+
+            if (capacity < 1 || capacity > 100)
+            {
+                ModelState.AddModelError(string.Empty, "Capacity must be between 1 and 100.");
+                await LoadTablesAsync();
+                return Page();
+            }
+
+            if (!AvailabilityStatusesList.Contains(availability, StringComparer.Ordinal))
+            {
+                ModelState.AddModelError(string.Empty, "Select a valid table status.");
+                await LoadTablesAsync();
+                return Page();
+            }
+
+            if (await _dbContext.Tables.AnyAsync(table => table.TableID == tableId))
+            {
+                ModelState.AddModelError(string.Empty, "A table with this ID already exists.");
+                await LoadTablesAsync();
+                return Page();
+            }
+
+            _dbContext.Tables.Add(new Table
+            {
+                TableID = tableId,
+                MaxPax = capacity,
+                TableAvailability = availability
+            });
+
+            try
+            {
+                await _dbContext.SaveChangesAsync();
+            }
+            catch (DbUpdateException exception)
+            {
+                _logger.LogError(exception, "Could not add table {TableId}.", tableId);
+                ModelState.AddModelError(string.Empty, "The table could not be added. Please try again.");
+                await LoadTablesAsync();
+                return Page();
+            }
+
+            TempData["TableMessage"] = $"Table {tableId} was added.";
+            return RedirectToPage(new { StatusFilter, Search });
+        }
+
         public static string StatusCssClass(string status) => status.ToLowerInvariant() switch
         {
             "available" => "table-available",

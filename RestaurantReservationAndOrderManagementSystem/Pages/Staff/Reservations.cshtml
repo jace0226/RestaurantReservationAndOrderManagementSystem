@@ -35,20 +35,26 @@
     </section>
 
     <form class="reservation-filters" method="get" asp-page="/Staff/Reservations" role="search">
-        <label class="search-control">
+        <div class="system-search">
             <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
-            <span class="visually-hidden">Search guests or tables</span>
+            <label class="visually-hidden" for="Search">Search guests or tables</label>
             <input asp-for="Search" type="search" placeholder="Search guests or tables..." />
-        </label>
-        <div class="date-control">
-            <i class="fa-regular fa-calendar-days" aria-hidden="true"></i>
-            <label for="selectedDate" class="visually-hidden">Select date</label>
-            <input type="date"
-                   id="selectedDate"
-                   name="selectedDate"
-                   value="@Model.SelectedDate?.ToString("yyyy-MM-dd")" />
+            <button type="button" class="system-search-clear" aria-label="Clear search">
+                <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+            </button>
+            <button class="system-search-submit" type="submit">Search</button>
         </div>
-        <button class="filter-submit" type="submit">Filter</button>
+        <div class="reservation-date-filter">
+            <div class="date-control">
+                <i class="fa-regular fa-calendar-days" aria-hidden="true"></i>
+                <label for="selectedDate" class="visually-hidden">Select date</label>
+                <input type="date"
+                       id="selectedDate"
+                       name="selectedDate"
+                       value="@Model.SelectedDate?.ToString("yyyy-MM-dd")" />
+            </div>
+            <button class="filter-submit" type="submit">Filter</button>
+        </div>
     </form>
 
     <section class="reservation-list-panel" aria-labelledby="reservation-list-title">
@@ -120,7 +126,13 @@
                                     <input type="hidden" name="selectedDate" value="@Model.SelectedDate?.ToString("yyyy-MM-dd")" />
                                     <input type="hidden" name="Search" value="@Model.Search" />
                                     <label class="visually-hidden" for="table-@reservation.BookingID">Table for @reservation.GuestName</label>
-                                    <select id="table-@reservation.BookingID" name="tableId" required>
+                                    <select id="table-@reservation.BookingID"
+                                            name="tableId"
+                                            data-booking-date="@reservation.BookingDate.ToString("yyyy-MM-dd")"
+                                            data-booking-time="@reservation.BookingTime.ToString("HH:mm")"
+                                            data-guest-count="@reservation.PartySize"
+                                            data-current-booking-id="@reservation.BookingID"
+                                            required>
                                         @if (string.IsNullOrEmpty(reservation.TableID))
                                         {
                                             <option value="" selected>Select a table</option>
@@ -129,16 +141,11 @@
                                         {
                                             var isCurrentTable = table.TableID == reservation.TableID;
                                             var canSeatParty = table.Capacity >= reservation.PartySize;
-                                            var isAvailable = table.Availability.Equals("Available", StringComparison.OrdinalIgnoreCase);
                                             <option value="@table.TableID"
                                                     selected="@(isCurrentTable ? "selected" : null)"
-                                                    disabled="@(!isCurrentTable && (!canSeatParty || !isAvailable))">
+                                                    disabled="@(!isCurrentTable && !canSeatParty)">
                                                 @table.TableID · @table.Capacity seats
-                                                @if (!isAvailable)
-                                                {
-                                                    @: (@table.Availability)
-                                                }
-                                                else if (!canSeatParty)
+                                                @if (!canSeatParty)
                                                 {
                                                     @: (too small)
                                                 }
@@ -178,14 +185,17 @@
                                         <select id="confirm-table-@reservation.BookingID"
                                                 class="confirm-table-select"
                                                 name="tableId"
+                                                data-booking-date="@reservation.BookingDate.ToString("yyyy-MM-dd")"
+                                                data-booking-time="@reservation.BookingTime.ToString("HH:mm")"
+                                                data-guest-count="@reservation.PartySize"
+                                                data-current-booking-id="@reservation.BookingID"
                                                 aria-label="Select an available table to confirm this reservation"
                                                 hidden>
                                             <option value="">Select available table</option>
                                             @foreach (var table in Model.Tables)
                                             {
                                                 var canSeatParty = table.Capacity >= reservation.PartySize;
-                                                var isAvailable = table.Availability.Equals("Available", StringComparison.OrdinalIgnoreCase);
-                                                if (canSeatParty && isAvailable)
+                                                if (canSeatParty)
                                                 {
                                                     <option value="@table.TableID">@table.TableID · @table.Capacity seats</option>
                                                 }
@@ -289,6 +299,75 @@
             if (event.target === reservationDialog) reservationDialog.close();
         });
         if (@Model.ShowCreateModal.ToString().ToLowerInvariant()) reservationDialog.showModal();
+
+        async function refreshAvailableTables(select, options = {}) {
+            const bookingDate = options.bookingDate || select.dataset.bookingDate;
+            const bookingTime = options.bookingTime || select.dataset.bookingTime;
+            const guestCount = options.guestCount || select.dataset.guestCount;
+            const currentBookingId = options.currentBookingId || select.dataset.currentBookingId || "";
+            if (!bookingDate || !bookingTime || !guestCount) return;
+
+            const previousValue = select.value;
+            const params = new URLSearchParams({
+                handler: "AvailableTables",
+                bookingDate,
+                bookingTime,
+                guestCount,
+                currentBookingId
+            });
+
+            try {
+                const response = await fetch(`?${params.toString()}`, {
+                    headers: { "Accept": "application/json" }
+                });
+                if (!response.ok) throw new Error("Could not load available tables.");
+                const tables = await response.json();
+
+                select.replaceChildren();
+                const placeholder = document.createElement("option");
+                placeholder.value = "";
+                placeholder.textContent = "Select a table";
+                select.appendChild(placeholder);
+
+                for (const table of tables) {
+                    const option = document.createElement("option");
+                    option.value = table.tableID;
+                    option.textContent = `${table.tableID} · ${table.capacity} seats`;
+                    select.appendChild(option);
+                }
+
+                if (tables.some(table => table.tableID === previousValue)) {
+                    select.value = previousValue;
+                }
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        const createForm = document.querySelector(".reservation-dialog-form");
+        const createTableSelect = createForm?.querySelector('[name="NewReservation.TableID"]');
+        const createDateInput = createForm?.querySelector('[name="NewReservation.BookingDate"]');
+        const createTimeInput = createForm?.querySelector('[name="NewReservation.BookingTime"]');
+        const createGuestInput = createForm?.querySelector('[name="NewReservation.PartySize"]');
+
+        const refreshCreateTables = () => {
+            if (!createTableSelect || !createDateInput?.value || !createTimeInput?.value) return;
+            refreshAvailableTables(createTableSelect, {
+                bookingDate: createDateInput.value,
+                bookingTime: createTimeInput.value,
+                guestCount: createGuestInput?.value || 1,
+                currentBookingId: ""
+            });
+        };
+
+        createDateInput?.addEventListener("change", refreshCreateTables);
+        createTimeInput?.addEventListener("change", refreshCreateTables);
+        createGuestInput?.addEventListener("change", refreshCreateTables);
+        refreshCreateTables();
+
+        document.querySelectorAll(
+            ".table-reassign-form select[name='tableId'], .confirm-table-select"
+        ).forEach(select => refreshAvailableTables(select));
 
         document.querySelectorAll(".status-select").forEach(select => {
             const tableSelect = select.form.querySelector(".confirm-table-select");

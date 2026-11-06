@@ -62,12 +62,12 @@
 
 .btn-add-promo {
     display: inline-flex;
-    min-height: 44px;
+    min-height: 40px;
     flex: 0 0 auto;
     align-items: center;
     justify-content: center;
     gap: 0.55rem;
-    padding: 0.65rem 1.25rem;
+    padding: 0.55rem 0.9rem;
     border: 1px solid var(--brand-color, #011bd8);
     border-radius: 999px;
     background: var(--brand-color, #011bd8);
@@ -75,8 +75,8 @@
     color: #fff;
     cursor: pointer;
     font: inherit;
-    font-size: 0.85rem;
-    font-weight: 600;
+    font-size: 0.68rem;
+    font-weight: 400;
     transition: transform 150ms ease, box-shadow 150ms ease;
     text-decoration: none;
 }
@@ -188,38 +188,6 @@
     gap: 1rem;
     padding-bottom: 0.75rem;
     border-bottom: 1px solid #edf0ff;
-}
-
-.promo-search-form {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.4rem 0.85rem;
-    border: 1px solid var(--promo-line);
-    border-radius: 999px;
-    background: #fafaff;
-    min-width: 280px;
-    max-width: 420px;
-    flex: 1 1 auto;
-}
-
-.promo-search-form i {
-    color: var(--promo-muted);
-    font-size: 0.85rem;
-}
-
-.promo-search-form input {
-    border: none;
-    background: transparent;
-    outline: none;
-    width: 100%;
-    font: inherit;
-    font-size: 0.82rem;
-    color: var(--promo-ink);
-}
-
-.promo-search-form input::placeholder {
-    color: #9aa2c2;
 }
 
 .promo-filter-nav {

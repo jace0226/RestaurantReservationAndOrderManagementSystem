@@ -36,6 +36,9 @@
 				<div class="form-input">
 					<i class="fa-solid fa-key"></i>
 					<input asp-for="Login.Password" autocomplete="current-password" placeholder="Password" />
+					<button type="button" class="password-toggle" data-password-toggle aria-label="Show password">
+						<i class="fa-solid fa-eye" aria-hidden="true"></i>
+					</button>
 				</div>
 				<span asp-validation-for="Login.Password" class="text-danger"></span>
 
@@ -82,11 +85,17 @@
 				<div class="form-input">
 					<i class="fa-solid fa-key"></i>
 					<input asp-for="Registration.Password" autocomplete="new-password" placeholder="Password" />
+					<button type="button" class="password-toggle" data-password-toggle aria-label="Show password">
+						<i class="fa-solid fa-eye" aria-hidden="true"></i>
+					</button>
 				</div>
 				<span asp-validation-for="Registration.Password" class="text-danger"></span>
 				<div class="form-input">
 					<i class="fa-solid fa-key"></i>
 					<input asp-for="Registration.ConfirmPassword" autocomplete="new-password" placeholder="Confirm password" />
+					<button type="button" class="password-toggle" data-password-toggle aria-label="Show confirm password">
+						<i class="fa-solid fa-eye" aria-hidden="true"></i>
+					</button>
 				</div>
 				<span asp-validation-for="Registration.ConfirmPassword" class="text-danger"></span>
 				<div class="form-input">
@@ -112,6 +121,20 @@
 				const showRegister = button.dataset.show === "register";
 				document.getElementById("loginForm").hidden = showRegister;
 				document.getElementById("registerForm").hidden = !showRegister;
+			});
+		});
+
+		document.querySelectorAll("[data-password-toggle]").forEach(button => {
+			button.addEventListener("click", () => {
+				const input = button.parentElement.querySelector("input");
+				const icon = button.querySelector("i");
+				if (!input || !icon) return;
+
+				const showPassword = input.type === "password";
+				input.type = showPassword ? "text" : "password";
+				icon.classList.toggle("fa-eye", !showPassword);
+				icon.classList.toggle("fa-eye-slash", showPassword);
+				button.setAttribute("aria-label", showPassword ? "Hide password" : "Show password");
 			});
 		});
 	</script>

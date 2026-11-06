@@ -72,10 +72,22 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 builder.Services.AddTransient<IEmailService, EmailService>();
 builder.Services.AddHostedService<ReservationArrivalBackgroundService>();
+builder.Services.AddHostedService<RestaurantReservationAndOrderManagementSystem.Services.BookingExpirationWorker>();
 
 QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
 
 var app = builder.Build();
+
+var webRootPath = app.Environment.WebRootPath;
+if (string.IsNullOrWhiteSpace(webRootPath))
+{
+    webRootPath = Path.Combine(app.Environment.ContentRootPath, "wwwroot");
+}
+
+foreach (var imageFolder in new[] { "menu", "tables", "promotions" })
+{
+    Directory.CreateDirectory(Path.Combine(webRootPath, "images", imageFolder));
+}
 
 await AccountSeeder.SeedConfiguredAccountsAsync(app.Services);
 // await TableSeeder.SeedDefaultTablesAsync(app.Services);

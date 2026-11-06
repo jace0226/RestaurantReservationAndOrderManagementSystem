@@ -173,7 +173,9 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
                 .OrderByDescending(feedback => feedback.FeedbackID)
                 .Take(10)
                 .Select(feedback => new FeedbackListItem(
-                    feedback.CustomerID,
+                    feedback.Customer != null && feedback.Customer.User != null && !string.IsNullOrWhiteSpace(feedback.Customer.User.FullName)
+                        ? feedback.Customer.User.FullName
+                        : "Anonymous",
                     feedback.Stars,
                     feedback.Message))
                 .ToListAsync();
@@ -194,7 +196,7 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
             string FormattedCount);
 
         public sealed record FeedbackListItem(
-            string? CustomerID,
+            string DisplayName,
             int Stars,
             string? Message);
     }

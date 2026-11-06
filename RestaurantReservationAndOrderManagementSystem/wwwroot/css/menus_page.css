@@ -469,35 +469,7 @@
 }
 
 .menu-search {
-    display: flex;
     width: min(100%, 230px);
-    min-height: 40px;
-    align-items: center;
-    gap: 0.55rem;
-    padding: 0 0.85rem;
-    border: 1px dashed var(--brand-border);
-    border-radius: 999px;
-    background: #fff;
-    color: var(--brand-color);
-}
-
-.menu-search i {
-    font-size: 0.8rem;
-}
-
-.menu-search input {
-    width: 100%;
-    min-width: 0;
-    border: 0;
-    outline: 0;
-    background: transparent;
-    color: #24205f;
-    font: inherit;
-    font-size: 0.72rem;
-}
-
-.menu-search input::placeholder {
-    color: #9299b2;
 }
 
 .visually-hidden {

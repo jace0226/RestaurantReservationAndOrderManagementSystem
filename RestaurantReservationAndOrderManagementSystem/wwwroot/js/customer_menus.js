@@ -632,6 +632,12 @@
             return;
         }
 
+        const selectedPaymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value;
+        if (!selectedPaymentMethod) {
+            window.alert("Please select a payment method before placing your order.");
+            return;
+        }
+
         confirmOrderButton.disabled = true;
         confirmOrderButton.textContent = "Placing Order...";
 
@@ -649,7 +655,10 @@
             };
         });
 
-        const payload = { items: orderItemsPayload };
+        const payload = {
+            items: orderItemsPayload,
+            paymentMethod: selectedPaymentMethod
+        };
 
         const token = document.getElementById("__RequestVerificationToken")?.value || "";
 
@@ -781,6 +790,31 @@
 
 
     let statusCheckInterval = null;
+    let qrWindowTimer = null;
+
+    function startQrWindowStatusTimer(opensAt, initialMessage) {
+        if (qrWindowTimer) {
+            clearInterval(qrWindowTimer);
+            qrWindowTimer = null;
+        }
+
+        const openingTime = new Date(opensAt);
+        if (!Number.isFinite(openingTime.getTime())) return;
+
+        qrWindowTimer = setInterval(() => {
+            if (Date.now() >= openingTime.getTime()) {
+                clearInterval(qrWindowTimer);
+                qrWindowTimer = null;
+                checkTableSessionStatus();
+                return;
+            }
+
+            const statusElement = document.querySelector(".customer-table-session-status");
+            if (statusElement) {
+                statusElement.innerHTML = `<span>${initialMessage}</span>`;
+            }
+        }, 1000);
+    }
 
     async function checkTableSessionStatus() {
         try {
@@ -797,6 +831,13 @@
                 const statusElement = document.querySelector(".customer-table-session-status");
                 if (statusElement) {
                     statusElement.innerHTML = `<span>${data.message || "Please scan the QR code at your table to start an order."}</span>`;
+                }
+
+                if (data.opensAt) {
+                    startQrWindowStatusTimer(
+                        data.opensAt,
+                        data.message || "Your table QR code check-in is not active yet."
+                    );
                 }
 
                 const cartLabelElement = document.querySelector(".customer-cart-table-label");

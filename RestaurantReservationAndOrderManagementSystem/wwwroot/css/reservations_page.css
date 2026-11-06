@@ -115,11 +115,16 @@
 
 .reservation-filters {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-columns: minmax(0, 1fr) auto;
     gap: 0.7rem;
 }
 
-.search-control,
+.reservation-date-filter {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+}
+
 .date-control {
     display: flex;
     min-width: 0;
@@ -133,13 +138,11 @@
     color: var(--brand-color);
 }
 
-.search-control > i,
 .date-control > i {
     flex: 0 0 auto;
     font-size: 0.75rem;
 }
 
-.search-control input,
 .date-control input {
     width: 100%;
     min-width: 0;
@@ -151,13 +154,29 @@
     font-size: 0.65rem;
 }
 
-.search-control input::placeholder {
-    color: #969db8;
-}
-
 .date-control input {
     width: 100px;
     cursor: pointer;
+}
+
+.reservation-date-filter .filter-submit {
+    min-height: 44px;
+    padding: 0.4rem 0.65rem;
+    border: 1px solid var(--brand-color);
+    border-radius: 999px;
+    background: #fff;
+    color: var(--brand-color);
+    font: inherit;
+    font-size: 0.61rem;
+    font-weight: 650;
+    cursor: pointer;
+    transition: background-color 150ms ease, color 150ms ease;
+}
+
+.reservation-date-filter .filter-submit:hover,
+.reservation-date-filter .filter-submit:focus-visible {
+    background: var(--brand-color);
+    color: #fff;
 }
 
 .reservation-list-panel {
@@ -336,8 +355,7 @@
     color: #b42335;
 }
 
-.save-status-button,
-.filter-submit {
+.save-status-button {
     padding: 0.4rem 0.65rem;
     border: 1px solid var(--brand-color);
     border-radius: 999px;
@@ -348,8 +366,7 @@
     font-size: 0.61rem;
 }
 
-.save-status-button:hover,
-.filter-submit:hover {
+.save-status-button:hover {
     background: var(--brand-color);
     color: #fff;
 }
@@ -595,14 +612,22 @@
     }
 
     .reservation-filters {
-        grid-template-columns: minmax(0, 1fr) auto auto;
+        grid-template-columns: minmax(0, 1fr) auto;
         gap: 0.45rem;
     }
 
-    .search-control,
+    .reservation-date-filter {
+        gap: 0.45rem;
+    }
+
     .date-control {
         min-height: 36px;
         padding: 0 0.65rem;
+    }
+
+    .reservation-date-filter .filter-submit {
+        min-height: 40px;
+        padding-inline: 0.75rem;
     }
 
     .date-control {

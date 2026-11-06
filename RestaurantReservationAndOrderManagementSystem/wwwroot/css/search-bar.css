@@ -1,0 +1,76 @@
+/* Shared appearance for every search control. Keep page-specific sizing in page stylesheets. */
+.search-bar {
+    display: flex;
+    min-width: 0;
+    min-height: 44px;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0 0.8rem;
+    box-sizing: border-box;
+    border: 1px dashed #cbd2f5;
+    border-radius: 999px;
+    background: #fff;
+    color: var(--brand-color, #24205f);
+}
+
+.search-bar:focus-within {
+    border-color: #5054c8;
+    box-shadow: 0 0 0 3px rgba(80, 84, 200, 0.12);
+}
+
+.search-bar > i,
+.search-bar > svg {
+    flex: 0 0 auto;
+    color: #687386;
+    font-size: 0.75rem;
+}
+
+.search-bar input:not([type="hidden"]) {
+    flex: 1 1 auto;
+    width: 100%;
+    min-width: 0;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: #1f2937;
+    font: inherit;
+    font-size: 0.72rem;
+    box-shadow: none;
+}
+
+.search-bar input::placeholder {
+    color: #969db8;
+    opacity: 1;
+}
+
+.search-bar input::-webkit-search-cancel-button {
+    display: none;
+}
+
+.search-bar .customer-search-reset,
+.search-bar .search-button {
+    flex: 0 0 auto;
+}
+
+.search-bar .search-button {
+    min-height: 32px;
+    padding: 0.45rem 0.7rem;
+    border: 1px solid var(--brand-color, #24205f);
+    border-radius: 999px;
+    background: #fff;
+    color: var(--brand-color, #24205f);
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.65rem;
+}
+
+.search-bar .search-button:hover {
+    background: var(--brand-color, #24205f);
+    color: #fff;
+}
+
+@media (max-width: 576px) {
+    .search-bar {
+        max-width: 100%;
+    }
+}

@@ -79,14 +79,24 @@
     <section class="promo-panel" aria-label="Promotion list">
         <div class="promo-toolbar">
             <!-- Search -->
-            <form method="get" class="promo-search-form" role="search">
-                <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
-                <input type="search"
-                       name="SearchTerm"
-                       value="@Model.SearchTerm"
-                       placeholder="Search by promo ID, dish, or category..."
-                       aria-label="Search promotions" />
+            <form method="get" role="search">
+                <div class="system-search">
+                    <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                    <label class="visually-hidden" for="promotionSearch">Search promotions</label>
+                    <input id="promotionSearch"
+                           type="search"
+                           name="SearchTerm"
+                           value="@Model.SearchTerm"
+                           placeholder="Search by promo ID, dish, or category..." />
+                    <button type="button" class="system-search-clear" aria-label="Clear search">
+                        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                    </button>
+                    <button type="submit" class="system-search-submit">Search</button>
+                </div>
                 <input type="hidden" name="StatusFilter" value="@Model.StatusFilter" />
+                <button class="customer-search-reset" id="promotionSearchReset" type="button" aria-label="Clear promotion search">
+                    <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                </button>
             </form>
 
             <!-- Status Filter Tabs -->
@@ -386,6 +396,15 @@
             const addDialog = document.getElementById("addPromoDialog");
             const editDialog = document.getElementById("editPromoDialog");
             const deleteDialog = document.getElementById("deletePromoDialog");
+            const promotionSearchReset = document.getElementById("promotionSearchReset");
+            const promotionSearchInput = document.querySelector(".search-bar input[name='SearchTerm']");
+
+            promotionSearchReset?.addEventListener("click", () => {
+                if (promotionSearchInput) {
+                    promotionSearchInput.value = "";
+                    promotionSearchInput.focus();
+                }
+            });
 
             const openAddBtn = document.getElementById("openAddPromoBtn");
             const closeAddBtn = document.getElementById("closeAddPromo");
