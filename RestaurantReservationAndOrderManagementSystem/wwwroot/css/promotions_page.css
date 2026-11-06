@@ -62,12 +62,12 @@
 
 .btn-add-promo {
     display: inline-flex;
-    min-height: 44px;
+    min-height: 40px;
     flex: 0 0 auto;
     align-items: center;
     justify-content: center;
     gap: 0.55rem;
-    padding: 0.65rem 1.25rem;
+    padding: 0.55rem 0.9rem;
     border: 1px solid var(--brand-color, #011bd8);
     border-radius: 999px;
     background: var(--brand-color, #011bd8);
@@ -75,8 +75,8 @@
     color: #fff;
     cursor: pointer;
     font: inherit;
-    font-size: 0.85rem;
-    font-weight: 600;
+    font-size: 0.68rem;
+    font-weight: 400;
     transition: transform 150ms ease, box-shadow 150ms ease;
     text-decoration: none;
 }

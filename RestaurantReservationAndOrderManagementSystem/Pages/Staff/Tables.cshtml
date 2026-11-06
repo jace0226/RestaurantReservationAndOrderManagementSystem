@@ -20,7 +20,7 @@
             </div>
             @if (User.IsInRole("Administrator"))
             {
-                <button class="add-table-button" type="button" id="openAddTable">
+                <button class="add-table-button" type="button" id="openAddTableModal">
                 <i class="fa-solid fa-plus" aria-hidden="true"></i>
                 Add table
                 </button>
@@ -164,6 +164,55 @@
     </section>
 </section>
 
+<dialog class="table-dialog" id="addTableModal" aria-labelledby="add-table-dialog-title">
+    <form method="post" action="/Staff/Tables?handler=AddTable" class="table-dialog-form" id="addTableForm">
+        @Html.AntiForgeryToken()
+        <header class="table-dialog-header">
+            <div>
+                <p class="eyebrow">Dining room setup</p>
+                <h2 id="add-table-dialog-title">Add table</h2>
+            </div>
+            <button type="button" class="table-dialog-close" data-close-table-modal aria-label="Close add table dialog">
+                <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+            </button>
+        </header>
+        <label class="table-edit-field">
+            <span>Table ID</span>
+            <input type="text" name="tableId" maxlength="20" required placeholder="e.g. T-21" />
+        </label>
+        <label class="table-edit-field">
+            <span>Capacity</span>
+            <input type="number" name="capacity" min="1" max="100" required />
+        </label>
+        <label class="table-edit-field">
+            <span>Status</span>
+            <select name="availability" required>
+                @foreach (var status in Model.AvailabilityStatuses)
+                {
+                    <option value="@status">@status</option>
+                }
+            </select>
+        </label>
+        <div class="table-dialog-actions">
+            <button type="button" class="table-dialog-cancel" data-close-table-modal>Cancel</button>
+            <button type="submit" class="save-table-button">
+                <i class="fa-solid fa-plus" aria-hidden="true"></i>
+                Add table
+            </button>
+        </div>
+    </form>
+</dialog>
+
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/tables_management.js" asp-append-version="true"></script>
+    <script>
+        document.getElementById("tableSearchReset")?.addEventListener("click", () => {
+            const input = document.querySelector(".search-bar input[name='Search']");
+            if (input) {
+                input.value = "";
+                input.focus();
+            }
+        });
+    </script>
 }

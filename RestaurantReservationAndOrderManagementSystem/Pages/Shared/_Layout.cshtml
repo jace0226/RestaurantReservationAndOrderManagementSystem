@@ -16,6 +16,10 @@
     @{
         var currentPath = Context.Request.Path;
         var isCustomer = User.Identity?.IsAuthenticated == true && User.IsInRole("Customer");
+        var isStaffOrAdmin = User.Identity?.IsAuthenticated == true &&
+            (User.IsInRole("Staff") || User.IsInRole("Administrator"));
+        var showChatbot = currentPath.Value == "/" ||
+            currentPath.StartsWithSegments("/Customer", StringComparison.OrdinalIgnoreCase);
         var userName = User.Identity?.Name;
         var initials = !string.IsNullOrEmpty(userName)
             ? userName.Substring(0, Math.Min(2, userName.Length)).ToUpper()
@@ -184,9 +188,12 @@
             <header class="top-header @(isCustomer ? "d-none d-lg-flex" : null)">
                 <div class="page-title">@ViewData["Title"]</div>
                 <div class="header-right">
-                    <button class="notification-btn" aria-label="Notifications">
-                        <i class="fa-solid fa-bell"></i>
-                    </button>
+                    @if (!isStaffOrAdmin)
+                    {
+                        <button class="notification-btn" aria-label="Notifications">
+                            <i class="fa-solid fa-bell"></i>
+                        </button>
+                    }
                     <div class="user-profile" aria-label="User Profile">
                         <div class="avatar" aria-hidden="true">
                             @initials
@@ -203,9 +210,12 @@
                 </div>
             </header>
 
-            <main role="main" class="content-body">
-                @RenderBody()
-            </main>
+    <main role="main" class="content-body">
+        @RenderBody()
+    </main>
+
+    <link rel="stylesheet" href="~/css/search-bar.css" asp-append-version="true" />
+
         </div>
     </div>
 
@@ -238,7 +248,10 @@
     <script src="~/js/search-controls.js" asp-append-version="true"></script>
     <script src="https://kit.fontawesome.com/f3ce044c74.js" crossorigin="anonymous"></script>
 
-    <script src='https://www.noupe.com/embed/01a15483f6e870008f533d28b55becc6e41a.js'></script>
+    @if (showChatbot)
+    {
+        <script src='https://www.noupe.com/embed/01a15483f6e870008f533d28b55becc6e41a.js'></script>
+    }
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>

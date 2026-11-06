@@ -94,6 +94,9 @@
                     <button type="submit" class="system-search-submit">Search</button>
                 </div>
                 <input type="hidden" name="StatusFilter" value="@Model.StatusFilter" />
+                <button class="customer-search-reset" id="promotionSearchReset" type="button" aria-label="Clear promotion search">
+                    <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                </button>
             </form>
 
             <!-- Status Filter Tabs -->
@@ -393,6 +396,15 @@
             const addDialog = document.getElementById("addPromoDialog");
             const editDialog = document.getElementById("editPromoDialog");
             const deleteDialog = document.getElementById("deletePromoDialog");
+            const promotionSearchReset = document.getElementById("promotionSearchReset");
+            const promotionSearchInput = document.querySelector(".search-bar input[name='SearchTerm']");
+
+            promotionSearchReset?.addEventListener("click", () => {
+                if (promotionSearchInput) {
+                    promotionSearchInput.value = "";
+                    promotionSearchInput.focus();
+                }
+            });
 
             const openAddBtn = document.getElementById("openAddPromoBtn");
             const closeAddBtn = document.getElementById("closeAddPromo");

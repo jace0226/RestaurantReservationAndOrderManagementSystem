@@ -52,26 +52,28 @@
 /* Action Buttons */
 .staff-add-menu-button {
     display: inline-flex;
-    min-height: 38px;
+    min-height: 40px;
+    flex: 0 0 auto;
     align-items: center;
     justify-content: center;
     gap: 0.55rem;
-    padding: 0.4rem 0.95rem;
+    padding: 0.55rem 0.9rem;
     border: 1px solid var(--brand-color, #011bd8);
     border-radius: 999px;
     background: var(--brand-color, #011bd8);
+    box-shadow: 0 4px 0 #aab6ff;
     color: #fff;
     font: inherit;
-    font-size: 0.75rem;
-    font-weight: 700;
+    font-size: 0.68rem;
+    font-weight: 400;
     cursor: pointer;
     transition: transform 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
 }
 
     .staff-add-menu-button:hover {
         background: var(--brand-color, #011bd8);
-        box-shadow: 0 3px 0 #aab6ff;
-        transform: translateY(-1px);
+        box-shadow: 0 2px 0 #aab6ff;
+        transform: translateY(2px);
     }
 
 /* Restaurant Overview Stats */

@@ -111,13 +111,15 @@
                             <img class="staff-food-image"
                                  src="@item.Image"
                                  alt="@(string.IsNullOrWhiteSpace(item.ImageAlt) ? item.Name : item.ImageAlt)"
-                                 loading="lazy" />
+                                 loading="lazy"
+                                 onerror="this.onerror=null;this.src='/images/menu/default-placeholder.jpg';" />
                         }
                         else
                         {
-                            <div class="staff-image-placeholder" aria-hidden="true">
-                                <i class="fa-solid fa-utensils"></i>
-                            </div>
+                            <img class="staff-food-image"
+                                 src="/images/menu/default-placeholder.jpg"
+                                 alt="Default menu image placeholder"
+                                 loading="lazy" />
                         }
                         <span class="staff-category-tag">@item.Category</span>
                     </div>

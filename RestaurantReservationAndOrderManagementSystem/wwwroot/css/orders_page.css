@@ -144,13 +144,13 @@
 
 .orders-date-filter .filter-submit {
   min-height: 44px;
-  padding: 0.4rem 0.85rem;
+  padding: 0.4rem 0.65rem;
   border: 1px solid var(--brand-color);
   border-radius: 999px;
   background: #fff;
   color: var(--brand-color);
   font: inherit;
-  font-size: 0.72rem;
+  font-size: 0.61rem;
   font-weight: 650;
   cursor: pointer;
   transition: background-color 150ms ease, color 150ms ease;

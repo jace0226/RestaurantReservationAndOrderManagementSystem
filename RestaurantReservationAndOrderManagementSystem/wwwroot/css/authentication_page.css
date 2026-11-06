@@ -76,6 +76,20 @@
           font-weight: 500;
         }
 
+        .password-toggle {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          flex: 0 0 28px;
+          width: 28px;
+          height: 28px;
+          padding: 0;
+          border: 0;
+          background: transparent;
+          color: var(--subtext-color);
+          cursor: pointer;
+        }
+
         input:focus {
           outline: none;
         }

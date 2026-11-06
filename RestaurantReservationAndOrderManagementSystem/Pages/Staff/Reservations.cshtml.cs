@@ -86,6 +86,16 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
                     "NewReservation.PartySize",
                     $"This table seats up to {table.MaxPax} guests.");
             }
+            else if (await IsTableOccupiedInWindowAsync(
+                table.TableID,
+                NewReservation.BookingDate!.Value,
+                NewReservation.BookingTime!.Value,
+                null))
+            {
+                ModelState.AddModelError(
+                    "NewReservation.TableID",
+                    "This table is already reserved within 1 hour of the selected time slot.");
+            }
 
             if (ModelState.ErrorCount > 0)
             {
@@ -189,7 +199,7 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
                     if (tableAlreadyBooked)
                     {
                         TempData["ReservationStatusError"] =
-                            "The selected table already has an active reservation at that date and time.";
+                            "This table is already reserved within 1 hour of the selected time slot.";
                         return RedirectToPage(new
                         {
                             selectedDate = SelectedDate?.ToString("yyyy-MM-dd"),
@@ -326,15 +336,12 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
             var table = await _dbContext.Tables
                 .SingleOrDefaultAsync(item => item.TableID == tableId);
             if (table is null ||
-                !table.TableAvailability.Equals("Available", StringComparison.OrdinalIgnoreCase) ||
                 table.MaxPax < booking.PartySize)
             {
                 TempData["ReservationTableError"] =
                     table is null
                         ? "The selected table does not exist."
-                        : !table.TableAvailability.Equals("Available", StringComparison.OrdinalIgnoreCase)
-                            ? "The selected table is not available."
-                            : $"The selected table seats up to {table.MaxPax} guests.";
+                        : $"The selected table seats up to {table.MaxPax} guests.";
                 return RedirectToPage(new
                 {
                     selectedDate = SelectedDate?.ToString("yyyy-MM-dd"),
@@ -342,13 +349,11 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
                 });
             }
 
-            var tableAlreadyBooked = await _dbContext.Bookings.AnyAsync(item =>
-                item.BookingID != booking.BookingID &&
-                item.TableID == tableId &&
-                item.BookingDate == booking.BookingDate &&
-                item.BookingTime == booking.BookingTime &&
-                item.BookingStatus != "Cancelled" &&
-                item.BookingStatus != "Completed");
+            var tableAlreadyBooked = await IsTableOccupiedInWindowAsync(
+                tableId,
+                booking.BookingDate,
+                booking.BookingTime,
+                booking.BookingID);
             if (tableAlreadyBooked)
             {
                 TempData["ReservationTableError"] =
@@ -407,6 +412,51 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
             });
         }
 
+        public async Task<IActionResult> OnGetAvailableTablesAsync(
+            DateOnly bookingDate,
+            TimeOnly bookingTime,
+            int guestCount,
+            string? currentBookingId)
+        {
+            if (bookingDate == default || guestCount < 1)
+            {
+                return new JsonResult(Array.Empty<TableOption>());
+            }
+
+            var windowStart = bookingTime.AddHours(-1);
+            var windowEnd = bookingTime.AddHours(1);
+            var activeStatuses = new[] { "Pending", "Confirmed", "Arriving", "On dine-in" };
+
+            var tables = await _dbContext.Tables
+                .AsNoTracking()
+                .Where(table => table.MaxPax >= guestCount)
+                .OrderBy(table => table.TableID)
+                .ToListAsync();
+
+            var occupiedTableIds = await _dbContext.Bookings
+                .AsNoTracking()
+                .Where(booking =>
+                    booking.BookingID != (currentBookingId ?? string.Empty) &&
+                    booking.TableID != null &&
+                    booking.BookingDate == bookingDate &&
+                    activeStatuses.Contains(booking.BookingStatus) &&
+                    booking.BookingTime >= windowStart &&
+                    booking.BookingTime <= windowEnd)
+                .Select(booking => booking.TableID!)
+                .Distinct()
+                .ToListAsync();
+
+            var eligible = tables
+                .Where(table => !occupiedTableIds.Contains(table.TableID, StringComparer.Ordinal))
+                .Select(table => new AvailableTableOption(
+                    table.TableID,
+                    table.MaxPax,
+                    table.TableAvailability))
+                .ToList();
+
+            return new JsonResult(eligible);
+        }
+
         public static string StatusCssClass(string status) => status switch
         {
             "Pending" or "Waiting" => "status-pending",
@@ -417,6 +467,25 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
             "Cancelled" => "status-cancelled",
             _ => "status-waiting"
         };
+
+        private async Task<bool> IsTableOccupiedInWindowAsync(
+            string tableId,
+            DateOnly targetDate,
+            TimeOnly targetTime,
+            string? currentBookingId)
+        {
+            var windowStart = targetTime.AddHours(-1);
+            var windowEnd = targetTime.AddHours(1);
+            var activeStatuses = new[] { "Pending", "Confirmed", "Arriving", "On dine-in" };
+
+            return await _dbContext.Bookings.AnyAsync(booking =>
+                booking.BookingID != (currentBookingId ?? string.Empty) &&
+                booking.TableID == tableId &&
+                booking.BookingDate == targetDate &&
+                activeStatuses.Contains(booking.BookingStatus) &&
+                booking.BookingTime >= windowStart &&
+                booking.BookingTime <= windowEnd);
+        }
 
         private async Task LoadPageDataAsync()
         {
@@ -515,5 +584,6 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
             string Status);
 
         public sealed record TableOption(string TableID, int Capacity, string Availability);
+        public sealed record AvailableTableOption(string TableID, int Capacity, string Availability);
     }
 }
