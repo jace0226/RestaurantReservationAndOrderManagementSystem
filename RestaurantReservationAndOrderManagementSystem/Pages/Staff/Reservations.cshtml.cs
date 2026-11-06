@@ -288,7 +288,10 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
                         <p style='margin-top:25px;'>
                             Thank you for choosing Between Bites!
                         </p>
-
+                        
+                        <p style='font-size:14px'>
+                            Please note that the reservation will be cancelled after 30 minutes from the reservation date.
+                        </p>
                     </div>
 
                     <div style='background:#eeeeee; padding:15px;
