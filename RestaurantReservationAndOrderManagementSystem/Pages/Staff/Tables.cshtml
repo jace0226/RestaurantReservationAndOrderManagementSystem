@@ -148,12 +148,11 @@
                             </button>
                             @if (User.IsInRole("Administrator"))
                             {
-                                <button type="submit" class="save-table-button delete-table-button" formaction="/Staff/Tables?handler=Delete" formnovalidate>
+                                <button type="button" class="row-delete save-table-button delete-table-button" data-table-id="@table.TableID">
                                         <i class="fas fa-trash-can" aria-hidden="true"></i>
                                     Remove Table
                                 </button>
                             }
-
                             <span asp-validation-for="TableUpdate.Capacity" class="text-danger"></span>
                         </form>
                     </details>
@@ -203,6 +202,30 @@
     </form>
 </dialog>
 
+<dialog class="table-dialog" id="deleteTableModal" aria-labelledby="delete-table-dialog-title">
+    <form method="post" action="/Staff/Tables?handler=Delete" class="table-dialog-form" id="deleteTableForm">
+        @Html.AntiForgeryToken()
+        <header class="table-dialog-header">
+            <div>
+                <p class="eyebrow">Dining room setup</p>
+                <h2 id="delete-table-dialog-title">Remove table?</h2>
+            </div>
+            <button type="button" class="table-dialog-close" data-close-table-modal aria-label="Close delete table dialog">
+                <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+            </button>
+        </header>
+        <input type="hidden" name="TableID" id="DeleteTableID"/>
+        <div class="table-dialog-actions">
+            <button type="button" class="table-dialog-cancel" data-close-table-modal>Cancel</button>
+            <button type="submit" class="save-table-button">
+                <i class="fas fa-trash-can" aria-hidden="true"></i>
+                Remove table
+            </button>
+        </div>
+    </form>
+</dialog>
+
+
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script src="~/js/tables_management.js" asp-append-version="true"></script>
@@ -213,6 +236,23 @@
                 input.value = "";
                 input.focus();
             }
+        });
+
+        const deleteTableModal = document.getElementById("deleteTableModal");
+        const deleteTableID = document.getElementById("DeleteTableID");
+
+        document.querySelectorAll(".row-delete").forEach(button =>{
+            button.addEventListener("click", function(){
+                const tableID = this.dataset.tableId;
+                deleteTableID.value = tableID;
+                deleteTableModal.showModal();
+            })
+        })
+
+        deleteTableModal.querySelectorAll("[data-close-table-modal]").forEach(button => {
+            button.addEventListener("click", function(){
+                deleteTableModal.close();
+            });
         });
     </script>
 }
