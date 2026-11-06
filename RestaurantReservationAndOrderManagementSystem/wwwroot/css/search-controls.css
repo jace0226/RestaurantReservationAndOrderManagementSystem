@@ -1,0 +1,108 @@
+.system-search-host {
+    width: min(100%, 420px);
+}
+
+.system-search-host .system-search {
+    width: 100%;
+}
+
+.system-search {
+    display: flex;
+    width: min(100%, 420px);
+    min-width: 0;
+    min-height: 44px;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.3rem 0.35rem 0.3rem 0.85rem;
+    border: 1px solid var(--brand-border, #ccd5ff);
+    border-radius: 999px;
+    background: #fff;
+    color: var(--brand-color, #011bd8);
+}
+
+.system-search:focus-within {
+    border-color: var(--brand-color, #011bd8);
+    outline: 3px solid rgb(1 27 216 / 12%);
+}
+
+.system-search > i {
+    flex: 0 0 auto;
+    color: #687386;
+    font-size: 0.8rem;
+}
+
+.system-search input[type="search"] {
+    flex: 1 1 auto;
+    width: 100%;
+    min-width: 0;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: #1f2937;
+    font: inherit;
+    font-size: 0.78rem;
+}
+
+.system-search input[type="search"]::-webkit-search-cancel-button {
+    display: none;
+}
+
+.system-search input[type="search"]::placeholder {
+    color: #969db8;
+}
+
+.system-search-clear {
+    display: grid;
+    width: 28px;
+    height: 28px;
+    flex: 0 0 28px;
+    place-items: center;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: #7c86a0;
+    cursor: pointer;
+}
+
+.system-search-clear:hover,
+.system-search-clear:focus-visible {
+    background: var(--subbrand-color, #ebeeff);
+    color: var(--brand-color, #011bd8);
+}
+
+.system-search-submit {
+    min-height: 34px;
+    flex: 0 0 auto;
+    padding: 0.4rem 0.85rem;
+    border: 1px solid var(--brand-color, #011bd8);
+    border-radius: 999px;
+    background: var(--brand-color, #011bd8);
+    color: #fff;
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.72rem;
+    font-weight: 600;
+    transition: background-color 150ms ease, color 150ms ease;
+}
+
+.system-search-submit:hover,
+.system-search-submit:focus-visible {
+    background: #fff;
+    color: var(--brand-color, #011bd8);
+}
+
+.system-search-submit:focus-visible,
+.system-search-clear:focus-visible {
+    outline: 2px solid var(--brand-color, #011bd8);
+    outline-offset: 2px;
+}
+
+@media (max-width: 640px) {
+    .system-search {
+        width: 100%;
+    }
+
+    .system-search-submit {
+        padding-inline: 0.7rem;
+    }
+}

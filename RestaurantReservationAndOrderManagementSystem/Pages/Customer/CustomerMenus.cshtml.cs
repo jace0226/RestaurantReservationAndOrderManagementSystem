@@ -187,6 +187,24 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
                 return new JsonResult(new { valid = true, tableId = activeBooking.TableID });
             }
 
+            var upcomingBooking = await FindCustomerBookingForTodayAsync(customer.CustomerID, DateTime.Now);
+            if (upcomingBooking is not null)
+            {
+                var checkInFailure = GetCheckInWindowFailureReason(upcomingBooking, DateTime.Now);
+                if (checkInFailure is not null)
+                {
+                    var reservationDateTime = upcomingBooking.BookingDate.ToDateTime(
+                        upcomingBooking.BookingTime,
+                        DateTimeKind.Local);
+                    return new JsonResult(new
+                    {
+                        valid = false,
+                        message = checkInFailure,
+                        opensAt = reservationDateTime.AddHours(-1).ToString("O")
+                    });
+                }
+            }
+
             var tableId = HttpContext.Session.GetString(SelectedTableSessionKey);
             var sessionOwner = HttpContext.Session.GetString(TableOwnerUserIdSessionKey);
 
@@ -420,7 +438,8 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
 
                     if (!IsBookingWithinCheckInWindow(customerBooking, DateTime.Now))
                     {
-                        TableSessionMessage = "The booking is not within the permitted scanning time.";
+                        TableSessionMessage = GetCheckInWindowFailureReason(customerBooking, DateTime.Now)
+                            ?? "The booking is not within the permitted scanning time.";
                         return;
                     }
                 }
@@ -649,7 +668,8 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
 
             if (!IsBookingWithinCheckInWindow(booking, now))
             {
-                return "The booking is not within the permitted scanning time.";
+                return GetCheckInWindowFailureReason(booking, now)
+                    ?? "The booking is not within the permitted scanning time.";
             }
 
             if (!IsBookingStatusEligibleForCheckIn(booking.BookingStatus))
@@ -676,9 +696,37 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
             }
 
             var bookingDateTime = booking.BookingDate.ToDateTime(booking.BookingTime, DateTimeKind.Local);
-            var earliestAllowed = bookingDateTime.AddMinutes(-30);
+            var earliestAllowed = bookingDateTime.AddHours(-1);
             var latestAllowed = bookingDateTime.AddMinutes(30);
             return now >= earliestAllowed && now <= latestAllowed;
+        }
+
+        private static string? GetCheckInWindowFailureReason(Booking booking, DateTime now)
+        {
+            if (booking.BookingDate == default || booking.BookingTime == default)
+            {
+                return "The booking time is invalid.";
+            }
+
+            if (!IsBookingStatusEligibleForCheckIn(booking.BookingStatus))
+            {
+                return "The booking has already been claimed or is no longer eligible.";
+            }
+
+            var reservationDateTime = booking.BookingDate.ToDateTime(booking.BookingTime, DateTimeKind.Local);
+            var scanOpensAt = reservationDateTime.AddHours(-1);
+
+            if (now < scanOpensAt)
+            {
+                return $"Your table QR code check-in is not active yet. QR code scanning opens 1 hour prior to your reservation time (at {scanOpensAt:h:mm tt}).";
+            }
+
+            if (now > reservationDateTime.AddMinutes(30))
+            {
+                return "Your reservation has expired and is no longer eligible for table check-in.";
+            }
+
+            return null;
         }
 
         private static bool IsWalkInOrderableTable(Table table) =>
