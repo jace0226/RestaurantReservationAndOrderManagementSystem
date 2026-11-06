@@ -9,6 +9,7 @@ using System.Text;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
+using Microsoft.Identity.Client;
 
 namespace RestaurantReservationAndOrderManagementSystem.Pages.Staff
 {
@@ -27,6 +28,9 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Staff
         public int PreviousWeekBookings { get; set; } = 0;
         public decimal? BookingsChangePercentage { get; set; }
 
+        [BindProperty(SupportsGet = true)]
+        public string? SelectedCategory { get; set; }
+
         public class PopularFoodItem {
             public string FoodName { get; set; } = string.Empty;
             public int QuantitySold { get; set; }
@@ -38,6 +42,7 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Staff
             public int NumberOfTransaction { get; set; }
             public decimal TransactionAmount { get; set; }
         }
+
 
         public List<PopularFoodItem> PopularFoodItems { get; set; } = new();
         public List<PaymentSummary> PaymentSummaries { get; set; } = new();
@@ -137,7 +142,13 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Staff
                 BookingsChangePercentage = null;
             }
 
-            PopularFoodItems = await _context.OrderItems.Where(oi => oi.Order.CreatedAt >= startDate && oi.Order.CreatedAt < endDate).GroupBy(oi => new
+            var popularFoodQuery = _context.OrderItems.Where(oi => oi.Order.CreatedAt >= startDate && oi.Order.CreatedAt < endDate);
+
+            if (!string.IsNullOrWhiteSpace(SelectedCategory)) {
+                popularFoodQuery = popularFoodQuery.Where(oi => oi.Food.Category == SelectedCategory);
+            }
+
+            PopularFoodItems = await popularFoodQuery.GroupBy(oi => new
             {
                 oi.FoodID,
                 oi.Food.FoodName

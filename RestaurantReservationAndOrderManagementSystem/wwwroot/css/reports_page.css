@@ -135,9 +135,42 @@
     transition: transform 0.25s ease;
 }
 
-.week-filter.is-open .dropdown-arrow {
-    transform: rotate(180deg);
+.category-filter {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    width: 140px;
+    height: 45px;
+    padding: 0 1rem;
+    background: #ffffff;
+    border: 1px solid #d9dce5;
+    border-radius: 999px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    margin-left: auto;
 }
+
+    .category-filter.is-open .dropdown-arrow {
+        transform: rotate(180deg);
+    }
+
+    .category-filter select {
+        flex: 1;
+        min-width: 0;
+        height: 100%;
+        border: none;
+        outline: none;
+        background: transparent;
+        appearance: none;
+        cursor: pointer;
+        font-size: 0.75rem;
+        color: #969db8;
+    }
+
+    .category-filter:focus-within {
+        border-color: #5054c8;
+        box-shadow: 0 0 0 3px rgba(80, 84, 200, 0.12);
+    }
 
 .middle-content {
     display: flex;
