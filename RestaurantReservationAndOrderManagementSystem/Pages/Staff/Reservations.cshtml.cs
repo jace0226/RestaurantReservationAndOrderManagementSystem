@@ -160,38 +160,8 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
             {
                 if ((booking.BookingStatus is "Pending" or "Waiting") && newStatus == "Confirmed")
                 {
-                    //if (string.IsNullOrWhiteSpace(tableId))
-                    //{
-                    //    TempData["ReservationStatusError"] =
-                    //        "Select an available table before confirming this reservation.";
-                    //    return RedirectToPage(new
-                    //    {
-                    //        selectedDate = SelectedDate?.ToString("yyyy-MM-dd"),
-                    //        search = Search
-                    //    });
-                    //}
-
-                    //var table = await _dbContext.Tables
-                    //    .SingleOrDefaultAsync(item => item.TableID == tableId);
-                    //if (table is null ||
-                    //    !table.TableAvailability.Equals("Available", StringComparison.OrdinalIgnoreCase) ||
-                    //    table.MaxPax < booking.PartySize)
-                    //{
-                    //    TempData["ReservationStatusError"] = table is null
-                    //        ? "The selected table does not exist."
-                    //        : !table.TableAvailability.Equals("Available", StringComparison.OrdinalIgnoreCase)
-                    //            ? "The selected table is not available."
-                    //            : $"The selected table seats up to {table.MaxPax} guests.";
-                    //    return RedirectToPage(new
-                    //    {
-                    //        selectedDate = SelectedDate?.ToString("yyyy-MM-dd"),
-                    //        search = Search
-                    //    });
-                    //}
-
                     var tableAlreadyBooked = await _dbContext.Bookings.AnyAsync(item =>
                         item.BookingID != booking.BookingID &&
-                        //item.TableID == table.TableID &&
                         item.BookingDate == booking.BookingDate &&
                         item.BookingTime == booking.BookingTime &&
                         item.BookingStatus != "Cancelled" &&
@@ -207,7 +177,6 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
                         });
                     }
 
-                    //booking.TableID = table.TableID;
                 }
 
                 await ReservationStatusWorkflow.ApplyAsync(_dbContext, booking, newStatus);

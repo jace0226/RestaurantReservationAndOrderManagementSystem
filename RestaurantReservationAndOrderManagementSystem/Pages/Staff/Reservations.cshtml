@@ -177,31 +177,6 @@
                                             }
                                         }
                                     </select>
-                                    @* @if (reservation.Status is "Pending" or "Waiting")
-                                    {
-                                        <label class="visually-hidden" for="confirm-table-@reservation.BookingID">
-                                            Table for confirming @reservation.GuestName
-                                        </label>
-                                        <select id="confirm-table-@reservation.BookingID"
-                                                class="confirm-table-select"
-                                                name="tableId"
-                                                data-booking-date="@reservation.BookingDate.ToString("yyyy-MM-dd")"
-                                                data-booking-time="@reservation.BookingTime.ToString("HH:mm")"
-                                                data-guest-count="@reservation.PartySize"
-                                                data-current-booking-id="@reservation.BookingID"
-                                                aria-label="Select an available table to confirm this reservation"
-                                                hidden>
-                                            <option value="">Select available table</option>
-                                            @foreach (var table in Model.Tables)
-                                            {
-                                                var canSeatParty = table.Capacity >= reservation.PartySize;
-                                                if (canSeatParty)
-                                                {
-                                                    <option value="@table.TableID">@table.TableID · @table.Capacity seats</option>
-                                                }
-                                            }
-                                        </select>
-                                    } *@
                                     <button class="save-status-button" type="submit">Save</button>
                                 </form>
                             </td>

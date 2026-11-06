@@ -303,7 +303,7 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
                     TableID = tableId!,
                     BookingID = activeBooking?.BookingID,
                     StaffID = null,
-                    OrderStatus = request.PaymentMethod == "Stripe" ? "Payment" : "Pending",
+                    OrderStatus = "Pending",
                     PaymentMethod = request.PaymentMethod,
                     CreatedAt = DateTime.Now,
                     CompletedAt = null
@@ -375,12 +375,15 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
 
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
+                TempData["OrderSuccess"] =
+                    "Order placed successfully! Your order is currently pending kitchen confirmation.";
 
                 return new JsonResult(new
                 {
                     success = true,
                     orderId = newOrderId,
-                    paymentMethod = request.PaymentMethod
+                    paymentMethod = request.PaymentMethod,
+                    redirectUrl = "/Customer/Orders"
                 });
             }
             catch (Exception ex)
