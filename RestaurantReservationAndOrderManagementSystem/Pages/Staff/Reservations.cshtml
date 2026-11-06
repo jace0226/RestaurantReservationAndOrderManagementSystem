@@ -170,7 +170,7 @@
                                             }
                                         }
                                     </select>
-                                    @if (reservation.Status is "Pending" or "Waiting")
+                                    @* @if (reservation.Status is "Pending" or "Waiting")
                                     {
                                         <label class="visually-hidden" for="confirm-table-@reservation.BookingID">
                                             Table for confirming @reservation.GuestName
@@ -191,7 +191,7 @@
                                                 }
                                             }
                                         </select>
-                                    }
+                                    } *@
                                     <button class="save-status-button" type="submit">Save</button>
                                 </form>
                             </td>

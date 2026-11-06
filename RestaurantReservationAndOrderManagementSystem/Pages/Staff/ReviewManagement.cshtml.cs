@@ -23,10 +23,10 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Staff
 
         public List<ReviewViewModel> Reviews { get; set; } = new();
 
-        [BindProperty]
+        [BindProperty(SupportsGet = true)]
         public string? SearchTerm { get; set; }
 
-        [BindProperty]
+        [BindProperty(SupportsGet = true)]
         public string? FilterRating { get; set; }
 
         public double AverageRating { get; set; }
