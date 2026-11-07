@@ -8,6 +8,7 @@ using System.Security.Claims;
 using System.ComponentModel.DataAnnotations;
 using RestaurantReservationAndOrderManagementSystem.Data;
 using RestaurantReservationAndOrderManagementSystem.Models;
+using RestaurantReservationAndOrderManagementSystem.Services;
 
 namespace RestaurantReservationAndOrderManagementSystem.Pages
 {
@@ -23,15 +24,18 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
         private readonly ApplicationDbContext _dbContext;
         private readonly IWebHostEnvironment _environment;
         private readonly ILogger<MenusModel> _logger;
+        private readonly PromotionService _promotionService;
 
         public MenusModel(
             ApplicationDbContext dbContext,
             IWebHostEnvironment environment,
-            ILogger<MenusModel> logger)
+            ILogger<MenusModel> logger,
+            PromotionService promotionService)
         {
             _dbContext = dbContext;
             _environment = environment;
             _logger = logger;
+            _promotionService = promotionService;
         }
 
         [BindProperty]
@@ -331,21 +335,32 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
                 .AsNoTracking()
                 .OrderBy(item => item.FoodName)
                 .ToListAsync();
+            var activePromotions = await _promotionService.GetActivePromotionsMapAsync();
             AvailableItemCount = items.Count(item =>
                 item.FoodAvailability.Equals("Available", StringComparison.OrdinalIgnoreCase));
 
-            MenuItems = items.Select(item => new MenuItemRow(
-                item.FoodID,
-                item.FoodName,
-                item.Price,
-                item.FoodDescription,
-                item.FullDescription,
-                item.Category,
-                item.Dietary,
-                item.PrepTime,
-                item.FoodAvailability,
-                item.ImageUrl,
-                item.ImageAlt)).ToList();
+            MenuItems = items.Select(item =>
+            {
+                activePromotions.TryGetValue(item.FoodID, out var promotion);
+                var discountPercent = promotion != null && item.Price > 0
+                    ? (int)Math.Round((item.Price - promotion.DiscountedPrice) / item.Price * 100)
+                    : 0;
+
+                return new MenuItemRow(
+                    item.FoodID,
+                    item.FoodName,
+                    item.Price,
+                    item.FoodDescription,
+                    item.FullDescription,
+                    item.Category,
+                    item.Dietary,
+                    item.PrepTime,
+                    item.FoodAvailability,
+                    item.ImageUrl,
+                    item.ImageAlt,
+                    promotion?.DiscountedPrice,
+                    discountPercent > 0 ? discountPercent : null);
+            }).ToList();
 
             await LoadCategoriesAsync(items);
 
@@ -542,6 +557,8 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
             string PrepTime,
             string Availability,
             string Image,
-            string ImageAlt);
+            string ImageAlt,
+            decimal? DiscountedPrice,
+            int? DiscountPercent);
     }
 }

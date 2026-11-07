@@ -40,8 +40,6 @@
                     <a class="primary-link" href="#menu">See what's on <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
                     <span class="hero-note"><i class="fa-solid fa-heart" aria-hidden="true"></i> Made for your little breaks</span>
                 </div>
-                </body>
-                </html>
             </div>
             <div class="hero-art" role="img" aria-label="Illustration of a freshly brewed cup">
                 <span class="hero-art-orbit"></span>
@@ -86,7 +84,10 @@
                             <div class="featured-art featured-art-@index" aria-hidden="true">
                                 <span class="featured-art-sun"></span>
                                 <span class="featured-food-icon">
-                                    <i class="fa-solid @(index % 3 == 0 ? "fa-bread-slice" : index % 3 == 1 ? "fa-leaf" : "fa-cookie-bite")"></i>
+                                    <img src="@(!string.IsNullOrWhiteSpace(item.ImageUrl) ? item.ImageUrl : "/images/menu/default-placeholder.jpg")"
+                                         alt="@(string.IsNullOrWhiteSpace(item.ImageAlt) ? item.Name : item.ImageAlt)"
+                                         loading="lazy"
+                                         onerror="this.onerror=null;this.src='/images/menu/default-placeholder.jpg';" />
                                 </span>
                                 <span class="featured-art-label">A little joy</span>
                             </div>
@@ -130,25 +131,41 @@
                 </div>
                 <div class="welcome-rating" aria-label="Made with care, every day">
                     <i class="fa-solid fa-heart" aria-hidden="true"></i>
-                    <span>Made with care,<br />every single day</span>
+                    <span>@Model.AverageReviewRating.ToString("0.0") / 5 average<br />@Model.ReviewCount @(Model.ReviewCount == 1 ? "review" : "reviews")</span>
                 </div>
             </div>
             <div class="welcome-cards">
-                <article class="welcome-card welcome-card-blue">
-                    <span class="welcome-card-icon"><i class="fa-solid fa-sun" aria-hidden="true"></i></span>
-                    <p>A cozy little pause in the middle of a busy day.</p>
-                    <span class="welcome-card-note">Make room for a slower moment</span>
-                </article>
-                <article class="welcome-card welcome-card-lilac">
-                    <span class="welcome-card-icon"><i class="fa-solid fa-mug-hot" aria-hidden="true"></i></span>
-                    <p>Good coffee, something lovely to eat, and no rush to leave.</p>
-                    <span class="welcome-card-note">Stay for another cup</span>
-                </article>
-                <article class="welcome-card welcome-card-mint">
-                    <span class="welcome-card-icon"><i class="fa-solid fa-heart" aria-hidden="true"></i></span>
-                    <p>A welcoming table for the people who make your day.</p>
-                    <span class="welcome-card-note">There's always room for you</span>
-                </article>
+                @if (Model.RecentReviews.Count == 0)
+                {
+                    <article class="welcome-card welcome-card-blue welcome-review-empty">
+                        <span class="welcome-card-icon"><i class="fa-solid fa-comments" aria-hidden="true"></i></span>
+                        <p>No customer reviews yet.</p>
+                        <span class="welcome-card-note">Be the first to share your experience</span>
+                    </article>
+                }
+                else
+                {
+                    @for (var index = 0; index < Model.RecentReviews.Count; index++)
+                    {
+                        var review = Model.RecentReviews[index];
+                        var cardClass = index % 3 == 1
+                            ? "welcome-card-lilac"
+                            : index % 3 == 2 ? "welcome-card-mint" : "welcome-card-blue";
+                        <article class="welcome-card @cardClass">
+                            <span class="welcome-review-stars" role="img" aria-label="@review.Stars out of 5 stars">
+                                @for (var star = 1; star <= 5; star++)
+                                {
+                                    <span class="@(star <= review.Stars ? "filled" : null)">★</span>
+                                }
+                            </span>
+                            <p>@review.Message</p>
+                            <span class="welcome-card-note">
+                                @(string.IsNullOrWhiteSpace(review.CustomerName) ? "Anonymous customer" : review.CustomerName)
+                                · @review.Stars/5
+                            </span>
+                        </article>
+                    }
+                }
             </div>
         </section>
 
@@ -180,3 +197,6 @@
         </nav>
     </footer>
 </div>
+<script src="https://www.noupe.com/embed/01a15483f6e870008f533d28b55becc6e41a.js" async></script>
+</body>
+</html>

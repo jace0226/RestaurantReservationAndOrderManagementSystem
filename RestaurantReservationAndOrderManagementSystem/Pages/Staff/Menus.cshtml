@@ -126,8 +126,25 @@
                     <div class="staff-food-content">
                         <div class="staff-food-title-row">
                             <h3>@item.Name</h3>
-                            <span class="staff-food-price">RM @item.Price.ToString("N2")</span>
+                            @if (item.DiscountedPrice.HasValue)
+                            {
+                                <div class="staff-food-price-wrap">
+                                    <del class="staff-card-orig-price">RM @item.Price.ToString("N2")</del>
+                                    <span class="staff-food-price staff-card-deal-price">RM @item.DiscountedPrice.Value.ToString("N2")</span>
+                                </div>
+                            }
+                            else
+                            {
+                                <span class="staff-food-price">RM @item.Price.ToString("N2")</span>
+                            }
                         </div>
+                        @if (item.DiscountPercent.HasValue)
+                        {
+                            <span class="staff-promo-pill">
+                                <i class="fa-solid fa-tag" aria-hidden="true"></i>
+                                @item.DiscountPercent.Value% OFF
+                            </span>
+                        }
                         <p class="staff-food-description">@item.Description</p>
                         <div class="staff-food-footer">
                             <span class="staff-food-availability @(isAvailable ? null : "unavailable")">

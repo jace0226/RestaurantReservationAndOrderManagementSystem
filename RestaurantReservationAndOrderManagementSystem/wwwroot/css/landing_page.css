@@ -411,6 +411,7 @@ body.landing-body {
     width: 108px;
     aspect-ratio: 1;
     place-items: center;
+    overflow: hidden;
     border: 3px solid var(--landing-ink);
     border-radius: 45% 55% 52% 48%;
     background: #fff9ec;
@@ -418,6 +419,13 @@ body.landing-body {
     color: var(--landing-blue);
     font-size: 2.2rem;
     transform: rotate(-7deg);
+}
+
+.featured-food-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scale(1.05) rotate(7deg);
 }
 
 .featured-art-1 .featured-food-icon {
@@ -652,6 +660,21 @@ body.landing-body {
     color: var(--landing-muted);
     font-family: Arial, sans-serif;
     font-size: 0.55rem;
+}
+
+.welcome-review-stars {
+    display: block;
+    color: #9da3c7;
+    font-size: 0.78rem;
+    letter-spacing: 0.05em;
+}
+
+.welcome-review-stars .filled {
+    color: #f6b91b;
+}
+
+.welcome-review-empty {
+    grid-column: 1 / -1;
 }
 
 .visit-section {
