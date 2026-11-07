@@ -81,9 +81,14 @@
 
 /* MAIN AREA */
 .main-area {
-  display: flex;
-  flex-direction: column;
-  height: 100dvh;
+    display: flex;
+    flex-direction: column;
+}
+
+@media (min-width: 992px) {
+    .main-area {
+        height: 100dvh;
+    }
 }
 
 .top-header {
