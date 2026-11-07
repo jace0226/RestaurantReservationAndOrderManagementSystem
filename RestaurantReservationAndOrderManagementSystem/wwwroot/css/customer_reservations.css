@@ -544,6 +544,12 @@
     font-size: 0.65rem;
 }
 
+.customer-reservation-party-note {
+    color: var(--reservation-muted, #6b7280);
+    font-size: 0.65rem;
+    line-height: 1.45;
+}
+
     .customer-reservation-validation-summary ul {
         margin: 0;
         padding-left: 1rem;

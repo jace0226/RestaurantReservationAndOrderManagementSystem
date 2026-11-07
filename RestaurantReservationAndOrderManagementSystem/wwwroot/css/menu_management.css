@@ -346,6 +346,36 @@
     font-weight: 750;
 }
 
+.staff-food-price-wrap {
+    display: flex;
+    flex: 0 0 auto;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.1rem;
+}
+
+.staff-card-orig-price {
+    color: var(--staff-muted);
+    font-size: 0.66rem;
+}
+
+.staff-card-deal-price {
+    color: #c54848;
+    font-size: 0.82rem;
+}
+
+.staff-promo-pill {
+    display: inline-flex;
+    width: fit-content;
+    margin-top: 0.55rem;
+    padding: 0.25rem 0.48rem;
+    border-radius: 999px;
+    background: #fff0f0;
+    color: #b53a3a;
+    font-size: 0.62rem;
+    font-weight: 800;
+}
+
 .staff-food-description {
     display: -webkit-box;
     overflow: hidden;

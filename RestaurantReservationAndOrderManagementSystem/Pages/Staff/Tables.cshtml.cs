@@ -262,7 +262,7 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
             [Required]
             public string TableID { get; set; } = string.Empty;
 
-            [Range(1, 100, ErrorMessage = "Capacity must be between 1 and 100.")]
+            [Range(1, 100, ErrorMessage = "Capacity must be between 1 and 20.")]
             public int Capacity { get; set; }
 
             [Required]
@@ -274,7 +274,7 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
             [Required]
             public string TableID { get; set; } = string.Empty;
 
-            [Range(1, 100, ErrorMessage = "Capacity must be between 1 and 100.")]
+            [Range(1, 100, ErrorMessage = "Capacity must be between 1 and 20.")]
             public int Capacity { get; set; }
 
             [Required]

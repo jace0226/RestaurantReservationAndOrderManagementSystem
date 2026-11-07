@@ -187,8 +187,11 @@
 
             <div class="customer-reservation-field">
                 <label asp-for="ReservationForm.PartySize">Number of People</label>
-                <input asp-for="ReservationForm.PartySize" type="number" min="1" max="50" />
+                <input asp-for="ReservationForm.PartySize" type="number" min="1" max="20" />
                 <span asp-validation-for="ReservationForm.PartySize" class="customer-reservation-field-error"></span>
+                <small class="customer-reservation-party-note">
+                    Booking for more than 20 people? Please contact the restaurant admin or staff to arrange your reservation.
+                </small>
             </div>
 
             <div class="customer-reservation-field customer-reservation-field-wide">

@@ -159,6 +159,7 @@
                                 <form method="post" asp-page-handler="UpdateStatus" class="status-edit-form">
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="bookingId" value="@reservation.BookingID" />
+                                    <input type="hidden" name="tableId" value="@reservation.TableID" class="status-table-id" />
                                     <input type="hidden" name="selectedDate" value="@Model.SelectedDate?.ToString("yyyy-MM-dd")" />
                                     <input type="hidden" name="Search" value="@Model.Search" />
                                     <label class="visually-hidden" for="status-@reservation.BookingID">Status for @reservation.GuestName</label>
@@ -314,6 +315,9 @@
                 if (tables.some(table => table.tableID === previousValue)) {
                     select.value = previousValue;
                 }
+                const row = select.closest("tr");
+                const statusTableId = row?.querySelector(".status-table-id");
+                if (statusTableId) statusTableId.value = select.value;
             } catch (error) {
                 console.error(error);
             }
@@ -345,16 +349,26 @@
         ).forEach(select => refreshAvailableTables(select));
 
         document.querySelectorAll(".status-select").forEach(select => {
-            const tableSelect = select.form.querySelector(".confirm-table-select");
-            const updateConfirmationTable = () => {
-                if (!tableSelect) return;
+            const row = select.form.closest("tr");
+            const rowTableSelect = row?.querySelector(".table-reassign-form select[name='tableId']");
+            const tableIdInput = select.form.querySelector(".status-table-id");
 
-                const requiresTable = select.value === "Confirmed";
-                tableSelect.hidden = !requiresTable;
-                tableSelect.required = requiresTable;
+            const syncStatusTable = () => {
+                if (tableIdInput) {
+                    tableIdInput.value = rowTableSelect?.value ?? "";
+                }
             };
-            select.addEventListener("change", updateConfirmationTable);
-            updateConfirmationTable();
+
+            rowTableSelect?.addEventListener("change", syncStatusTable);
+            syncStatusTable();
+
+            select.form.addEventListener("submit", event => {
+                syncStatusTable();
+                if (select.value === "Confirmed" && !tableIdInput?.value) {
+                    event.preventDefault();
+                    alert("No table selected. Please select the table before confirming the reservation.");
+                }
+            });
 
             select.addEventListener("change", () => {
                 select.className = `status-select ${{
