@@ -437,6 +437,12 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
                 return false;
             }
 
+            if (ReservationForm.PartySize > 20)
+            {
+                message = "Online reservations are limited to 20 people. Please contact the restaurant admin or staff for a larger booking.";
+                return false;
+            }
+
             message = string.Empty;
             return true;
         }
@@ -505,7 +511,7 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages.Customer
             [Required(ErrorMessage = "Select a reservation time.")]
             public TimeOnly? BookingTime { get; set; }
 
-            [Range(1, 50, ErrorMessage = "The number of people must be at least 1.")]
+            [Range(1, 20, ErrorMessage = "Enter between 1 and 20 people. For larger bookings, please contact the restaurant admin or staff.")]
             public int PartySize { get; set; } = 2;
 
             [StringLength(500, ErrorMessage = "Notes cannot exceed 500 characters.")]

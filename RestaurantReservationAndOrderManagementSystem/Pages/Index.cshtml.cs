@@ -15,6 +15,9 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
         }
 
         public IReadOnlyList<FeaturedMenuItem> FeaturedItems { get; private set; } = [];
+        public IReadOnlyList<LandingReview> RecentReviews { get; private set; } = [];
+        public double AverageReviewRating { get; private set; }
+        public int ReviewCount { get; private set; }
 
         public async Task OnGetAsync()
         {
@@ -26,10 +29,40 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
                 .Select(item => new FeaturedMenuItem(
                     item.FoodName,
                     item.FoodDescription,
-                    item.Price))
+                    item.Price,
+                    item.ImageUrl,
+                    item.ImageAlt))
+                .ToListAsync();
+
+            ReviewCount = await _dbContext.Feedbacks.CountAsync();
+            AverageReviewRating = ReviewCount == 0
+                ? 0
+                : await _dbContext.Feedbacks.AverageAsync(feedback => (double)feedback.Stars);
+
+            RecentReviews = await _dbContext.Feedbacks
+                .AsNoTracking()
+                .Include(feedback => feedback.Customer)
+                .ThenInclude(customer => customer.User)
+                .Where(feedback => !string.IsNullOrWhiteSpace(feedback.Message))
+                .OrderByDescending(feedback => feedback.FeedbackID)
+                .Take(3)
+                .Select(feedback => new LandingReview(
+                    feedback.Customer.User.FullName,
+                    feedback.Stars,
+                    feedback.Message))
                 .ToListAsync();
         }
 
-        public sealed record FeaturedMenuItem(string Name, string Description, decimal Price);
+        public sealed record FeaturedMenuItem(
+            string Name,
+            string Description,
+            decimal Price,
+            string ImageUrl,
+            string ImageAlt);
+
+        public sealed record LandingReview(
+            string CustomerName,
+            int Stars,
+            string Message);
     }
 }

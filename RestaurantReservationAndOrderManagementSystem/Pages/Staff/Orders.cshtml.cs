@@ -87,6 +87,24 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
                 return NotFound();
             }
 
+            var expectedNextStatus = order.OrderStatus switch
+            {
+                "Pending" => "Preparing",
+                "Preparing" => "Ready to Serve",
+                "Ready to Serve" => "Served",
+                "Served" => "Payment",
+                _ => null
+            };
+            var isPaidCompletion =
+                status == "Completed" &&
+                await _dbContext.Transactions.AnyAsync(item => item.OrderID == orderId);
+            if (!isPaidCompletion &&
+                !string.Equals(status, expectedNextStatus, StringComparison.Ordinal))
+            {
+                PaymentError = "Order statuses must progress step-by-step.";
+                return RedirectToPage(new { orderId, statusFilter, selectedDate });
+            }
+
             if (status == "Completed" &&
                 !await _dbContext.Transactions.AnyAsync(item => item.OrderID == orderId))
             {
@@ -95,6 +113,14 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
             }
 
             order.OrderStatus = status;
+            if (status == "Completed")
+            {
+                order.CompletedAt ??= DateTime.Now;
+                await ReservationStatusWorkflow.SyncCompletedOrderAsync(
+                    _dbContext,
+                    order,
+                    _logger);
+            }
             try
             {
                 await _dbContext.SaveChangesAsync();
@@ -165,6 +191,10 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
 
             order.OrderStatus = "Completed";
             order.CompletedAt = paidAt;
+            await ReservationStatusWorkflow.SyncCompletedOrderAsync(
+                _dbContext,
+                order,
+                _logger);
             _dbContext.Transactions.Add(new Transaction
             {
                 TransactionID = $"CTR-{Guid.NewGuid():N}",

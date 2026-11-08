@@ -148,7 +148,6 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
                 return BadRequest();
             }
 
-            await using var transaction = await _dbContext.Database.BeginTransactionAsync();
             var booking = await _dbContext.Bookings
                 .SingleOrDefaultAsync(item => item.BookingID == bookingId);
             if (booking is null)
@@ -158,48 +157,16 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
 
             try
             {
-                if ((booking.BookingStatus is "Pending" or "Waiting") && newStatus == "Confirmed")
+                if (newStatus == "Confirmed")
                 {
-                    //if (string.IsNullOrWhiteSpace(tableId))
-                    //{
-                    //    TempData["ReservationStatusError"] =
-                    //        "Select an available table before confirming this reservation.";
-                    //    return RedirectToPage(new
-                    //    {
-                    //        selectedDate = SelectedDate?.ToString("yyyy-MM-dd"),
-                    //        search = Search
-                    //    });
-                    //}
+                    var effectiveTableId = string.IsNullOrWhiteSpace(tableId)
+                        ? booking.TableID
+                        : tableId.Trim();
 
-                    //var table = await _dbContext.Tables
-                    //    .SingleOrDefaultAsync(item => item.TableID == tableId);
-                    //if (table is null ||
-                    //    !table.TableAvailability.Equals("Available", StringComparison.OrdinalIgnoreCase) ||
-                    //    table.MaxPax < booking.PartySize)
-                    //{
-                    //    TempData["ReservationStatusError"] = table is null
-                    //        ? "The selected table does not exist."
-                    //        : !table.TableAvailability.Equals("Available", StringComparison.OrdinalIgnoreCase)
-                    //            ? "The selected table is not available."
-                    //            : $"The selected table seats up to {table.MaxPax} guests.";
-                    //    return RedirectToPage(new
-                    //    {
-                    //        selectedDate = SelectedDate?.ToString("yyyy-MM-dd"),
-                    //        search = Search
-                    //    });
-                    //}
-
-                    var tableAlreadyBooked = await _dbContext.Bookings.AnyAsync(item =>
-                        item.BookingID != booking.BookingID &&
-                        //item.TableID == table.TableID &&
-                        item.BookingDate == booking.BookingDate &&
-                        item.BookingTime == booking.BookingTime &&
-                        item.BookingStatus != "Cancelled" &&
-                        item.BookingStatus != "Completed");
-                    if (tableAlreadyBooked)
+                    if (string.IsNullOrWhiteSpace(effectiveTableId))
                     {
                         TempData["ReservationStatusError"] =
-                            "This table is already reserved within 1 hour of the selected time slot.";
+                            "No table selected. Please select the table before confirming the reservation.";
                         return RedirectToPage(new
                         {
                             selectedDate = SelectedDate?.ToString("yyyy-MM-dd"),
@@ -207,9 +174,41 @@ namespace RestaurantReservationAndOrderManagementSystem.Pages
                         });
                     }
 
-                    //booking.TableID = table.TableID;
+                    var table = await _dbContext.Tables
+                        .SingleOrDefaultAsync(item => item.TableID == effectiveTableId);
+                    if (table is null || table.MaxPax < booking.PartySize)
+                    {
+                        TempData["ReservationStatusError"] =
+                            table is null
+                                ? "The selected table does not exist."
+                                : $"The selected table seats up to {table.MaxPax} guests.";
+                        return RedirectToPage(new
+                        {
+                            selectedDate = SelectedDate?.ToString("yyyy-MM-dd"),
+                            search = Search
+                        });
+                    }
+
+                    var tableAlreadyBooked = await IsTableOccupiedInWindowAsync(
+                        effectiveTableId,
+                        booking.BookingDate,
+                        booking.BookingTime,
+                        booking.BookingID);
+                    if (tableAlreadyBooked)
+                    {
+                        TempData["ReservationStatusError"] =
+                            "The selected table already has an active reservation within 1 hour of this time slot.";
+                        return RedirectToPage(new
+                        {
+                            selectedDate = SelectedDate?.ToString("yyyy-MM-dd"),
+                            search = Search
+                        });
+                    }
+
+                    booking.TableID = effectiveTableId;
                 }
 
+                await using var transaction = await _dbContext.Database.BeginTransactionAsync();
                 await ReservationStatusWorkflow.ApplyAsync(_dbContext, booking, newStatus);
                 await _dbContext.SaveChangesAsync();
                 await transaction.CommitAsync();
