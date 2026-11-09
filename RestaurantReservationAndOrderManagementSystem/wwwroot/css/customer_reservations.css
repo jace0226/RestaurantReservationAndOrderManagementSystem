@@ -59,7 +59,6 @@
 }
 
 /* Base Utility Classes */
-.customer-category-btn,
 .customer-reservation-close {
     border: 0;
     border-radius: 10px;
@@ -175,6 +174,9 @@
 
 /* Category Filter Buttons */
 .customer-category-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     min-height: 38px;
     padding: 0.5rem 0.9rem;
     border: 1px solid var(--brand-border, #cbd2f5);
@@ -185,6 +187,8 @@
     font: inherit;
     font-size: 0.75rem;
     font-weight: 650;
+    text-decoration: none;
+    white-space: nowrap;
     transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease;
 }
 
@@ -198,6 +202,11 @@
         background: var(--brand-color, #011bd8);
         color: #fff;
     }
+
+        .customer-category-btn.active:hover {
+            background: var(--brand-color, #011bd8);
+            color: #fff;
+        }
 
 /* Date Filter matching customer_orders.css */
 .customer-reservation-date-filter {
@@ -615,8 +624,13 @@
         width: 100%;
     }
 
-    .customer-category-btn,
-    .customer-filter-btn,
+    .customer-category-btn {
+        flex: 1;
+        padding-inline: 0.4rem;
+        font-size: 0.72rem;
+    }
+
+    .customer-reservation-filter-btn,
     .customer-reservation-clear-filter,
     .customer-reservation-action,
     .customer-reservation-secondary-btn,

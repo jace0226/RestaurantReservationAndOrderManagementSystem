@@ -188,12 +188,6 @@
             <header class="top-header @(isCustomer ? "d-none d-lg-flex" : null)">
                 <div class="page-title">@ViewData["Title"]</div>
                 <div class="header-right">
-                    @if (!isStaffOrAdmin)
-                    {
-                        <button class="notification-btn" aria-label="Notifications">
-                            <i class="fa-solid fa-bell"></i>
-                        </button>
-                    }
                     <div class="user-profile" aria-label="User Profile">
                         <div class="avatar" aria-hidden="true">
                             @initials

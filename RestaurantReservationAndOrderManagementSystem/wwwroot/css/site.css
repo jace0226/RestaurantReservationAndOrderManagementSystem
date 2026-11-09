@@ -9,6 +9,11 @@ html {
     font-size: 17px;
 }
 
+html, body {
+    background-color: #fafaff;
+    min-height: 100vh;
+}
+
 * {
     box-sizing: border-box;
     margin: 0;
@@ -229,7 +234,6 @@ html {
 .main-area {
     display: flex;
     flex-direction: column;
-    height: 100dvh;
 }
 
 .top-header {
@@ -441,7 +445,7 @@ html {
     height: var(--mobile-nav-height);
     background: #fff;
     border-top: 1px solid #e6e6e6;
-    padding: 0 0.25rem;
+    padding: 0 75px 0 0.5rem;
     box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.04);
 }
 
@@ -451,7 +455,7 @@ html {
     align-items: center;
     justify-content: center;
     gap: 0.2rem;
-    flex: 1;
+    flex: 0 0 auto;
     height: 100%;
     color: #666;
     text-decoration: none;
@@ -472,13 +476,32 @@ html {
 /* ==========================================
    RESPONSIVE BREAKPOINTS
    ========================================== */
-@media (max-width: 991.98px) {
-    .app-wrapper {
-        grid-template-columns: 1fr;
+/* DESKTOP LAYOUT (>= 992px) */
+@media (min-width: 992px) {
+    .main-area {
+        height: 100dvh;
     }
 
     .content-body {
-        padding-bottom: calc(var(--mobile-nav-height) + 1rem);
+        overflow: auto;
+    }
+}
+
+/* MOBILE LAYOUT (< 992px) */
+@media (max-width: 991.98px) {
+    .app-wrapper {
+        grid-template-columns: 1fr;
+        min-height: calc(100vh - var(--mobile-header-height));
+    }
+
+    .main-area {
+        height: auto;
+        min-height: calc(100vh - var(--mobile-header-height));
+    }
+
+    .content-body {
+        overflow: visible;
+        padding-bottom: calc(var(--mobile-nav-height) + 2rem);
     }
 }
 
